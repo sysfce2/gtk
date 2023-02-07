@@ -34,6 +34,7 @@
 #include <gtk/gtktextiter.h>
 #include <gtk/gtktextmark.h>
 #include <gtk/gtktextchild.h>
+#include <gtk/gtktexttypes.h>
 
 G_BEGIN_DECLS
 
