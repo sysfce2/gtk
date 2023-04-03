@@ -319,6 +319,15 @@ gsk_gl_renderer_render (GskRenderer          *renderer,
 
   gsk_gl_driver_after_frame (self->driver);
 
+  {
+    graphene_rect_t opaque;
+
+    if (!gsk_render_node_get_opaque (root, &opaque))
+      g_print ("no opaque region\n");
+    else
+      g_print ("opaque region: %g %g %g %g\n", opaque.origin.x, opaque.origin.y, opaque.size.width, opaque.size.height);
+  }
+
   cairo_region_destroy (render_region);
 }
 

@@ -2707,6 +2707,15 @@ gdk_surface_set_opaque_region (GdkSurface      *surface,
   if (region != NULL)
     surface->opaque_region = cairo_region_reference (region);
 
+  if (!region)
+    g_print (">>> no opaque region\n");
+  else
+    {
+      GdkRectangle opaque;
+      cairo_region_get_extents (region, &opaque);
+      g_print (">>> opaque region: %d %d %d %d (%d)\n", opaque.x, opaque.y, opaque.width, opaque.height, cairo_region_num_rectangles (region));
+    }
+
   class = GDK_SURFACE_GET_CLASS (surface);
   if (class->set_opaque_region)
     class->set_opaque_region (surface, region);
