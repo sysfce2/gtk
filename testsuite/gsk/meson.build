@@ -128,6 +128,8 @@ informative_render_tests = [
 
 renderers = [
   { 'name': 'gl' },
+  { 'name': 'ngl' },
+  { 'name': 'vulkan' },
   { 'name': 'broadway', 'exclude_term': '-3d' },
   { 'name': 'cairo', 'exclude_term': '-3d' },
 ]
@@ -158,10 +160,6 @@ foreach renderer : renderers
       'gsk-compare-' + renderer_name,
     ]
 
-    if compare_xfails.contains(testname)
-      suites += 'failing'
-    endif
-
     if compare_xfails_small_texture.contains(testname)
       suites += 'wayland_gles2_failing'
     endif
@@ -174,7 +172,8 @@ foreach renderer : renderers
     ]
 
     if ((exclude_term == '' or not testname.contains(exclude_term)) and
-        (renderer_name != 'broadway' or broadway_enabled))
+        (renderer_name != 'broadway' or broadway_enabled) and
+        (renderer_name != 'vulkan' or have_vulkan))
       test(renderer_name + ' ' + testname, compare_render,
         args: [
           '--output', join_paths(meson.current_build_dir(), 'compare', renderer_name),
