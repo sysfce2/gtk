@@ -1157,10 +1157,16 @@ node_editor_window_realize (GtkWidget *widget)
   node_editor_window_add_renderer (self,
                                    gsk_gl_renderer_new (),
                                    "OpenGL");
+  node_editor_window_add_renderer (self,
+                                   gsk_ngl_renderer_new (),
+                                   "NGL");
 #ifdef GDK_RENDERING_VULKAN
   node_editor_window_add_renderer (self,
-                                   gsk_vk_old_renderer_new (),
+                                   gsk_vulkan_renderer_new (),
                                    "Vulkan");
+  node_editor_window_add_renderer (self,
+                                   gsk_vk_old_renderer_new (),
+                                   "Vulkan (old)");
 #endif
 #ifdef GDK_WINDOWING_BROADWAY
   node_editor_window_add_renderer (self,
