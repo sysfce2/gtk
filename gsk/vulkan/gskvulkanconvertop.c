@@ -7,11 +7,11 @@
 
 #include "vulkan/resources/convert.vert.h"
 
-typedef struct _GskVulkanConvertOp GskVulkanConvertOp;
+typedef struct _GskVkOldConvertOp GskVkOldConvertOp;
 
-struct _GskVulkanConvertOp
+struct _GskVkOldConvertOp
 {
-  GskVulkanShaderOp op;
+  GskVkOldShaderOp op;
 
   graphene_rect_t rect;
   graphene_rect_t tex_rect;
@@ -20,12 +20,12 @@ struct _GskVulkanConvertOp
 };
 
 static void
-gsk_vulkan_convert_op_print (GskVulkanOp *op,
+gsk_vk_old_convert_op_print (GskVkOldOp *op,
                              GString     *string,
                              guint        indent)
 {
-  GskVulkanConvertOp *self = (GskVulkanConvertOp *) op;
-  GskVulkanShaderOp *shader = (GskVulkanShaderOp *) op;
+  GskVkOldConvertOp *self = (GskVkOldConvertOp *) op;
+  GskVkOldShaderOp *shader = (GskVkOldShaderOp *) op;
 
   print_indent (string, indent);
   print_rect (string, &self->rect);
@@ -35,12 +35,12 @@ gsk_vulkan_convert_op_print (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_convert_op_collect_vertex_data (GskVulkanOp *op,
+gsk_vk_old_convert_op_collect_vertex_data (GskVkOldOp *op,
                                            guchar      *data)
 {
-  GskVulkanConvertOp *self = (GskVulkanConvertOp *) op;
-  GskVulkanConvertInstance *instance = (GskVulkanConvertInstance *) (data + ((GskVulkanShaderOp *) op)->vertex_offset);
-  GskVulkanShaderOp *shader = (GskVulkanShaderOp *) op;
+  GskVkOldConvertOp *self = (GskVkOldConvertOp *) op;
+  GskVkOldConvertInstance *instance = (GskVkOldConvertInstance *) (data + ((GskVkOldShaderOp *) op)->vertex_offset);
+  GskVkOldShaderOp *shader = (GskVkOldShaderOp *) op;
 
   instance->rect[0] = self->rect.origin.x;
   instance->rect[1] = self->rect.origin.y;
@@ -51,50 +51,50 @@ gsk_vulkan_convert_op_collect_vertex_data (GskVulkanOp *op,
   instance->tex_rect[2] = self->tex_rect.size.width;
   instance->tex_rect[3] = self->tex_rect.size.height;
   instance->tex_id = self->image_descriptor;
-  instance->postprocess = gsk_vulkan_image_get_postprocess (shader->images[0]);
+  instance->postprocess = gsk_vk_old_image_get_postprocess (shader->images[0]);
 }
 
 static void
-gsk_vulkan_convert_op_reserve_descriptor_sets (GskVulkanOp     *op,
-                                               GskVulkanRender *render)
+gsk_vk_old_convert_op_reserve_descriptor_sets (GskVkOldOp     *op,
+                                               GskVkOldRender *render)
 {
-  GskVulkanConvertOp *self = (GskVulkanConvertOp *) op;
-  GskVulkanShaderOp *shader = (GskVulkanShaderOp *) op;
+  GskVkOldConvertOp *self = (GskVkOldConvertOp *) op;
+  GskVkOldShaderOp *shader = (GskVkOldShaderOp *) op;
 
-  self->image_descriptor = gsk_vulkan_render_get_image_descriptor (render, shader->images[0], GSK_VULKAN_SAMPLER_NEAREST);
+  self->image_descriptor = gsk_vk_old_render_get_image_descriptor (render, shader->images[0], GSK_VK_OLD_SAMPLER_NEAREST);
 }
 
-static const GskVulkanShaderOpClass GSK_VULKAN_CONVERT_OP_CLASS = {
+static const GskVkOldShaderOpClass GSK_VK_OLD_CONVERT_OP_CLASS = {
   {
-    GSK_VULKAN_OP_SIZE (GskVulkanConvertOp),
-    GSK_VULKAN_STAGE_SHADER,
-    gsk_vulkan_shader_op_finish,
-    gsk_vulkan_convert_op_print,
-    gsk_vulkan_shader_op_count_vertex_data,
-    gsk_vulkan_convert_op_collect_vertex_data,
-    gsk_vulkan_convert_op_reserve_descriptor_sets,
-    gsk_vulkan_shader_op_command
+    GSK_VK_OLD_OP_SIZE (GskVkOldConvertOp),
+    GSK_VK_OLD_STAGE_SHADER,
+    gsk_vk_old_shader_op_finish,
+    gsk_vk_old_convert_op_print,
+    gsk_vk_old_shader_op_count_vertex_data,
+    gsk_vk_old_convert_op_collect_vertex_data,
+    gsk_vk_old_convert_op_reserve_descriptor_sets,
+    gsk_vk_old_shader_op_command
   },
   "convert",
   1,
-  &gsk_vulkan_convert_info,
+  &gsk_vk_old_convert_info,
 };
 
 void
-gsk_vulkan_convert_op (GskVulkanRender        *render,
-                       GskVulkanShaderClip     clip,
-                       GskVulkanImage         *image,
+gsk_vk_old_convert_op (GskVkOldRender        *render,
+                       GskVkOldShaderClip     clip,
+                       GskVkOldImage         *image,
                        const graphene_rect_t  *rect,
                        const graphene_point_t *offset,
                        const graphene_rect_t  *tex_rect)
 {
-  GskVulkanConvertOp *self;
+  GskVkOldConvertOp *self;
 
-  self = (GskVulkanConvertOp *) gsk_vulkan_shader_op_alloc (render,
-                                                            &GSK_VULKAN_CONVERT_OP_CLASS,
+  self = (GskVkOldConvertOp *) gsk_vk_old_shader_op_alloc (render,
+                                                            &GSK_VK_OLD_CONVERT_OP_CLASS,
                                                             clip,
                                                             &image);
 
   graphene_rect_offset_r (rect, offset->x, offset->y, &self->rect);
-  gsk_vulkan_normalize_tex_coords (&self->tex_rect, rect, tex_rect);
+  gsk_vk_old_normalize_tex_coords (&self->tex_rect, rect, tex_rect);
 }

@@ -8,11 +8,11 @@
 
 #include "vulkan/resources/outset-shadow.vert.h"
 
-typedef struct _GskVulkanOutsetShadowOp GskVulkanOutsetShadowOp;
+typedef struct _GskVkOldOutsetShadowOp GskVkOldOutsetShadowOp;
 
-struct _GskVulkanOutsetShadowOp
+struct _GskVkOldOutsetShadowOp
 {
-  GskVulkanShaderOp op;
+  GskVkOldShaderOp op;
 
   GskRoundedRect outline;
   GdkRGBA color;
@@ -22,16 +22,16 @@ struct _GskVulkanOutsetShadowOp
 };
 
 static void
-gsk_vulkan_outset_shadow_op_finish (GskVulkanOp *op)
+gsk_vk_old_outset_shadow_op_finish (GskVkOldOp *op)
 {
 }
 
 static void
-gsk_vulkan_outset_shadow_op_print (GskVulkanOp *op,
+gsk_vk_old_outset_shadow_op_print (GskVkOldOp *op,
                                    GString     *string,
                                    guint        indent)
 {
-  GskVulkanOutsetShadowOp *self = (GskVulkanOutsetShadowOp *) op;
+  GskVkOldOutsetShadowOp *self = (GskVkOldOutsetShadowOp *) op;
 
   print_indent (string, indent);
   print_rounded_rect (string, &self->outline);
@@ -42,44 +42,44 @@ gsk_vulkan_outset_shadow_op_print (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_outset_shadow_op_collect_vertex_data (GskVulkanOp *op,
+gsk_vk_old_outset_shadow_op_collect_vertex_data (GskVkOldOp *op,
                                                  guchar      *data)
 {
-  GskVulkanOutsetShadowOp *self = (GskVulkanOutsetShadowOp *) op;
-  GskVulkanOutsetShadowInstance *instance = (GskVulkanOutsetShadowInstance *) (data + ((GskVulkanShaderOp *) op)->vertex_offset);
+  GskVkOldOutsetShadowOp *self = (GskVkOldOutsetShadowOp *) op;
+  GskVkOldOutsetShadowInstance *instance = (GskVkOldOutsetShadowInstance *) (data + ((GskVkOldShaderOp *) op)->vertex_offset);
 
   gsk_rounded_rect_to_float (&self->outline, graphene_point_zero (), instance->outline);
-  gsk_vulkan_rgba_to_float (&self->color, instance->color);
-  gsk_vulkan_point_to_float (&self->offset, instance->offset);
+  gsk_vk_old_rgba_to_float (&self->color, instance->color);
+  gsk_vk_old_point_to_float (&self->offset, instance->offset);
   instance->spread = self->spread;
   instance->blur_radius = self->blur_radius;
 }
 
 static void
-gsk_vulkan_outset_shadow_op_reserve_descriptor_sets (GskVulkanOp     *op,
-                                                     GskVulkanRender *render)
+gsk_vk_old_outset_shadow_op_reserve_descriptor_sets (GskVkOldOp     *op,
+                                                     GskVkOldRender *render)
 {
 }
 
-static const GskVulkanShaderOpClass GSK_VULKAN_OUTSET_SHADOW_OP_CLASS = {
+static const GskVkOldShaderOpClass GSK_VK_OLD_OUTSET_SHADOW_OP_CLASS = {
   {
-    GSK_VULKAN_OP_SIZE (GskVulkanOutsetShadowOp),
-    GSK_VULKAN_STAGE_SHADER,
-    gsk_vulkan_outset_shadow_op_finish,
-    gsk_vulkan_outset_shadow_op_print,
-    gsk_vulkan_shader_op_count_vertex_data,
-    gsk_vulkan_outset_shadow_op_collect_vertex_data,
-    gsk_vulkan_outset_shadow_op_reserve_descriptor_sets,
-    gsk_vulkan_shader_op_command
+    GSK_VK_OLD_OP_SIZE (GskVkOldOutsetShadowOp),
+    GSK_VK_OLD_STAGE_SHADER,
+    gsk_vk_old_outset_shadow_op_finish,
+    gsk_vk_old_outset_shadow_op_print,
+    gsk_vk_old_shader_op_count_vertex_data,
+    gsk_vk_old_outset_shadow_op_collect_vertex_data,
+    gsk_vk_old_outset_shadow_op_reserve_descriptor_sets,
+    gsk_vk_old_shader_op_command
   },
   "outset-shadow",
   0,
-  &gsk_vulkan_outset_shadow_info,
+  &gsk_vk_old_outset_shadow_info,
 };
 
 void
-gsk_vulkan_outset_shadow_op (GskVulkanRender         *render,
-                             GskVulkanShaderClip      clip,
+gsk_vk_old_outset_shadow_op (GskVkOldRender         *render,
+                             GskVkOldShaderClip      clip,
                              const GskRoundedRect    *outline,
                              const graphene_point_t  *offset,
                              const GdkRGBA           *color,
@@ -87,9 +87,9 @@ gsk_vulkan_outset_shadow_op (GskVulkanRender         *render,
                              float                    spread,
                              float                    blur_radius)
 {
-  GskVulkanOutsetShadowOp *self;
+  GskVkOldOutsetShadowOp *self;
 
-  self = (GskVulkanOutsetShadowOp *) gsk_vulkan_shader_op_alloc (render, &GSK_VULKAN_OUTSET_SHADOW_OP_CLASS, clip, NULL);
+  self = (GskVkOldOutsetShadowOp *) gsk_vk_old_shader_op_alloc (render, &GSK_VK_OLD_OUTSET_SHADOW_OP_CLASS, clip, NULL);
 
   self->outline = *outline;
   gsk_rounded_rect_offset (&self->outline, offset->x, offset->y);

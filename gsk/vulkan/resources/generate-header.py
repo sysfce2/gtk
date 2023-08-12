@@ -5,8 +5,8 @@ import re
 import os
 
 name = os.path.splitext(os.path.basename(sys.argv[1]))[0]
-var_name = "gsk_vulkan_" + name.replace('-', '_')
-struct_name = "GskVulkan" + name.title().replace('-', '') + "Instance"
+var_name = "gsk_vk_old_" + name.replace('-', '_')
+struct_name = "GskVkOld" + name.title().replace('-', '') + "Instance"
 
 with open(sys.argv[1]) as f:
     lines = f.readlines()

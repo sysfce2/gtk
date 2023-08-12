@@ -4,13 +4,13 @@
 
 G_BEGIN_DECLS
 
-void                    gsk_vulkan_mask_op                              (GskVulkanRender                *render,
-                                                                         GskVulkanShaderClip             clip,
+void                    gsk_vk_old_mask_op                              (GskVkOldRender                *render,
+                                                                         GskVkOldShaderClip             clip,
                                                                          const graphene_point_t         *offset,
-                                                                         GskVulkanImage                 *source,
+                                                                         GskVkOldImage                 *source,
                                                                          const graphene_rect_t          *source_rect,
                                                                          const graphene_rect_t          *source_tex_rect,
-                                                                         GskVulkanImage                 *mask,
+                                                                         GskVkOldImage                 *mask,
                                                                          const graphene_rect_t          *mask_rect,
                                                                          const graphene_rect_t          *mask_tex_rect,
                                                                          GskMaskMode                     mask_mode);

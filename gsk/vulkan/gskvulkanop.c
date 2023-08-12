@@ -2,26 +2,26 @@
 
 #include "gskvulkanopprivate.h"
 
-GskVulkanOp *
-gsk_vulkan_op_alloc (GskVulkanRender        *render,
-                     const GskVulkanOpClass *op_class)
+GskVkOldOp *
+gsk_vk_old_op_alloc (GskVkOldRender        *render,
+                     const GskVkOldOpClass *op_class)
 {
-  GskVulkanOp *op;
+  GskVkOldOp *op;
 
-  op = gsk_vulkan_render_alloc_op (render, op_class->size);
+  op = gsk_vk_old_render_alloc_op (render, op_class->size);
   op->op_class = op_class;
 
   return op;
 }
 
 void
-gsk_vulkan_op_finish (GskVulkanOp *op)
+gsk_vk_old_op_finish (GskVkOldOp *op)
 {
   op->op_class->finish (op);
 }
 
 void
-gsk_vulkan_op_print (GskVulkanOp *op,
+gsk_vk_old_op_print (GskVkOldOp *op,
                      GString     *string,
                      guint        indent)
 {
@@ -29,29 +29,29 @@ gsk_vulkan_op_print (GskVulkanOp *op,
 }
 
 gsize
-gsk_vulkan_op_count_vertex_data (GskVulkanOp *op,
+gsk_vk_old_op_count_vertex_data (GskVkOldOp *op,
                                  gsize        n_bytes)
 {
   return op->op_class->count_vertex_data (op, n_bytes);
 }
 
 void
-gsk_vulkan_op_collect_vertex_data (GskVulkanOp *op,
+gsk_vk_old_op_collect_vertex_data (GskVkOldOp *op,
                                    guchar      *data)
 {
   op->op_class->collect_vertex_data (op, data);
 }
 
 void
-gsk_vulkan_op_reserve_descriptor_sets (GskVulkanOp     *op,
-                                       GskVulkanRender *render)
+gsk_vk_old_op_reserve_descriptor_sets (GskVkOldOp     *op,
+                                       GskVkOldRender *render)
 {
   op->op_class->reserve_descriptor_sets (op, render);
 }
 
-GskVulkanOp *
-gsk_vulkan_op_command (GskVulkanOp      *op,
-                       GskVulkanRender  *render,
+GskVkOldOp *
+gsk_vk_old_op_command (GskVkOldOp      *op,
+                       GskVkOldRender  *render,
                        VkRenderPass      render_pass,
                        VkCommandBuffer   command_buffer)
 {

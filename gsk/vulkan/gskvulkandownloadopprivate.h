@@ -4,13 +4,13 @@
 
 G_BEGIN_DECLS
 
-void                    gsk_vulkan_download_op                          (GskVulkanRender                *render,
-                                                                         GskVulkanImage                 *image,
-                                                                         GskVulkanDownloadFunc           func,
+void                    gsk_vk_old_download_op                          (GskVkOldRender                *render,
+                                                                         GskVkOldImage                 *image,
+                                                                         GskVkOldDownloadFunc           func,
                                                                          gpointer                        user_data);
 
-void                    gsk_vulkan_download_png_op                      (GskVulkanRender                *render,
-                                                                         GskVulkanImage                 *image,
+void                    gsk_vk_old_download_png_op                      (GskVkOldRender                *render,
+                                                                         GskVkOldImage                 *image,
                                                                          const char                     *filename_format,
                                                                          ...) G_GNUC_PRINTF(3, 4);
 

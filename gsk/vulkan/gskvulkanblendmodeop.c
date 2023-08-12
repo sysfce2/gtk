@@ -7,11 +7,11 @@
 
 #include "vulkan/resources/blend-mode.vert.h"
 
-typedef struct _GskVulkanBlendModeOp GskVulkanBlendModeOp;
+typedef struct _GskVkOldBlendModeOp GskVkOldBlendModeOp;
 
-struct _GskVulkanBlendModeOp
+struct _GskVkOldBlendModeOp
 {
-  GskVulkanShaderOp op;
+  GskVkOldShaderOp op;
 
   graphene_rect_t bounds;
   GskBlendMode blend_mode;
@@ -24,11 +24,11 @@ struct _GskVulkanBlendModeOp
 };
 
 static void
-gsk_vulkan_blend_mode_op_print (GskVulkanOp *op,
+gsk_vk_old_blend_mode_op_print (GskVkOldOp *op,
                                 GString     *string,
                                 guint        indent)
 {
-  GskVulkanBlendModeOp *self = (GskVulkanBlendModeOp *) op;
+  GskVkOldBlendModeOp *self = (GskVkOldBlendModeOp *) op;
 
   print_indent (string, indent);
   print_rect (string, &self->bounds);
@@ -37,11 +37,11 @@ gsk_vulkan_blend_mode_op_print (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_blend_mode_op_collect_vertex_data (GskVulkanOp *op,
+gsk_vk_old_blend_mode_op_collect_vertex_data (GskVkOldOp *op,
                                               guchar      *data)
 {
-  GskVulkanBlendModeOp *self = (GskVulkanBlendModeOp *) op;
-  GskVulkanBlendModeInstance *instance = (GskVulkanBlendModeInstance *) (data + ((GskVulkanShaderOp *) op)->vertex_offset);
+  GskVkOldBlendModeOp *self = (GskVkOldBlendModeOp *) op;
+  GskVkOldBlendModeInstance *instance = (GskVkOldBlendModeInstance *) (data + ((GskVkOldShaderOp *) op)->vertex_offset);
 
   gsk_rect_to_float (&self->bounds, instance->rect);
   gsk_rect_to_float (&self->top.rect, instance->top_rect);
@@ -55,55 +55,55 @@ gsk_vulkan_blend_mode_op_collect_vertex_data (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_blend_mode_op_reserve_descriptor_sets (GskVulkanOp     *op,
-                                                  GskVulkanRender *render)
+gsk_vk_old_blend_mode_op_reserve_descriptor_sets (GskVkOldOp     *op,
+                                                  GskVkOldRender *render)
 {
-  GskVulkanBlendModeOp *self = (GskVulkanBlendModeOp *) op;
-  GskVulkanShaderOp *shader = (GskVulkanShaderOp *) op;
+  GskVkOldBlendModeOp *self = (GskVkOldBlendModeOp *) op;
+  GskVkOldShaderOp *shader = (GskVkOldShaderOp *) op;
 
-  self->top.image_descriptor = gsk_vulkan_render_get_image_descriptor (render,
+  self->top.image_descriptor = gsk_vk_old_render_get_image_descriptor (render,
                                                                        shader->images[0],
-                                                                       GSK_VULKAN_SAMPLER_DEFAULT);
-  self->bottom.image_descriptor = gsk_vulkan_render_get_image_descriptor (render,
+                                                                       GSK_VK_OLD_SAMPLER_DEFAULT);
+  self->bottom.image_descriptor = gsk_vk_old_render_get_image_descriptor (render,
                                                                           shader->images[1],
-                                                                          GSK_VULKAN_SAMPLER_DEFAULT);
+                                                                          GSK_VK_OLD_SAMPLER_DEFAULT);
 }
 
-static const GskVulkanShaderOpClass GSK_VULKAN_BLEND_MODE_OP_CLASS = {
+static const GskVkOldShaderOpClass GSK_VK_OLD_BLEND_MODE_OP_CLASS = {
   {
-    GSK_VULKAN_OP_SIZE (GskVulkanBlendModeOp),
-    GSK_VULKAN_STAGE_SHADER,
-    gsk_vulkan_shader_op_finish,
-    gsk_vulkan_blend_mode_op_print,
-    gsk_vulkan_shader_op_count_vertex_data,
-    gsk_vulkan_blend_mode_op_collect_vertex_data,
-    gsk_vulkan_blend_mode_op_reserve_descriptor_sets,
-    gsk_vulkan_shader_op_command
+    GSK_VK_OLD_OP_SIZE (GskVkOldBlendModeOp),
+    GSK_VK_OLD_STAGE_SHADER,
+    gsk_vk_old_shader_op_finish,
+    gsk_vk_old_blend_mode_op_print,
+    gsk_vk_old_shader_op_count_vertex_data,
+    gsk_vk_old_blend_mode_op_collect_vertex_data,
+    gsk_vk_old_blend_mode_op_reserve_descriptor_sets,
+    gsk_vk_old_shader_op_command
   },
   "blend-mode",
   2,
-  &gsk_vulkan_blend_mode_info,
+  &gsk_vk_old_blend_mode_info,
 };
 
 void
-gsk_vulkan_blend_mode_op (GskVulkanRender        *render,
-                          GskVulkanShaderClip     clip,
+gsk_vk_old_blend_mode_op (GskVkOldRender        *render,
+                          GskVkOldShaderClip     clip,
                           const graphene_rect_t  *bounds,
                           const graphene_point_t *offset,
                           GskBlendMode            blend_mode,
-                          GskVulkanImage         *top_image,
+                          GskVkOldImage         *top_image,
                           const graphene_rect_t  *top_rect,
                           const graphene_rect_t  *top_tex_rect,
-                          GskVulkanImage         *bottom_image,
+                          GskVkOldImage         *bottom_image,
                           const graphene_rect_t  *bottom_rect,
                           const graphene_rect_t  *bottom_tex_rect)
 {
-  GskVulkanBlendModeOp *self;
+  GskVkOldBlendModeOp *self;
 
-  self = (GskVulkanBlendModeOp *) gsk_vulkan_shader_op_alloc (render,
-                                                              &GSK_VULKAN_BLEND_MODE_OP_CLASS,
+  self = (GskVkOldBlendModeOp *) gsk_vk_old_shader_op_alloc (render,
+                                                              &GSK_VK_OLD_BLEND_MODE_OP_CLASS,
                                                               clip,
-                                                              (GskVulkanImage *[2]) {
+                                                              (GskVkOldImage *[2]) {
                                                                   top_image,
                                                                   bottom_image
                                                               });
@@ -112,8 +112,8 @@ gsk_vulkan_blend_mode_op (GskVulkanRender        *render,
   self->blend_mode = blend_mode;
 
   graphene_rect_offset_r (top_rect, offset->x, offset->y, &self->top.rect);
-  gsk_vulkan_normalize_tex_coords (&self->top.tex_rect, bounds, top_tex_rect);
+  gsk_vk_old_normalize_tex_coords (&self->top.tex_rect, bounds, top_tex_rect);
 
   graphene_rect_offset_r (bottom_rect, offset->x, offset->y, &self->bottom.rect);
-  gsk_vulkan_normalize_tex_coords (&self->bottom.tex_rect, bounds, bottom_tex_rect);
+  gsk_vk_old_normalize_tex_coords (&self->bottom.tex_rect, bounds, bottom_tex_rect);
 }

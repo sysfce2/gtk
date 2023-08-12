@@ -7,45 +7,45 @@
 #include "gdk/gdkmemoryformatprivate.h"
 
 static gsize
-gsk_vulkan_upload_op_count_vertex_data (GskVulkanOp *op,
+gsk_vk_old_upload_op_count_vertex_data (GskVkOldOp *op,
                                         gsize        n_bytes)
 {
   return n_bytes;
 }
 
 static void
-gsk_vulkan_upload_op_collect_vertex_data (GskVulkanOp *op,
+gsk_vk_old_upload_op_collect_vertex_data (GskVkOldOp *op,
                                           guchar      *data)
 {
 }
 
 static void
-gsk_vulkan_upload_op_reserve_descriptor_sets (GskVulkanOp     *op,
-                                              GskVulkanRender *render)
+gsk_vk_old_upload_op_reserve_descriptor_sets (GskVkOldOp     *op,
+                                              GskVkOldRender *render)
 {
 }
 
-static GskVulkanOp *
-gsk_vulkan_upload_op_command_with_area (GskVulkanOp                 *op,
-                                        GskVulkanRender             *render,
+static GskVkOldOp *
+gsk_vk_old_upload_op_command_with_area (GskVkOldOp                 *op,
+                                        GskVkOldRender             *render,
                                         VkCommandBuffer              command_buffer,
-                                        GskVulkanImage              *image,
+                                        GskVkOldImage              *image,
                                         const cairo_rectangle_int_t *area,
-                                        void           (* draw_func) (GskVulkanOp *, guchar *, gsize),
-                                        GskVulkanBuffer            **buffer)
+                                        void           (* draw_func) (GskVkOldOp *, guchar *, gsize),
+                                        GskVkOldBuffer            **buffer)
 {
   gsize stride;
   guchar *data;
 
-  stride = area->width * gdk_memory_format_bytes_per_pixel (gsk_vulkan_image_get_format (image));
-  *buffer = gsk_vulkan_buffer_new_map (gsk_vulkan_render_get_context (render),
+  stride = area->width * gdk_memory_format_bytes_per_pixel (gsk_vk_old_image_get_format (image));
+  *buffer = gsk_vk_old_buffer_new_map (gsk_vk_old_render_get_context (render),
                                        area->height * stride,
-                                       GSK_VULKAN_WRITE);
-  data = gsk_vulkan_buffer_map (*buffer);
+                                       GSK_VK_OLD_WRITE);
+  data = gsk_vk_old_buffer_map (*buffer);
 
   draw_func (op, data, stride);
 
-  gsk_vulkan_buffer_unmap (*buffer);
+  gsk_vk_old_buffer_unmap (*buffer);
 
   vkCmdPipelineBarrier (command_buffer,
                         VK_PIPELINE_STAGE_HOST_BIT,
@@ -58,20 +58,20 @@ gsk_vulkan_upload_op_command_with_area (GskVulkanOp                 *op,
                             .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
                             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
                             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                            .buffer = gsk_vulkan_buffer_get_buffer (*buffer),
+                            .buffer = gsk_vk_old_buffer_get_buffer (*buffer),
                             .offset = 0,
                             .size = VK_WHOLE_SIZE,
                         },
                         0, NULL);
-  gsk_vulkan_image_transition (image, 
+  gsk_vk_old_image_transition (image, 
                                command_buffer,
                                VK_PIPELINE_STAGE_TRANSFER_BIT,
                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                VK_ACCESS_TRANSFER_WRITE_BIT);
 
   vkCmdCopyBufferToImage (command_buffer,
-                          gsk_vulkan_buffer_get_buffer (*buffer),
-                          gsk_vulkan_image_get_vk_image (image),
+                          gsk_vk_old_buffer_get_buffer (*buffer),
+                          gsk_vk_old_image_get_vk_image (image),
                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                           1,
                           (VkBufferImageCopy[1]) {
@@ -101,69 +101,69 @@ gsk_vulkan_upload_op_command_with_area (GskVulkanOp                 *op,
   return op->next;
 }
 
-static GskVulkanOp *
-gsk_vulkan_upload_op_command (GskVulkanOp      *op,
-                              GskVulkanRender  *render,
+static GskVkOldOp *
+gsk_vk_old_upload_op_command (GskVkOldOp      *op,
+                              GskVkOldRender  *render,
                               VkCommandBuffer   command_buffer,
-                              GskVulkanImage   *image,
-                              void              (* draw_func) (GskVulkanOp *, guchar *, gsize),
-                              GskVulkanBuffer **buffer)
+                              GskVkOldImage   *image,
+                              void              (* draw_func) (GskVkOldOp *, guchar *, gsize),
+                              GskVkOldBuffer **buffer)
 {
   gsize stride;
   guchar *data;
 
-  data = gsk_vulkan_image_try_map (image, &stride);
+  data = gsk_vk_old_image_try_map (image, &stride);
   if (data)
     {
       draw_func (op, data, stride);
 
-      gsk_vulkan_image_unmap (image);
+      gsk_vk_old_image_unmap (image);
       *buffer = NULL;
 
       return op->next;
     }
 
-  return gsk_vulkan_upload_op_command_with_area (op,
+  return gsk_vk_old_upload_op_command_with_area (op,
                                                  render,
                                                  command_buffer,
                                                  image,
                                                  &(cairo_rectangle_int_t) {
                                                      0, 0,
-                                                     gsk_vulkan_image_get_width (image),
-                                                     gsk_vulkan_image_get_height (image),
+                                                     gsk_vk_old_image_get_width (image),
+                                                     gsk_vk_old_image_get_height (image),
                                                  },
                                                  draw_func,
                                                  buffer);
 
 }
 
-typedef struct _GskVulkanUploadTextureOp GskVulkanUploadTextureOp;
+typedef struct _GskVkOldUploadTextureOp GskVkOldUploadTextureOp;
 
-struct _GskVulkanUploadTextureOp
+struct _GskVkOldUploadTextureOp
 {
-  GskVulkanOp op;
+  GskVkOldOp op;
 
-  GskVulkanImage *image;
-  GskVulkanBuffer *buffer;
+  GskVkOldImage *image;
+  GskVkOldBuffer *buffer;
   GdkTexture *texture;
 };
 
 static void
-gsk_vulkan_upload_texture_op_finish (GskVulkanOp *op)
+gsk_vk_old_upload_texture_op_finish (GskVkOldOp *op)
 {
-  GskVulkanUploadTextureOp *self = (GskVulkanUploadTextureOp *) op;
+  GskVkOldUploadTextureOp *self = (GskVkOldUploadTextureOp *) op;
 
   g_object_unref (self->image);
-  g_clear_pointer (&self->buffer, gsk_vulkan_buffer_free);
+  g_clear_pointer (&self->buffer, gsk_vk_old_buffer_free);
   g_object_unref (self->texture);
 }
 
 static void
-gsk_vulkan_upload_texture_op_print (GskVulkanOp *op,
+gsk_vk_old_upload_texture_op_print (GskVkOldOp *op,
                                     GString     *string,
                                     guint        indent)
 {
-  GskVulkanUploadTextureOp *self = (GskVulkanUploadTextureOp *) op;
+  GskVkOldUploadTextureOp *self = (GskVkOldUploadTextureOp *) op;
 
   print_indent (string, indent);
   g_string_append (string, "upload-texture ");
@@ -172,56 +172,56 @@ gsk_vulkan_upload_texture_op_print (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_upload_texture_op_draw (GskVulkanOp *op,
+gsk_vk_old_upload_texture_op_draw (GskVkOldOp *op,
                                    guchar      *data,
                                    gsize        stride)
 {
-  GskVulkanUploadTextureOp *self = (GskVulkanUploadTextureOp *) op;
+  GskVkOldUploadTextureOp *self = (GskVkOldUploadTextureOp *) op;
   GdkTextureDownloader *downloader;
 
   downloader = gdk_texture_downloader_new (self->texture);
-  gdk_texture_downloader_set_format (downloader, gsk_vulkan_image_get_format (self->image));
+  gdk_texture_downloader_set_format (downloader, gsk_vk_old_image_get_format (self->image));
   gdk_texture_downloader_download_into (downloader, data, stride);
   gdk_texture_downloader_free (downloader);
 }
 
-static GskVulkanOp *
-gsk_vulkan_upload_texture_op_command (GskVulkanOp      *op,
-                                      GskVulkanRender  *render,
+static GskVkOldOp *
+gsk_vk_old_upload_texture_op_command (GskVkOldOp      *op,
+                                      GskVkOldRender  *render,
                                       VkRenderPass      render_pass,
                                       VkCommandBuffer   command_buffer)
 {
-  GskVulkanUploadTextureOp *self = (GskVulkanUploadTextureOp *) op;
+  GskVkOldUploadTextureOp *self = (GskVkOldUploadTextureOp *) op;
 
-  return gsk_vulkan_upload_op_command (op,
+  return gsk_vk_old_upload_op_command (op,
                                        render,
                                        command_buffer,
                                        self->image,
-                                       gsk_vulkan_upload_texture_op_draw,
+                                       gsk_vk_old_upload_texture_op_draw,
                                        &self->buffer);
 }
 
-static const GskVulkanOpClass GSK_VULKAN_UPLOAD_TEXTURE_OP_CLASS = {
-  GSK_VULKAN_OP_SIZE (GskVulkanUploadTextureOp),
-  GSK_VULKAN_STAGE_UPLOAD,
-  gsk_vulkan_upload_texture_op_finish,
-  gsk_vulkan_upload_texture_op_print,
-  gsk_vulkan_upload_op_count_vertex_data,
-  gsk_vulkan_upload_op_collect_vertex_data,
-  gsk_vulkan_upload_op_reserve_descriptor_sets,
-  gsk_vulkan_upload_texture_op_command
+static const GskVkOldOpClass GSK_VK_OLD_UPLOAD_TEXTURE_OP_CLASS = {
+  GSK_VK_OLD_OP_SIZE (GskVkOldUploadTextureOp),
+  GSK_VK_OLD_STAGE_UPLOAD,
+  gsk_vk_old_upload_texture_op_finish,
+  gsk_vk_old_upload_texture_op_print,
+  gsk_vk_old_upload_op_count_vertex_data,
+  gsk_vk_old_upload_op_collect_vertex_data,
+  gsk_vk_old_upload_op_reserve_descriptor_sets,
+  gsk_vk_old_upload_texture_op_command
 };
 
-GskVulkanImage *
-gsk_vulkan_upload_texture_op (GskVulkanRender  *render,
+GskVkOldImage *
+gsk_vk_old_upload_texture_op (GskVkOldRender  *render,
                               GdkTexture       *texture)
 {
-  GskVulkanUploadTextureOp *self;
+  GskVkOldUploadTextureOp *self;
 
-  self = (GskVulkanUploadTextureOp *) gsk_vulkan_op_alloc (render, &GSK_VULKAN_UPLOAD_TEXTURE_OP_CLASS);
+  self = (GskVkOldUploadTextureOp *) gsk_vk_old_op_alloc (render, &GSK_VK_OLD_UPLOAD_TEXTURE_OP_CLASS);
 
   self->texture = g_object_ref (texture);
-  self->image = gsk_vulkan_image_new_for_upload (gsk_vulkan_render_get_context (render),
+  self->image = gsk_vk_old_image_new_for_upload (gsk_vk_old_render_get_context (render),
                                                  gdk_texture_get_format (texture),
                                                  gdk_texture_get_width (texture),
                                                  gdk_texture_get_height (texture));
@@ -229,36 +229,36 @@ gsk_vulkan_upload_texture_op (GskVulkanRender  *render,
   return self->image;
 }
 
-typedef struct _GskVulkanUploadCairoOp GskVulkanUploadCairoOp;
+typedef struct _GskVkOldUploadCairoOp GskVkOldUploadCairoOp;
 
-struct _GskVulkanUploadCairoOp
+struct _GskVkOldUploadCairoOp
 {
-  GskVulkanOp op;
+  GskVkOldOp op;
 
-  GskVulkanImage *image;
+  GskVkOldImage *image;
   GskRenderNode *node;
   graphene_rect_t viewport;
 
-  GskVulkanBuffer *buffer;
+  GskVkOldBuffer *buffer;
 };
 
 static void
-gsk_vulkan_upload_cairo_op_finish (GskVulkanOp *op)
+gsk_vk_old_upload_cairo_op_finish (GskVkOldOp *op)
 {
-  GskVulkanUploadCairoOp *self = (GskVulkanUploadCairoOp *) op;
+  GskVkOldUploadCairoOp *self = (GskVkOldUploadCairoOp *) op;
 
   g_object_unref (self->image);
   gsk_render_node_unref (self->node);
 
-  g_clear_pointer (&self->buffer, gsk_vulkan_buffer_free);
+  g_clear_pointer (&self->buffer, gsk_vk_old_buffer_free);
 }
 
 static void
-gsk_vulkan_upload_cairo_op_print (GskVulkanOp *op,
+gsk_vk_old_upload_cairo_op_print (GskVkOldOp *op,
                                   GString     *string,
                                   guint        indent)
 {
-  GskVulkanUploadCairoOp *self = (GskVulkanUploadCairoOp *) op;
+  GskVkOldUploadCairoOp *self = (GskVkOldUploadCairoOp *) op;
 
   print_indent (string, indent);
   g_string_append (string, "upload-cairo ");
@@ -267,17 +267,17 @@ gsk_vulkan_upload_cairo_op_print (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_upload_cairo_op_draw (GskVulkanOp *op,
+gsk_vk_old_upload_cairo_op_draw (GskVkOldOp *op,
                                  guchar      *data,
                                  gsize        stride)
 {
-  GskVulkanUploadCairoOp *self = (GskVulkanUploadCairoOp *) op;
+  GskVkOldUploadCairoOp *self = (GskVkOldUploadCairoOp *) op;
   cairo_surface_t *surface;
   cairo_t *cr;
   int width, height;
 
-  width = gsk_vulkan_image_get_width (self->image);
-  height = gsk_vulkan_image_get_height (self->image);
+  width = gsk_vk_old_image_get_width (self->image);
+  height = gsk_vk_old_image_get_height (self->image);
 
   surface = cairo_image_surface_create_for_data (data,
                                                  CAIRO_FORMAT_ARGB32,
@@ -300,86 +300,86 @@ gsk_vulkan_upload_cairo_op_draw (GskVulkanOp *op,
   cairo_surface_destroy (surface);
 }
 
-static GskVulkanOp *
-gsk_vulkan_upload_cairo_op_command (GskVulkanOp      *op,
-                                    GskVulkanRender  *render,
+static GskVkOldOp *
+gsk_vk_old_upload_cairo_op_command (GskVkOldOp      *op,
+                                    GskVkOldRender  *render,
                                     VkRenderPass      render_pass,
                                     VkCommandBuffer   command_buffer)
 {
-  GskVulkanUploadCairoOp *self = (GskVulkanUploadCairoOp *) op;
+  GskVkOldUploadCairoOp *self = (GskVkOldUploadCairoOp *) op;
 
-  return gsk_vulkan_upload_op_command (op,
+  return gsk_vk_old_upload_op_command (op,
                                        render,
                                        command_buffer,
                                        self->image,
-                                       gsk_vulkan_upload_cairo_op_draw,
+                                       gsk_vk_old_upload_cairo_op_draw,
                                        &self->buffer);
 }
 
-static const GskVulkanOpClass GSK_VULKAN_UPLOAD_CAIRO_OP_CLASS = {
-  GSK_VULKAN_OP_SIZE (GskVulkanUploadCairoOp),
-  GSK_VULKAN_STAGE_UPLOAD,
-  gsk_vulkan_upload_cairo_op_finish,
-  gsk_vulkan_upload_cairo_op_print,
-  gsk_vulkan_upload_op_count_vertex_data,
-  gsk_vulkan_upload_op_collect_vertex_data,
-  gsk_vulkan_upload_op_reserve_descriptor_sets,
-  gsk_vulkan_upload_cairo_op_command
+static const GskVkOldOpClass GSK_VK_OLD_UPLOAD_CAIRO_OP_CLASS = {
+  GSK_VK_OLD_OP_SIZE (GskVkOldUploadCairoOp),
+  GSK_VK_OLD_STAGE_UPLOAD,
+  gsk_vk_old_upload_cairo_op_finish,
+  gsk_vk_old_upload_cairo_op_print,
+  gsk_vk_old_upload_op_count_vertex_data,
+  gsk_vk_old_upload_op_collect_vertex_data,
+  gsk_vk_old_upload_op_reserve_descriptor_sets,
+  gsk_vk_old_upload_cairo_op_command
 };
 
-GskVulkanImage *
-gsk_vulkan_upload_cairo_op (GskVulkanRender       *render,
+GskVkOldImage *
+gsk_vk_old_upload_cairo_op (GskVkOldRender       *render,
                             GskRenderNode         *node,
                             const graphene_vec2_t *scale,
                             const graphene_rect_t *viewport)
 {
-  GskVulkanUploadCairoOp *self;
+  GskVkOldUploadCairoOp *self;
 
-  self = (GskVulkanUploadCairoOp *) gsk_vulkan_op_alloc (render, &GSK_VULKAN_UPLOAD_CAIRO_OP_CLASS);
+  self = (GskVkOldUploadCairoOp *) gsk_vk_old_op_alloc (render, &GSK_VK_OLD_UPLOAD_CAIRO_OP_CLASS);
 
   self->node = gsk_render_node_ref (node);
-  self->image = gsk_vulkan_image_new_for_upload (gsk_vulkan_render_get_context (render),
+  self->image = gsk_vk_old_image_new_for_upload (gsk_vk_old_render_get_context (render),
                                                  GDK_MEMORY_DEFAULT,
                                                  ceil (graphene_vec2_get_x (scale) * viewport->size.width),
                                                  ceil (graphene_vec2_get_y (scale) * viewport->size.height));
-  g_assert (gsk_vulkan_image_get_postprocess (self->image) == 0);
+  g_assert (gsk_vk_old_image_get_postprocess (self->image) == 0);
   self->viewport = *viewport;
 
   return self->image;
 }
 
-typedef struct _GskVulkanUploadGlyphOp GskVulkanUploadGlyphOp;
+typedef struct _GskVkOldUploadGlyphOp GskVkOldUploadGlyphOp;
 
-struct _GskVulkanUploadGlyphOp
+struct _GskVkOldUploadGlyphOp
 {
-  GskVulkanOp op;
+  GskVkOldOp op;
 
-  GskVulkanImage *image;
+  GskVkOldImage *image;
   cairo_rectangle_int_t area;
   PangoFont *font;
   PangoGlyphInfo glyph_info;
   float scale;
 
-  GskVulkanBuffer *buffer;
+  GskVkOldBuffer *buffer;
 };
 
 static void
-gsk_vulkan_upload_glyph_op_finish (GskVulkanOp *op)
+gsk_vk_old_upload_glyph_op_finish (GskVkOldOp *op)
 {
-  GskVulkanUploadGlyphOp *self = (GskVulkanUploadGlyphOp *) op;
+  GskVkOldUploadGlyphOp *self = (GskVkOldUploadGlyphOp *) op;
 
   g_object_unref (self->image);
   g_object_unref (self->font);
 
-  g_clear_pointer (&self->buffer, gsk_vulkan_buffer_free);
+  g_clear_pointer (&self->buffer, gsk_vk_old_buffer_free);
 }
 
 static void
-gsk_vulkan_upload_glyph_op_print (GskVulkanOp *op,
+gsk_vk_old_upload_glyph_op_print (GskVkOldOp *op,
                                   GString     *string,
                                   guint        indent)
 {
-  GskVulkanUploadGlyphOp *self = (GskVulkanUploadGlyphOp *) op;
+  GskVkOldUploadGlyphOp *self = (GskVkOldUploadGlyphOp *) op;
 
   print_indent (string, indent);
   g_string_append (string, "upload-glyph ");
@@ -389,11 +389,11 @@ gsk_vulkan_upload_glyph_op_print (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_upload_glyph_op_draw (GskVulkanOp *op,
+gsk_vk_old_upload_glyph_op_draw (GskVkOldOp *op,
                                  guchar      *data,
                                  gsize        stride)
 {
-  GskVulkanUploadGlyphOp *self = (GskVulkanUploadGlyphOp *) op;
+  GskVkOldUploadGlyphOp *self = (GskVkOldUploadGlyphOp *) op;
   cairo_surface_t *surface;
   cairo_t *cr;
 
@@ -430,45 +430,45 @@ gsk_vulkan_upload_glyph_op_draw (GskVulkanOp *op,
   cairo_surface_destroy (surface);
 }
 
-static GskVulkanOp *
-gsk_vulkan_upload_glyph_op_command (GskVulkanOp      *op,
-                                    GskVulkanRender  *render,
+static GskVkOldOp *
+gsk_vk_old_upload_glyph_op_command (GskVkOldOp      *op,
+                                    GskVkOldRender  *render,
                                     VkRenderPass      render_pass,
                                     VkCommandBuffer   command_buffer)
 {
-  GskVulkanUploadGlyphOp *self = (GskVulkanUploadGlyphOp *) op;
+  GskVkOldUploadGlyphOp *self = (GskVkOldUploadGlyphOp *) op;
 
-  return gsk_vulkan_upload_op_command_with_area (op,
+  return gsk_vk_old_upload_op_command_with_area (op,
                                                  render,
                                                  command_buffer,
                                                  self->image,
                                                  &self->area,
-                                                 gsk_vulkan_upload_glyph_op_draw,
+                                                 gsk_vk_old_upload_glyph_op_draw,
                                                  &self->buffer);
 }
 
-static const GskVulkanOpClass GSK_VULKAN_UPLOAD_GLYPH_OP_CLASS = {
-  GSK_VULKAN_OP_SIZE (GskVulkanUploadGlyphOp),
-  GSK_VULKAN_STAGE_UPLOAD,
-  gsk_vulkan_upload_glyph_op_finish,
-  gsk_vulkan_upload_glyph_op_print,
-  gsk_vulkan_upload_op_count_vertex_data,
-  gsk_vulkan_upload_op_collect_vertex_data,
-  gsk_vulkan_upload_op_reserve_descriptor_sets,
-  gsk_vulkan_upload_glyph_op_command
+static const GskVkOldOpClass GSK_VK_OLD_UPLOAD_GLYPH_OP_CLASS = {
+  GSK_VK_OLD_OP_SIZE (GskVkOldUploadGlyphOp),
+  GSK_VK_OLD_STAGE_UPLOAD,
+  gsk_vk_old_upload_glyph_op_finish,
+  gsk_vk_old_upload_glyph_op_print,
+  gsk_vk_old_upload_op_count_vertex_data,
+  gsk_vk_old_upload_op_collect_vertex_data,
+  gsk_vk_old_upload_op_reserve_descriptor_sets,
+  gsk_vk_old_upload_glyph_op_command
 };
 
 void
-gsk_vulkan_upload_glyph_op (GskVulkanRender       *render,
-                            GskVulkanImage        *image,
+gsk_vk_old_upload_glyph_op (GskVkOldRender       *render,
+                            GskVkOldImage        *image,
                             cairo_rectangle_int_t *area,
                             PangoFont             *font,
                             PangoGlyphInfo        *glyph_info,
                             float                  scale)
 {
-  GskVulkanUploadGlyphOp *self;
+  GskVkOldUploadGlyphOp *self;
 
-  self = (GskVulkanUploadGlyphOp *) gsk_vulkan_op_alloc (render, &GSK_VULKAN_UPLOAD_GLYPH_OP_CLASS);
+  self = (GskVkOldUploadGlyphOp *) gsk_vk_old_op_alloc (render, &GSK_VK_OLD_UPLOAD_GLYPH_OP_CLASS);
 
   self->image = g_object_ref (image);
   self->area = *area;

@@ -4,9 +4,9 @@
 
 G_BEGIN_DECLS
 
-void                    gsk_vulkan_glyph_op                             (GskVulkanRender                *render,
-                                                                         GskVulkanShaderClip             clip,
-                                                                         GskVulkanImage                 *image,
+void                    gsk_vk_old_glyph_op                             (GskVkOldRender                *render,
+                                                                         GskVkOldShaderClip             clip,
+                                                                         GskVkOldImage                 *image,
                                                                          const graphene_rect_t          *rect,
                                                                          const graphene_point_t         *offset,
                                                                          const graphene_rect_t          *tex_rect,

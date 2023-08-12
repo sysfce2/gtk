@@ -8,11 +8,11 @@
 
 #include "vulkan/resources/border.vert.h"
 
-typedef struct _GskVulkanBorderOp GskVulkanBorderOp;
+typedef struct _GskVkOldBorderOp GskVkOldBorderOp;
 
-struct _GskVulkanBorderOp
+struct _GskVkOldBorderOp
 {
-  GskVulkanShaderOp op;
+  GskVkOldShaderOp op;
 
   GskRoundedRect outline;
   float widths[4];
@@ -20,16 +20,16 @@ struct _GskVulkanBorderOp
 };
 
 static void
-gsk_vulkan_border_op_finish (GskVulkanOp *op)
+gsk_vk_old_border_op_finish (GskVkOldOp *op)
 {
 }
 
 static void
-gsk_vulkan_border_op_print (GskVulkanOp *op,
+gsk_vk_old_border_op_print (GskVkOldOp *op,
                             GString     *string,
                             guint        indent)
 {
-  GskVulkanBorderOp *self = (GskVulkanBorderOp *) op;
+  GskVkOldBorderOp *self = (GskVkOldBorderOp *) op;
 
   print_indent (string, indent);
   print_rounded_rect (string, &self->outline);
@@ -53,64 +53,64 @@ gsk_vulkan_border_op_print (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_border_op_collect_vertex_data (GskVulkanOp *op,
+gsk_vk_old_border_op_collect_vertex_data (GskVkOldOp *op,
                                           guchar      *data)
 {
-  GskVulkanBorderOp *self = (GskVulkanBorderOp *) op;
-  GskVulkanBorderInstance *instance = (GskVulkanBorderInstance *) (data + ((GskVulkanShaderOp *) op)->vertex_offset);
+  GskVkOldBorderOp *self = (GskVkOldBorderOp *) op;
+  GskVkOldBorderInstance *instance = (GskVkOldBorderInstance *) (data + ((GskVkOldShaderOp *) op)->vertex_offset);
   guint i;
 
   gsk_rounded_rect_to_float (&self->outline, graphene_point_zero (), instance->rect);
   for (i = 0; i < 4; i++)
     {
       instance->border_widths[i] = self->widths[i];
-      gsk_vulkan_rgba_to_float (&self->colors[i], (gpointer) &instance->border_colors[4 * i]);
+      gsk_vk_old_rgba_to_float (&self->colors[i], (gpointer) &instance->border_colors[4 * i]);
     }
 }
 
 static void
-gsk_vulkan_border_op_reserve_descriptor_sets (GskVulkanOp     *op,
-                                              GskVulkanRender *render)
+gsk_vk_old_border_op_reserve_descriptor_sets (GskVkOldOp     *op,
+                                              GskVkOldRender *render)
 {
 }
 
-static GskVulkanOp *
-gsk_vulkan_border_op_command (GskVulkanOp     *op,
-                              GskVulkanRender *render,
+static GskVkOldOp *
+gsk_vk_old_border_op_command (GskVkOldOp     *op,
+                              GskVkOldRender *render,
                               VkRenderPass     render_pass,
                               VkCommandBuffer  command_buffer)
 {
-  return gsk_vulkan_shader_op_command_n (op, render, render_pass, command_buffer, 8);
+  return gsk_vk_old_shader_op_command_n (op, render, render_pass, command_buffer, 8);
 }
 
-static const GskVulkanShaderOpClass GSK_VULKAN_BORDER_OP_CLASS = {
+static const GskVkOldShaderOpClass GSK_VK_OLD_BORDER_OP_CLASS = {
   {
-    GSK_VULKAN_OP_SIZE (GskVulkanBorderOp),
-    GSK_VULKAN_STAGE_SHADER,
-    gsk_vulkan_border_op_finish,
-    gsk_vulkan_border_op_print,
-    gsk_vulkan_shader_op_count_vertex_data,
-    gsk_vulkan_border_op_collect_vertex_data,
-    gsk_vulkan_border_op_reserve_descriptor_sets,
-    gsk_vulkan_border_op_command
+    GSK_VK_OLD_OP_SIZE (GskVkOldBorderOp),
+    GSK_VK_OLD_STAGE_SHADER,
+    gsk_vk_old_border_op_finish,
+    gsk_vk_old_border_op_print,
+    gsk_vk_old_shader_op_count_vertex_data,
+    gsk_vk_old_border_op_collect_vertex_data,
+    gsk_vk_old_border_op_reserve_descriptor_sets,
+    gsk_vk_old_border_op_command
   },
   "border",
   0,
-  &gsk_vulkan_border_info,
+  &gsk_vk_old_border_info,
 };
 
 void
-gsk_vulkan_border_op (GskVulkanRender         *render,
-                      GskVulkanShaderClip      clip,
+gsk_vk_old_border_op (GskVkOldRender         *render,
+                      GskVkOldShaderClip      clip,
                       const GskRoundedRect    *outline,
                       const graphene_point_t  *offset,
                       const float              widths[4],
                       const GdkRGBA            colors[4])
 {
-  GskVulkanBorderOp *self;
+  GskVkOldBorderOp *self;
   guint i;
 
-  self = (GskVulkanBorderOp *) gsk_vulkan_shader_op_alloc (render, &GSK_VULKAN_BORDER_OP_CLASS, clip, NULL);
+  self = (GskVkOldBorderOp *) gsk_vk_old_shader_op_alloc (render, &GSK_VK_OLD_BORDER_OP_CLASS, clip, NULL);
 
   self->outline = *outline;
   gsk_rounded_rect_offset (&self->outline, offset->x, offset->y);

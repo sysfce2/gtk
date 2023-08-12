@@ -7,64 +7,64 @@
 G_BEGIN_DECLS
 
 typedef enum {
-  GSK_VULKAN_SHADER_CLIP_NONE,
-  GSK_VULKAN_SHADER_CLIP_RECT,
-  GSK_VULKAN_SHADER_CLIP_ROUNDED
-} GskVulkanShaderClip;
+  GSK_VK_OLD_SHADER_CLIP_NONE,
+  GSK_VK_OLD_SHADER_CLIP_RECT,
+  GSK_VK_OLD_SHADER_CLIP_ROUNDED
+} GskVkOldShaderClip;
 
 typedef enum {
   /* The whole area is clipped, no drawing is necessary.
    * This can't be handled by return values because for return
    * values we return if clips could even be computed.
    */
-  GSK_VULKAN_CLIP_ALL_CLIPPED,
+  GSK_VK_OLD_CLIP_ALL_CLIPPED,
   /* No clipping is necessary, but the clip rect is set
    * to the actual bounds of the underlying framebuffer
    */
-  GSK_VULKAN_CLIP_NONE,
+  GSK_VK_OLD_CLIP_NONE,
   /* The clip is a rectangular area */
-  GSK_VULKAN_CLIP_RECT,
+  GSK_VK_OLD_CLIP_RECT,
   /* The clip is a rounded rectangle */
-  GSK_VULKAN_CLIP_ROUNDED
-} GskVulkanClipComplexity;
+  GSK_VK_OLD_CLIP_ROUNDED
+} GskVkOldClipComplexity;
 
-typedef struct _GskVulkanClip GskVulkanClip;
+typedef struct _GskVkOldClip GskVkOldClip;
 
-struct _GskVulkanClip
+struct _GskVkOldClip
 {
-  GskVulkanClipComplexity type;
+  GskVkOldClipComplexity type;
   GskRoundedRect          rect;
 };
 
-void                    gsk_vulkan_clip_init_empty                      (GskVulkanClip          *clip,
+void                    gsk_vk_old_clip_init_empty                      (GskVkOldClip          *clip,
                                                                          const graphene_rect_t  *rect);
-void                    gsk_vulkan_clip_init_copy                       (GskVulkanClip          *self,
-                                                                         const GskVulkanClip    *src);
-void                    gsk_vulkan_clip_init_rect                       (GskVulkanClip          *clip,
+void                    gsk_vk_old_clip_init_copy                       (GskVkOldClip          *self,
+                                                                         const GskVkOldClip    *src);
+void                    gsk_vk_old_clip_init_rect                       (GskVkOldClip          *clip,
                                                                          const graphene_rect_t  *rect);
 
-gboolean                gsk_vulkan_clip_intersect_rect                  (GskVulkanClip          *dest,
-                                                                         const GskVulkanClip    *src,
+gboolean                gsk_vk_old_clip_intersect_rect                  (GskVkOldClip          *dest,
+                                                                         const GskVkOldClip    *src,
                                                                          const graphene_rect_t  *rect) G_GNUC_WARN_UNUSED_RESULT;
-gboolean                gsk_vulkan_clip_intersect_rounded_rect          (GskVulkanClip          *dest,
-                                                                         const GskVulkanClip    *src,
+gboolean                gsk_vk_old_clip_intersect_rounded_rect          (GskVkOldClip          *dest,
+                                                                         const GskVkOldClip    *src,
                                                                          const GskRoundedRect   *rounded) G_GNUC_WARN_UNUSED_RESULT;
-void                    gsk_vulkan_clip_scale                           (GskVulkanClip          *dest,
-                                                                         const GskVulkanClip    *src,
+void                    gsk_vk_old_clip_scale                           (GskVkOldClip          *dest,
+                                                                         const GskVkOldClip    *src,
                                                                          float                   scale_x,
                                                                          float                   scale_y);
-gboolean                gsk_vulkan_clip_transform                       (GskVulkanClip          *dest,
-                                                                         const GskVulkanClip    *src,
+gboolean                gsk_vk_old_clip_transform                       (GskVkOldClip          *dest,
+                                                                         const GskVkOldClip    *src,
                                                                          GskTransform           *transform,
                                                                          const graphene_rect_t  *viewport) G_GNUC_WARN_UNUSED_RESULT;
 
-gboolean                gsk_vulkan_clip_contains_rect                   (const GskVulkanClip    *self,
+gboolean                gsk_vk_old_clip_contains_rect                   (const GskVkOldClip    *self,
                                                                          const graphene_point_t *offset,
                                                                          const graphene_rect_t  *rect) G_GNUC_WARN_UNUSED_RESULT;
-gboolean                gsk_vulkan_clip_may_intersect_rect              (const GskVulkanClip    *self,
+gboolean                gsk_vk_old_clip_may_intersect_rect              (const GskVkOldClip    *self,
                                                                          const graphene_point_t *offset,
                                                                          const graphene_rect_t  *rect) G_GNUC_WARN_UNUSED_RESULT;
-GskVulkanShaderClip     gsk_vulkan_clip_get_shader_clip                 (const GskVulkanClip    *self,
+GskVkOldShaderClip     gsk_vk_old_clip_get_shader_clip                 (const GskVkOldClip    *self,
                                                                          const graphene_point_t *offset,
                                                                          const graphene_rect_t  *rect);
 

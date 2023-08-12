@@ -4,7 +4,7 @@
 
 #include "gskvulkanprivate.h"
 
-struct _GskVulkanMemory
+struct _GskVkOldMemory
 {
   GdkVulkanContext *vulkan;
 
@@ -14,17 +14,17 @@ struct _GskVulkanMemory
   VkDeviceMemory vk_memory;
 };
 
-GskVulkanMemory *
-gsk_vulkan_memory_new (GdkVulkanContext      *context,
+GskVkOldMemory *
+gsk_vk_old_memory_new (GdkVulkanContext      *context,
                        uint32_t               allowed_types,
                        VkMemoryPropertyFlags  flags,
                        gsize                  size)
 {
   VkPhysicalDeviceMemoryProperties properties;
-  GskVulkanMemory *self;
+  GskVkOldMemory *self;
   uint32_t i;
 
-  self = g_new0 (GskVulkanMemory, 1);
+  self = g_new0 (GskVkOldMemory, 1);
 
   self->vulkan = g_object_ref (context);
   self->size = size;
@@ -57,7 +57,7 @@ gsk_vulkan_memory_new (GdkVulkanContext      *context,
 }
 
 void
-gsk_vulkan_memory_free (GskVulkanMemory *self)
+gsk_vk_old_memory_free (GskVkOldMemory *self)
 {
   vkFreeMemory (gdk_vulkan_context_get_device (self->vulkan),
                 self->vk_memory,
@@ -69,13 +69,13 @@ gsk_vulkan_memory_free (GskVulkanMemory *self)
 }
 
 VkDeviceMemory
-gsk_vulkan_memory_get_device_memory (GskVulkanMemory *self)
+gsk_vk_old_memory_get_device_memory (GskVkOldMemory *self)
 {
   return self->vk_memory;
 }
 
 gboolean
-gsk_vulkan_memory_can_map (GskVulkanMemory *self,
+gsk_vk_old_memory_can_map (GskVkOldMemory *self,
                            gboolean         fast)
 {
   if (!(self->vk_memory_type.propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
@@ -95,11 +95,11 @@ gsk_vulkan_memory_can_map (GskVulkanMemory *self,
 }
 
 guchar *
-gsk_vulkan_memory_map (GskVulkanMemory *self)
+gsk_vk_old_memory_map (GskVkOldMemory *self)
 {
   void *data;
 
-  g_assert (gsk_vulkan_memory_can_map (self, FALSE));
+  g_assert (gsk_vk_old_memory_can_map (self, FALSE));
 
   GSK_VK_CHECK (vkMapMemory, gdk_vulkan_context_get_device (self->vulkan),
                              self->vk_memory,
@@ -112,7 +112,7 @@ gsk_vulkan_memory_map (GskVulkanMemory *self)
 }
 
 void
-gsk_vulkan_memory_unmap (GskVulkanMemory *self)
+gsk_vk_old_memory_unmap (GskVkOldMemory *self)
 {
   vkUnmapMemory (gdk_vulkan_context_get_device (self->vulkan),
                  self->vk_memory);

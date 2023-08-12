@@ -4,29 +4,29 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GskVulkanBuffer GskVulkanBuffer;
+typedef struct _GskVkOldBuffer GskVkOldBuffer;
 
 typedef enum
 {
-  GSK_VULKAN_READ = (1 << 0),
-  GSK_VULKAN_WRITE = (1 << 1),
-  GSK_VULKAN_READWRITE = GSK_VULKAN_READ | GSK_VULKAN_WRITE
-} GskVulkanMapMode;
+  GSK_VK_OLD_READ = (1 << 0),
+  GSK_VK_OLD_WRITE = (1 << 1),
+  GSK_VK_OLD_READWRITE = GSK_VK_OLD_READ | GSK_VK_OLD_WRITE
+} GskVkOldMapMode;
 
-GskVulkanBuffer *       gsk_vulkan_buffer_new                           (GdkVulkanContext       *context,
+GskVkOldBuffer *       gsk_vk_old_buffer_new                           (GdkVulkanContext       *context,
                                                                          gsize                   size);
-GskVulkanBuffer *       gsk_vulkan_buffer_new_storage                   (GdkVulkanContext       *context,
+GskVkOldBuffer *       gsk_vk_old_buffer_new_storage                   (GdkVulkanContext       *context,
                                                                          gsize                   size);
-GskVulkanBuffer *       gsk_vulkan_buffer_new_map                       (GdkVulkanContext       *context,
+GskVkOldBuffer *       gsk_vk_old_buffer_new_map                       (GdkVulkanContext       *context,
                                                                          gsize                   size,
-                                                                         GskVulkanMapMode        mode);
-void                    gsk_vulkan_buffer_free                          (GskVulkanBuffer        *buffer);
+                                                                         GskVkOldMapMode        mode);
+void                    gsk_vk_old_buffer_free                          (GskVkOldBuffer        *buffer);
 
-VkBuffer                gsk_vulkan_buffer_get_buffer                    (GskVulkanBuffer        *self);
-gsize                   gsk_vulkan_buffer_get_size                      (GskVulkanBuffer        *self);
+VkBuffer                gsk_vk_old_buffer_get_buffer                    (GskVkOldBuffer        *self);
+gsize                   gsk_vk_old_buffer_get_size                      (GskVkOldBuffer        *self);
 
-guchar *                gsk_vulkan_buffer_map                           (GskVulkanBuffer        *self);
-void                    gsk_vulkan_buffer_unmap                         (GskVulkanBuffer        *self);
+guchar *                gsk_vk_old_buffer_map                           (GskVkOldBuffer        *self);
+void                    gsk_vk_old_buffer_unmap                         (GskVkOldBuffer        *self);
 
 G_END_DECLS
 

@@ -4,26 +4,26 @@
 
 #include "gskvulkanprivate.h"
 
-typedef struct _GskVulkanScissorOp GskVulkanScissorOp;
+typedef struct _GskVkOldScissorOp GskVkOldScissorOp;
 
-struct _GskVulkanScissorOp
+struct _GskVkOldScissorOp
 {
-  GskVulkanOp op;
+  GskVkOldOp op;
 
   cairo_rectangle_int_t rect;
 };
 
 static void
-gsk_vulkan_scissor_op_finish (GskVulkanOp *op)
+gsk_vk_old_scissor_op_finish (GskVkOldOp *op)
 {
 }
 
 static void
-gsk_vulkan_scissor_op_print (GskVulkanOp *op,
+gsk_vk_old_scissor_op_print (GskVkOldOp *op,
                              GString     *string,
                              guint        indent)
 {
-  GskVulkanScissorOp *self = (GskVulkanScissorOp *) op;
+  GskVkOldScissorOp *self = (GskVkOldScissorOp *) op;
 
   print_indent (string, indent);
   print_int_rect (string, &self->rect);
@@ -32,31 +32,31 @@ gsk_vulkan_scissor_op_print (GskVulkanOp *op,
 }
 
 static gsize
-gsk_vulkan_scissor_op_count_vertex_data (GskVulkanOp *op,
+gsk_vk_old_scissor_op_count_vertex_data (GskVkOldOp *op,
                                          gsize        n_bytes)
 {
   return n_bytes;
 }
 
 static void
-gsk_vulkan_scissor_op_collect_vertex_data (GskVulkanOp *op,
+gsk_vk_old_scissor_op_collect_vertex_data (GskVkOldOp *op,
                                            guchar      *data)
 {
 }
 
 static void
-gsk_vulkan_scissor_op_reserve_descriptor_sets (GskVulkanOp     *op,
-                                               GskVulkanRender *render)
+gsk_vk_old_scissor_op_reserve_descriptor_sets (GskVkOldOp     *op,
+                                               GskVkOldRender *render)
 {
 }
 
-static GskVulkanOp *
-gsk_vulkan_scissor_op_command (GskVulkanOp      *op,
-                               GskVulkanRender  *render,
+static GskVkOldOp *
+gsk_vk_old_scissor_op_command (GskVkOldOp      *op,
+                               GskVkOldRender  *render,
                                VkRenderPass      render_pass,
                                VkCommandBuffer   command_buffer)
 {
-  GskVulkanScissorOp *self = (GskVulkanScissorOp *) op;
+  GskVkOldScissorOp *self = (GskVkOldScissorOp *) op;
 
   vkCmdSetScissor (command_buffer,
                    0,
@@ -69,24 +69,24 @@ gsk_vulkan_scissor_op_command (GskVulkanOp      *op,
   return op->next;
 }
 
-static const GskVulkanOpClass GSK_VULKAN_SCISSOR_OP_CLASS = {
-  GSK_VULKAN_OP_SIZE (GskVulkanScissorOp),
-  GSK_VULKAN_STAGE_COMMAND,
-  gsk_vulkan_scissor_op_finish,
-  gsk_vulkan_scissor_op_print,
-  gsk_vulkan_scissor_op_count_vertex_data,
-  gsk_vulkan_scissor_op_collect_vertex_data,
-  gsk_vulkan_scissor_op_reserve_descriptor_sets,
-  gsk_vulkan_scissor_op_command
+static const GskVkOldOpClass GSK_VK_OLD_SCISSOR_OP_CLASS = {
+  GSK_VK_OLD_OP_SIZE (GskVkOldScissorOp),
+  GSK_VK_OLD_STAGE_COMMAND,
+  gsk_vk_old_scissor_op_finish,
+  gsk_vk_old_scissor_op_print,
+  gsk_vk_old_scissor_op_count_vertex_data,
+  gsk_vk_old_scissor_op_collect_vertex_data,
+  gsk_vk_old_scissor_op_reserve_descriptor_sets,
+  gsk_vk_old_scissor_op_command
 };
 
 void
-gsk_vulkan_scissor_op (GskVulkanRender             *render,
+gsk_vk_old_scissor_op (GskVkOldRender             *render,
                        const cairo_rectangle_int_t *rect)
 {
-  GskVulkanScissorOp *self;
+  GskVkOldScissorOp *self;
 
-  self = (GskVulkanScissorOp *) gsk_vulkan_op_alloc (render, &GSK_VULKAN_SCISSOR_OP_CLASS);
+  self = (GskVkOldScissorOp *) gsk_vk_old_op_alloc (render, &GSK_VK_OLD_SCISSOR_OP_CLASS);
 
   self->rect = *rect;
 }

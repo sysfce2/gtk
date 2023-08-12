@@ -20,14 +20,14 @@
 
 #include <graphene.h>
 
-#define GSK_VULKAN_MAX_RENDERS 4
+#define GSK_VK_OLD_MAX_RENDERS 4
 
-typedef struct _GskVulkanTextureData GskVulkanTextureData;
+typedef struct _GskVkOldTextureData GskVkOldTextureData;
 
-struct _GskVulkanTextureData {
+struct _GskVkOldTextureData {
   GdkTexture *texture;
-  GskVulkanImage *image;
-  GskVulkanRenderer *renderer;
+  GskVkOldImage *image;
+  GskVkOldRenderer *renderer;
 };
 
 #ifdef G_ENABLE_DEBUG
@@ -47,20 +47,20 @@ static guint texture_pixels_counter;
 static guint fallback_pixels_counter;
 #endif
 
-struct _GskVulkanRenderer
+struct _GskVkOldRenderer
 {
   GskRenderer parent_instance;
 
   GdkVulkanContext *vulkan;
 
   guint n_targets;
-  GskVulkanImage **targets;
+  GskVkOldImage **targets;
 
-  GskVulkanRender *renders[GSK_VULKAN_MAX_RENDERS];
+  GskVkOldRender *renders[GSK_VK_OLD_MAX_RENDERS];
 
   GSList *textures;
 
-  GskVulkanGlyphCache *glyph_cache;
+  GskVkOldGlyphCache *glyph_cache;
 
 #ifdef G_ENABLE_DEBUG
   ProfileCounters profile_counters;
@@ -68,15 +68,15 @@ struct _GskVulkanRenderer
 #endif
 };
 
-struct _GskVulkanRendererClass
+struct _GskVkOldRendererClass
 {
   GskRendererClass parent_class;
 };
 
-G_DEFINE_TYPE (GskVulkanRenderer, gsk_vulkan_renderer, GSK_TYPE_RENDERER)
+G_DEFINE_TYPE (GskVkOldRenderer, gsk_vk_old_renderer, GSK_TYPE_RENDERER)
 
 static cairo_region_t *
-get_render_region (GskVulkanRenderer *self)
+get_render_region (GskVkOldRenderer *self)
 {
   const cairo_region_t *damage;
   cairo_region_t *render_region;
@@ -125,7 +125,7 @@ out:
 }
 
 static void
-gsk_vulkan_renderer_free_targets (GskVulkanRenderer *self)
+gsk_vk_old_renderer_free_targets (GskVkOldRenderer *self)
 {
   guint i;
 
@@ -139,8 +139,8 @@ gsk_vulkan_renderer_free_targets (GskVulkanRenderer *self)
 }
 
 static void
-gsk_vulkan_renderer_update_images_cb (GdkVulkanContext  *context,
-                                      GskVulkanRenderer *self)
+gsk_vk_old_renderer_update_images_cb (GdkVulkanContext  *context,
+                                      GskVkOldRenderer *self)
 {
   GdkSurface *surface;
   double scale;
@@ -151,10 +151,10 @@ gsk_vulkan_renderer_update_images_cb (GdkVulkanContext  *context,
   if (surface == NULL)
     return;
 
-  gsk_vulkan_renderer_free_targets (self);
+  gsk_vk_old_renderer_free_targets (self);
 
   self->n_targets = gdk_vulkan_context_get_n_images (context);
-  self->targets = g_new (GskVulkanImage *, self->n_targets);
+  self->targets = g_new (GskVkOldImage *, self->n_targets);
 
   scale = gdk_surface_get_scale (surface);
   width = (int) ceil (gdk_surface_get_width (surface) * scale);
@@ -162,15 +162,15 @@ gsk_vulkan_renderer_update_images_cb (GdkVulkanContext  *context,
 
   for (i = 0; i < self->n_targets; i++)
     {
-      self->targets[i] = gsk_vulkan_image_new_for_swapchain (self->vulkan,
+      self->targets[i] = gsk_vk_old_image_new_for_swapchain (self->vulkan,
                                                              gdk_vulkan_context_get_image (context, i),
                                                              gdk_vulkan_context_get_image_format (self->vulkan),
                                                              width, height);
     }
 }
 
-static GskVulkanRender *
-gsk_vulkan_renderer_get_render (GskVulkanRenderer *self)
+static GskVkOldRender *
+gsk_vk_old_renderer_get_render (GskVkOldRenderer *self)
 {
   VkFence fences[G_N_ELEMENTS (self->renders)];
   VkDevice device;
@@ -184,11 +184,11 @@ gsk_vulkan_renderer_get_render (GskVulkanRenderer *self)
         {
           if (self->renders[i] == NULL)
             {
-              self->renders[i] = gsk_vulkan_render_new (GSK_RENDERER (self), self->vulkan);
+              self->renders[i] = gsk_vk_old_render_new (GSK_RENDERER (self), self->vulkan);
               return self->renders[i];
             }
 
-          fences[i] = gsk_vulkan_render_get_fence (self->renders[i]);
+          fences[i] = gsk_vk_old_render_get_fence (self->renders[i]);
           if (vkGetFenceStatus (device, fences[i]) == VK_SUCCESS)
             return self->renders[i];
         }
@@ -202,11 +202,11 @@ gsk_vulkan_renderer_get_render (GskVulkanRenderer *self)
 }
 
 static gboolean
-gsk_vulkan_renderer_realize (GskRenderer  *renderer,
+gsk_vk_old_renderer_realize (GskRenderer  *renderer,
                              GdkSurface   *surface,
                              GError      **error)
 {
-  GskVulkanRenderer *self = GSK_VULKAN_RENDERER (renderer);
+  GskVkOldRenderer *self = GSK_VK_OLD_RENDERER (renderer);
 
   if (surface == NULL)
     self->vulkan = gdk_display_create_vulkan_context (gdk_display_get_default (), error);
@@ -218,19 +218,19 @@ gsk_vulkan_renderer_realize (GskRenderer  *renderer,
 
   g_signal_connect (self->vulkan,
                     "images-updated",
-                    G_CALLBACK (gsk_vulkan_renderer_update_images_cb),
+                    G_CALLBACK (gsk_vk_old_renderer_update_images_cb),
                     self);
-  gsk_vulkan_renderer_update_images_cb (self->vulkan, self);
+  gsk_vk_old_renderer_update_images_cb (self->vulkan, self);
 
-  self->glyph_cache = gsk_vulkan_glyph_cache_new (self->vulkan);
+  self->glyph_cache = gsk_vk_old_glyph_cache_new (self->vulkan);
 
   return TRUE;
 }
 
 static void
-gsk_vulkan_renderer_unrealize (GskRenderer *renderer)
+gsk_vk_old_renderer_unrealize (GskRenderer *renderer)
 {
-  GskVulkanRenderer *self = GSK_VULKAN_RENDERER (renderer);
+  GskVkOldRenderer *self = GSK_VK_OLD_RENDERER (renderer);
   GSList *l;
   guint i;
 
@@ -238,7 +238,7 @@ gsk_vulkan_renderer_unrealize (GskRenderer *renderer)
 
   for (l = self->textures; l; l = l->next)
     {
-      GskVulkanTextureData *data = l->data;
+      GskVkOldTextureData *data = l->data;
 
       data->renderer = NULL;
       gdk_texture_clear_render_data (data->texture);
@@ -246,18 +246,18 @@ gsk_vulkan_renderer_unrealize (GskRenderer *renderer)
   g_clear_pointer (&self->textures, g_slist_free);
 
   for (i = 0; i < G_N_ELEMENTS (self->renders); i++)
-    g_clear_pointer (&self->renders[i], gsk_vulkan_render_free);
+    g_clear_pointer (&self->renders[i], gsk_vk_old_render_free);
 
-  gsk_vulkan_renderer_free_targets (self);
+  gsk_vk_old_renderer_free_targets (self);
   g_signal_handlers_disconnect_by_func(self->vulkan,
-                                       gsk_vulkan_renderer_update_images_cb,
+                                       gsk_vk_old_renderer_update_images_cb,
                                        self);
 
   g_clear_object (&self->vulkan);
 }
 
 static void
-gsk_vulkan_renderer_download_texture_cb (gpointer         user_data,
+gsk_vk_old_renderer_download_texture_cb (gpointer         user_data,
                                          GdkMemoryFormat  format,
                                          const guchar    *data,
                                          int              width,
@@ -276,13 +276,13 @@ gsk_vulkan_renderer_download_texture_cb (gpointer         user_data,
 }
 
 static GdkTexture *
-gsk_vulkan_renderer_render_texture (GskRenderer           *renderer,
+gsk_vk_old_renderer_render_texture (GskRenderer           *renderer,
                                     GskRenderNode         *root,
                                     const graphene_rect_t *viewport)
 {
-  GskVulkanRenderer *self = GSK_VULKAN_RENDERER (renderer);
-  GskVulkanRender *render;
-  GskVulkanImage *image;
+  GskVkOldRenderer *self = GSK_VK_OLD_RENDERER (renderer);
+  GskVkOldRender *render;
+  GskVkOldImage *image;
   GdkTexture *texture;
   graphene_rect_t rounded_viewport;
 #ifdef G_ENABLE_DEBUG
@@ -299,28 +299,28 @@ gsk_vulkan_renderer_render_texture (GskRenderer           *renderer,
   gsk_profiler_timer_begin (profiler, self->profile_timers.cpu_time);
 #endif
 
-  render = gsk_vulkan_render_new (renderer, self->vulkan);
+  render = gsk_vk_old_render_new (renderer, self->vulkan);
 
   rounded_viewport = GRAPHENE_RECT_INIT (viewport->origin.x,
                                          viewport->origin.y,
                                          ceil (viewport->size.width),
                                          ceil (viewport->size.height));
-  image = gsk_vulkan_image_new_for_offscreen (self->vulkan,
+  image = gsk_vk_old_image_new_for_offscreen (self->vulkan,
                                               gdk_vulkan_context_get_offscreen_format (self->vulkan,
                                                   gsk_render_node_get_preferred_depth (root)),
                                               rounded_viewport.size.width,
                                               rounded_viewport.size.height);
 
   texture = NULL;
-  gsk_vulkan_render_render (render,
+  gsk_vk_old_render_render (render,
                             image,
                             &rounded_viewport,
                             NULL,
                             root,
-                            gsk_vulkan_renderer_download_texture_cb,
+                            gsk_vk_old_renderer_download_texture_cb,
                             &texture);
 
-  gsk_vulkan_render_free (render);
+  gsk_vk_old_render_free (render);
   g_object_unref (image);
 
   /* check that callback setting texture was actually called, as its technically async */
@@ -347,12 +347,12 @@ gsk_vulkan_renderer_render_texture (GskRenderer           *renderer,
 }
 
 static void
-gsk_vulkan_renderer_render (GskRenderer          *renderer,
+gsk_vk_old_renderer_render (GskRenderer          *renderer,
                             GskRenderNode        *root,
                             const cairo_region_t *region)
 {
-  GskVulkanRenderer *self = GSK_VULKAN_RENDERER (renderer);
-  GskVulkanRender *render;
+  GskVkOldRenderer *self = GSK_VK_OLD_RENDERER (renderer);
+  GskVkOldRender *render;
   GdkSurface *surface;
   cairo_region_t *render_region;
 #ifdef G_ENABLE_DEBUG
@@ -372,13 +372,13 @@ gsk_vulkan_renderer_render (GskRenderer          *renderer,
   gdk_draw_context_begin_frame_full (GDK_DRAW_CONTEXT (self->vulkan),
                                      gsk_render_node_get_preferred_depth (root),
                                      region);
-  render = gsk_vulkan_renderer_get_render (self);
+  render = gsk_vk_old_renderer_get_render (self);
   surface = gdk_draw_context_get_surface (GDK_DRAW_CONTEXT (self->vulkan));
 
   render_region = get_render_region (self);
   draw_index = gdk_vulkan_context_get_draw_index (self->vulkan);
 
-  gsk_vulkan_render_render (render,
+  gsk_vk_old_render_render (render,
                             self->targets[draw_index],
                             &GRAPHENE_RECT_INIT(
                               0, 0,
@@ -404,18 +404,18 @@ gsk_vulkan_renderer_render (GskRenderer          *renderer,
 }
 
 static void
-gsk_vulkan_renderer_class_init (GskVulkanRendererClass *klass)
+gsk_vk_old_renderer_class_init (GskVkOldRendererClass *klass)
 {
   GskRendererClass *renderer_class = GSK_RENDERER_CLASS (klass);
 
-  renderer_class->realize = gsk_vulkan_renderer_realize;
-  renderer_class->unrealize = gsk_vulkan_renderer_unrealize;
-  renderer_class->render = gsk_vulkan_renderer_render;
-  renderer_class->render_texture = gsk_vulkan_renderer_render_texture;
+  renderer_class->realize = gsk_vk_old_renderer_realize;
+  renderer_class->unrealize = gsk_vk_old_renderer_unrealize;
+  renderer_class->render = gsk_vk_old_renderer_render;
+  renderer_class->render_texture = gsk_vk_old_renderer_render_texture;
 }
 
 static void
-gsk_vulkan_renderer_init (GskVulkanRenderer *self)
+gsk_vk_old_renderer_init (GskVkOldRenderer *self)
 {
 #ifdef G_ENABLE_DEBUG
   GskProfiler *profiler = gsk_renderer_get_profiler (GSK_RENDERER (self));
@@ -443,9 +443,9 @@ gsk_vulkan_renderer_init (GskVulkanRenderer *self)
 }
 
 static void
-gsk_vulkan_renderer_clear_texture (gpointer p)
+gsk_vk_old_renderer_clear_texture (gpointer p)
 {
-  GskVulkanTextureData *data = p;
+  GskVkOldTextureData *data = p;
 
   if (data->renderer != NULL)
     data->renderer->textures = g_slist_remove (data->renderer->textures, data);
@@ -455,11 +455,11 @@ gsk_vulkan_renderer_clear_texture (gpointer p)
   g_free (data);
 }
 
-GskVulkanImage *
-gsk_vulkan_renderer_get_texture_image (GskVulkanRenderer *self,
+GskVkOldImage *
+gsk_vk_old_renderer_get_texture_image (GskVkOldRenderer *self,
                                        GdkTexture        *texture)
 {
-  GskVulkanTextureData *data;
+  GskVkOldTextureData *data;
 
   data = gdk_texture_get_render_data (texture, self);
   if (data)
@@ -469,18 +469,18 @@ gsk_vulkan_renderer_get_texture_image (GskVulkanRenderer *self,
 }
 
 void
-gsk_vulkan_renderer_add_texture_image (GskVulkanRenderer *self,
+gsk_vk_old_renderer_add_texture_image (GskVkOldRenderer *self,
                                        GdkTexture        *texture,
-                                       GskVulkanImage    *image)
+                                       GskVkOldImage    *image)
 {
-  GskVulkanTextureData *data;
+  GskVkOldTextureData *data;
 
-  data = g_new0 (GskVulkanTextureData, 1);
+  data = g_new0 (GskVkOldTextureData, 1);
   data->image = image;
   data->texture = texture;
   data->renderer = self;
 
-  if (gdk_texture_set_render_data (texture, self, data, gsk_vulkan_renderer_clear_texture))
+  if (gdk_texture_set_render_data (texture, self, data, gsk_vk_old_renderer_clear_texture))
     {
       g_object_ref (data->image);
       self->textures = g_slist_prepend (self->textures, data);
@@ -491,16 +491,16 @@ gsk_vulkan_renderer_add_texture_image (GskVulkanRenderer *self,
     }
 }
 
-GskVulkanGlyphCache *
-gsk_vulkan_renderer_get_glyph_cache (GskVulkanRenderer  *self)
+GskVkOldGlyphCache *
+gsk_vk_old_renderer_get_glyph_cache (GskVkOldRenderer  *self)
 {
   return self->glyph_cache;
 }
 
 /**
- * gsk_vulkan_renderer_new:
+ * gsk_vk_old_renderer_new:
  *
- * Creates a new Vulkan renderer.
+ * Creates a new instance of the old Vulkan renderer.
  *
  * The Vulkan renderer is a renderer that uses the Vulkan library for
  * rendering.
@@ -508,10 +508,10 @@ gsk_vulkan_renderer_get_glyph_cache (GskVulkanRenderer  *self)
  * This function is only available when GTK was compiled with Vulkan
  * support.
  *
- * Returns: a new Vulkan renderer
+ * Returns: a new old Vulkan renderer
  **/
 GskRenderer *
-gsk_vulkan_renderer_new (void)
+gsk_vk_old_renderer_new (void)
 {
-  return g_object_new (GSK_TYPE_VULKAN_RENDERER, NULL);
+  return g_object_new (GSK_TYPE_VK_OLD_RENDERER, NULL);
 }

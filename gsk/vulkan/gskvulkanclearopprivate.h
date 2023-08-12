@@ -4,7 +4,7 @@
 
 G_BEGIN_DECLS
 
-void                    gsk_vulkan_clear_op                             (GskVulkanRender                *render,
+void                    gsk_vk_old_clear_op                             (GskVkOldRender                *render,
                                                                          const cairo_rectangle_int_t    *rect,
                                                                          const GdkRGBA                  *color);
 

@@ -7,11 +7,11 @@
 
 #include "vulkan/resources/mask.vert.h"
 
-typedef struct _GskVulkanMaskOp GskVulkanMaskOp;
+typedef struct _GskVkOldMaskOp GskVkOldMaskOp;
 
-struct _GskVulkanMaskOp
+struct _GskVkOldMaskOp
 {
-  GskVulkanShaderOp op;
+  GskVkOldShaderOp op;
 
   struct {
     graphene_rect_t rect;
@@ -22,11 +22,11 @@ struct _GskVulkanMaskOp
 };
 
 static void
-gsk_vulkan_mask_op_print (GskVulkanOp *op,
+gsk_vk_old_mask_op_print (GskVkOldOp *op,
                           GString     *string,
                           guint        indent)
 {
-  GskVulkanMaskOp *self = (GskVulkanMaskOp *) op;
+  GskVkOldMaskOp *self = (GskVkOldMaskOp *) op;
 
   print_indent (string, indent);
   print_rect (string, &self->source.rect);
@@ -54,11 +54,11 @@ gsk_vulkan_mask_op_print (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_mask_op_collect_vertex_data (GskVulkanOp *op,
+gsk_vk_old_mask_op_collect_vertex_data (GskVkOldOp *op,
                                         guchar      *data)
 {
-  GskVulkanMaskOp *self = (GskVulkanMaskOp *) op;
-  GskVulkanMaskInstance *instance = (GskVulkanMaskInstance *) (data + ((GskVulkanShaderOp *) op)->vertex_offset);
+  GskVkOldMaskOp *self = (GskVkOldMaskOp *) op;
+  GskVkOldMaskInstance *instance = (GskVkOldMaskInstance *) (data + ((GskVkOldShaderOp *) op)->vertex_offset);
 
   gsk_rect_to_float (&self->source.rect, instance->source_rect);
   gsk_rect_to_float (&self->source.tex_rect, instance->source_tex_rect);
@@ -70,57 +70,57 @@ gsk_vulkan_mask_op_collect_vertex_data (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_mask_op_reserve_descriptor_sets (GskVulkanOp     *op,
-                                            GskVulkanRender *render)
+gsk_vk_old_mask_op_reserve_descriptor_sets (GskVkOldOp     *op,
+                                            GskVkOldRender *render)
 {
-  GskVulkanMaskOp *self = (GskVulkanMaskOp *) op;
-  GskVulkanShaderOp *shader = (GskVulkanShaderOp *) op;
+  GskVkOldMaskOp *self = (GskVkOldMaskOp *) op;
+  GskVkOldShaderOp *shader = (GskVkOldShaderOp *) op;
 
-  self->source.image_descriptor = gsk_vulkan_render_get_image_descriptor (render, shader->images[0], GSK_VULKAN_SAMPLER_DEFAULT);
-  self->mask.image_descriptor = gsk_vulkan_render_get_image_descriptor (render, shader->images[1], GSK_VULKAN_SAMPLER_DEFAULT);
+  self->source.image_descriptor = gsk_vk_old_render_get_image_descriptor (render, shader->images[0], GSK_VK_OLD_SAMPLER_DEFAULT);
+  self->mask.image_descriptor = gsk_vk_old_render_get_image_descriptor (render, shader->images[1], GSK_VK_OLD_SAMPLER_DEFAULT);
 }
 
-static const GskVulkanShaderOpClass GSK_VULKAN_COLOR_MASK_OP_CLASS = {
+static const GskVkOldShaderOpClass GSK_VK_OLD_COLOR_MASK_OP_CLASS = {
   {
-    GSK_VULKAN_OP_SIZE (GskVulkanMaskOp),
-    GSK_VULKAN_STAGE_SHADER,
-    gsk_vulkan_shader_op_finish,
-    gsk_vulkan_mask_op_print,
-    gsk_vulkan_shader_op_count_vertex_data,
-    gsk_vulkan_mask_op_collect_vertex_data,
-    gsk_vulkan_mask_op_reserve_descriptor_sets,
-    gsk_vulkan_shader_op_command
+    GSK_VK_OLD_OP_SIZE (GskVkOldMaskOp),
+    GSK_VK_OLD_STAGE_SHADER,
+    gsk_vk_old_shader_op_finish,
+    gsk_vk_old_mask_op_print,
+    gsk_vk_old_shader_op_count_vertex_data,
+    gsk_vk_old_mask_op_collect_vertex_data,
+    gsk_vk_old_mask_op_reserve_descriptor_sets,
+    gsk_vk_old_shader_op_command
   },
   "mask",
   2,
-  &gsk_vulkan_mask_info,
+  &gsk_vk_old_mask_info,
 };
 
 void
-gsk_vulkan_mask_op (GskVulkanRender        *render,
-                    GskVulkanShaderClip     clip,
+gsk_vk_old_mask_op (GskVkOldRender        *render,
+                    GskVkOldShaderClip     clip,
                     const graphene_point_t *offset,
-                    GskVulkanImage         *source,
+                    GskVkOldImage         *source,
                     const graphene_rect_t  *source_rect,
                     const graphene_rect_t  *source_tex_rect,
-                    GskVulkanImage         *mask,
+                    GskVkOldImage         *mask,
                     const graphene_rect_t  *mask_rect,
                     const graphene_rect_t  *mask_tex_rect,
                     GskMaskMode             mask_mode)
 {
-  GskVulkanMaskOp *self;
+  GskVkOldMaskOp *self;
 
-  self = (GskVulkanMaskOp *) gsk_vulkan_shader_op_alloc (render,
-                                                         &GSK_VULKAN_COLOR_MASK_OP_CLASS,
+  self = (GskVkOldMaskOp *) gsk_vk_old_shader_op_alloc (render,
+                                                         &GSK_VK_OLD_COLOR_MASK_OP_CLASS,
                                                          clip,
-                                                         (GskVulkanImage *[2]) {
+                                                         (GskVkOldImage *[2]) {
                                                              source,
                                                              mask,
                                                          });
 
   graphene_rect_offset_r (source_rect, offset->x, offset->y, &self->source.rect);
-  gsk_vulkan_normalize_tex_coords (&self->source.tex_rect, source_rect, source_tex_rect);
+  gsk_vk_old_normalize_tex_coords (&self->source.tex_rect, source_rect, source_tex_rect);
   graphene_rect_offset_r (mask_rect, offset->x, offset->y, &self->mask.rect);
-  gsk_vulkan_normalize_tex_coords (&self->mask.tex_rect, mask_rect, mask_tex_rect);
+  gsk_vk_old_normalize_tex_coords (&self->mask.tex_rect, mask_rect, mask_tex_rect);
   self->mask_mode = mask_mode;
 }

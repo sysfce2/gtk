@@ -18,8 +18,8 @@
 
 #include "gdk/gdkvulkancontextprivate.h"
 
-#define GDK_ARRAY_NAME gsk_vulkan_render_ops
-#define GDK_ARRAY_TYPE_NAME GskVulkanRenderOps
+#define GDK_ARRAY_NAME gsk_vk_old_render_ops
+#define GDK_ARRAY_TYPE_NAME GskVkOldRenderOps
 #define GDK_ARRAY_ELEMENT_TYPE guchar
 #define GDK_ARRAY_BY_VALUE 1
 #include "gdk/gdkarrayimpl.c"
@@ -45,7 +45,7 @@
 
 #define N_DESCRIPTOR_SETS 2
 
-struct _GskVulkanRender
+struct _GskVkOldRender
 {
   GskRenderer *renderer;
   GdkVulkanContext *vulkan;
@@ -53,13 +53,13 @@ struct _GskVulkanRender
   graphene_rect_t viewport;
   cairo_region_t *clip;
 
-  GskVulkanCommandPool *command_pool;
+  GskVkOldCommandPool *command_pool;
   VkFence fence;
   VkDescriptorSetLayout descriptor_set_layouts[N_DESCRIPTOR_SETS];
   VkPipelineLayout pipeline_layout;
 
-  GskVulkanRenderOps render_ops;
-  GskVulkanOp *first_op;
+  GskVkOldRenderOps render_ops;
+  GskVkOldOp *first_op;
 
   GskDescriptorImageInfos descriptor_images;
   GskDescriptorBufferInfos descriptor_buffers;
@@ -68,11 +68,11 @@ struct _GskVulkanRender
   GHashTable *pipeline_cache;
   GHashTable *render_pass_cache;
 
-  GskVulkanImage *target;
+  GskVkOldImage *target;
 
-  GskVulkanBuffer *vertex_buffer;
+  GskVkOldBuffer *vertex_buffer;
   VkSampler samplers[3];
-  GskVulkanBuffer *storage_buffer;
+  GskVkOldBuffer *storage_buffer;
   guchar *storage_buffer_memory;
   gsize storage_buffer_used;
 
@@ -85,8 +85,8 @@ typedef struct _RenderPassCacheKey RenderPassCacheKey;
 
 struct _PipelineCacheKey
 {
-  const GskVulkanOpClass *op_class;
-  GskVulkanShaderClip clip;
+  const GskVkOldOpClass *op_class;
+  GskVkOldShaderClip clip;
   VkFormat format;
 };
 
@@ -142,23 +142,23 @@ render_pass_cache_key_equal (gconstpointer a,
 }
 
 static void
-gsk_vulkan_render_verbose_print (GskVulkanRender *self,
+gsk_vk_old_render_verbose_print (GskVkOldRender *self,
                                  const char      *heading)
 {
 #ifdef G_ENABLE_DEBUG
   if (GSK_RENDERER_DEBUG_CHECK (self->renderer, VERBOSE))
     {
-      GskVulkanOp *op;
+      GskVkOldOp *op;
       guint indent = 1;
       GString *string = g_string_new (heading);
       g_string_append (string, ":\n");
 
       for (op = self->first_op; op; op = op->next)
         {
-          if (op->op_class->stage == GSK_VULKAN_STAGE_END_PASS)
+          if (op->op_class->stage == GSK_VK_OLD_STAGE_END_PASS)
             indent--;
-          gsk_vulkan_op_print (op, string, indent);
-          if (op->op_class->stage == GSK_VULKAN_STAGE_BEGIN_PASS)
+          gsk_vk_old_op_print (op, string, indent);
+          if (op->op_class->stage == GSK_VK_OLD_STAGE_BEGIN_PASS)
             indent++;
         }
 
@@ -169,8 +169,8 @@ gsk_vulkan_render_verbose_print (GskVulkanRender *self,
 }
 
 static void
-gsk_vulkan_render_setup (GskVulkanRender       *self,
-                         GskVulkanImage        *target,
+gsk_vk_old_render_setup (GskVkOldRender       *self,
+                         GskVkOldImage        *target,
                          const graphene_rect_t *rect,
                          const cairo_region_t  *clip)
 {
@@ -185,20 +185,20 @@ gsk_vulkan_render_setup (GskVulkanRender       *self,
     {
       self->clip = cairo_region_create_rectangle (&(cairo_rectangle_int_t) {
                                                       0, 0,
-                                                      gsk_vulkan_image_get_width (target),
-                                                      gsk_vulkan_image_get_height (target)
+                                                      gsk_vk_old_image_get_width (target),
+                                                      gsk_vk_old_image_get_height (target)
                                                   });
     }
 }
 
-GskVulkanRender *
-gsk_vulkan_render_new (GskRenderer      *renderer,
+GskVkOldRender *
+gsk_vk_old_render_new (GskRenderer      *renderer,
                        GdkVulkanContext *context)
 {
-  GskVulkanRender *self;
+  GskVkOldRender *self;
   VkDevice device;
 
-  self = g_new0 (GskVulkanRender, 1);
+  self = g_new0 (GskVkOldRender, 1);
 
   self->vulkan = context;
   self->renderer = renderer;
@@ -207,7 +207,7 @@ gsk_vulkan_render_new (GskRenderer      *renderer,
 
   device = gdk_vulkan_context_get_device (self->vulkan);
 
-  self->command_pool = gsk_vulkan_command_pool_new (self->vulkan);
+  self->command_pool = gsk_vk_old_command_pool_new (self->vulkan);
   GSK_VK_CHECK (vkCreateFence, device,
                                &(VkFenceCreateInfo) {
                                    .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
@@ -293,8 +293,8 @@ gsk_vulkan_render_new (GskRenderer      *renderer,
                                             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
                                             .setLayoutCount = G_N_ELEMENTS (self->descriptor_set_layouts),
                                             .pSetLayouts = self->descriptor_set_layouts,
-                                            .pushConstantRangeCount = gsk_vulkan_push_constants_get_range_count (),
-                                            .pPushConstantRanges = gsk_vulkan_push_constants_get_ranges ()
+                                            .pushConstantRangeCount = gsk_vk_old_push_constants_get_range_count (),
+                                            .pPushConstantRanges = gsk_vk_old_push_constants_get_ranges ()
                                         },
                                         NULL,
                                         &self->pipeline_layout);
@@ -312,7 +312,7 @@ gsk_vulkan_render_new (GskRenderer      *renderer,
                                      .maxAnisotropy = 1.0,
                                  },
                                  NULL,
-                                 &self->samplers[GSK_VULKAN_SAMPLER_DEFAULT]);
+                                 &self->samplers[GSK_VK_OLD_SAMPLER_DEFAULT]);
 
   GSK_VK_CHECK (vkCreateSampler, device,
                                  &(VkSamplerCreateInfo) {
@@ -327,7 +327,7 @@ gsk_vulkan_render_new (GskRenderer      *renderer,
                                      .maxAnisotropy = 1.0,
                                  },
                                  NULL,
-                                 &self->samplers[GSK_VULKAN_SAMPLER_REPEAT]);
+                                 &self->samplers[GSK_VK_OLD_SAMPLER_REPEAT]);
   
   GSK_VK_CHECK (vkCreateSampler, device,
                                  &(VkSamplerCreateInfo) {
@@ -342,10 +342,10 @@ gsk_vulkan_render_new (GskRenderer      *renderer,
                                      .maxAnisotropy = 1.0,
                                  },
                                  NULL,
-                                 &self->samplers[GSK_VULKAN_SAMPLER_NEAREST]);
+                                 &self->samplers[GSK_VK_OLD_SAMPLER_NEAREST]);
   
 
-  gsk_vulkan_render_ops_init (&self->render_ops);
+  gsk_vk_old_render_ops_init (&self->render_ops);
   self->pipeline_cache = g_hash_table_new (pipeline_cache_key_hash, pipeline_cache_key_equal);
   self->render_pass_cache = g_hash_table_new (render_pass_cache_key_hash, render_pass_cache_key_equal);
 
@@ -358,23 +358,23 @@ gsk_vulkan_render_new (GskRenderer      *renderer,
 }
 
 VkFence
-gsk_vulkan_render_get_fence (GskVulkanRender *self)
+gsk_vk_old_render_get_fence (GskVkOldRender *self)
 {
   return self->fence;
 }
 
 static void
-gsk_vulkan_render_seal_ops (GskVulkanRender *self)
+gsk_vk_old_render_seal_ops (GskVkOldRender *self)
 {
-  GskVulkanOp *last, *op;
+  GskVkOldOp *last, *op;
   guint i;
 
-  self->first_op = (GskVulkanOp *) gsk_vulkan_render_ops_index (&self->render_ops, 0);
+  self->first_op = (GskVkOldOp *) gsk_vk_old_render_ops_index (&self->render_ops, 0);
 
   last = self->first_op;
-  for (i = last->op_class->size; i < gsk_vulkan_render_ops_get_size (&self->render_ops); i += op->op_class->size)
+  for (i = last->op_class->size; i < gsk_vk_old_render_ops_get_size (&self->render_ops); i += op->op_class->size)
     {
-      op = (GskVulkanOp *) gsk_vulkan_render_ops_index (&self->render_ops, i);
+      op = (GskVkOldOp *) gsk_vk_old_render_ops_index (&self->render_ops, i);
 
       last->next = op;
       last = op;
@@ -384,21 +384,21 @@ gsk_vulkan_render_seal_ops (GskVulkanRender *self)
 typedef struct 
 {
   struct {
-    GskVulkanOp *first;
-    GskVulkanOp *last;
+    GskVkOldOp *first;
+    GskVkOldOp *last;
   } upload, command;
 } SortData;
 
-static GskVulkanOp *
-gsk_vulkan_render_sort_render_pass (GskVulkanRender *self,
-                                    GskVulkanOp     *op,
+static GskVkOldOp *
+gsk_vk_old_render_sort_render_pass (GskVkOldRender *self,
+                                    GskVkOldOp     *op,
                                     SortData        *sort_data)
 {
   while (op)
     {
       switch (op->op_class->stage)
       {
-        case GSK_VULKAN_STAGE_UPLOAD:
+        case GSK_VK_OLD_STAGE_UPLOAD:
           if (sort_data->upload.first == NULL)
             sort_data->upload.first = op;
           else
@@ -407,8 +407,8 @@ gsk_vulkan_render_sort_render_pass (GskVulkanRender *self,
           op = op->next;
           break;
 
-        case GSK_VULKAN_STAGE_COMMAND:
-        case GSK_VULKAN_STAGE_SHADER:
+        case GSK_VK_OLD_STAGE_COMMAND:
+        case GSK_VK_OLD_STAGE_SHADER:
           if (sort_data->command.first == NULL)
             sort_data->command.first = op;
           else
@@ -417,11 +417,11 @@ gsk_vulkan_render_sort_render_pass (GskVulkanRender *self,
           op = op->next;
           break;
 
-        case GSK_VULKAN_STAGE_BEGIN_PASS:
+        case GSK_VK_OLD_STAGE_BEGIN_PASS:
           {
             SortData pass_data = { { NULL, NULL }, { op, op } };
 
-            op = gsk_vulkan_render_sort_render_pass (self, op->next, &pass_data);
+            op = gsk_vk_old_render_sort_render_pass (self, op->next, &pass_data);
 
             if (pass_data.upload.first)
               {
@@ -439,7 +439,7 @@ gsk_vulkan_render_sort_render_pass (GskVulkanRender *self,
           }
           break;
 
-        case GSK_VULKAN_STAGE_END_PASS:
+        case GSK_VK_OLD_STAGE_END_PASS:
           sort_data->command.last->next = op;
           sort_data->command.last = op;
           return op->next;
@@ -454,11 +454,11 @@ gsk_vulkan_render_sort_render_pass (GskVulkanRender *self,
 }
 
 static void
-gsk_vulkan_render_sort_ops (GskVulkanRender *self)
+gsk_vk_old_render_sort_ops (GskVkOldRender *self)
 {
   SortData sort_data = { { NULL, }, };
   
-  gsk_vulkan_render_sort_render_pass (self, self->first_op, &sort_data);
+  gsk_vk_old_render_sort_render_pass (self, self->first_op, &sort_data);
 
   if (sort_data.upload.first)
     {
@@ -472,58 +472,58 @@ gsk_vulkan_render_sort_ops (GskVulkanRender *self)
 }
 
 static void
-gsk_vulkan_render_add_node (GskVulkanRender       *self,
+gsk_vk_old_render_add_node (GskVkOldRender       *self,
                             GskRenderNode         *node,
-                            GskVulkanDownloadFunc  download_func,
+                            GskVkOldDownloadFunc  download_func,
                             gpointer               download_data)
 {
-  GskVulkanRenderPass *render_pass;
+  GskVkOldRenderPass *render_pass;
   cairo_rectangle_int_t extents;
 
   cairo_region_get_extents (self->clip, &extents);
 
-  gsk_vulkan_render_pass_begin_op (self,
+  gsk_vk_old_render_pass_begin_op (self,
                                    self->target,
                                    &extents,
                                    VK_IMAGE_LAYOUT_UNDEFINED,
                                    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-  render_pass = gsk_vulkan_render_pass_new ();
-  gsk_vulkan_render_pass_add (render_pass,
+  render_pass = gsk_vk_old_render_pass_new ();
+  gsk_vk_old_render_pass_add (render_pass,
                               self,
-                              gsk_vulkan_image_get_width (self->target),
-                              gsk_vulkan_image_get_height (self->target),
+                              gsk_vk_old_image_get_width (self->target),
+                              gsk_vk_old_image_get_height (self->target),
                               &extents,
                               node,
                               &self->viewport);
-  gsk_vulkan_render_pass_free (render_pass);
+  gsk_vk_old_render_pass_free (render_pass);
 
-  gsk_vulkan_render_pass_end_op (self,
+  gsk_vk_old_render_pass_end_op (self,
                                  self->target,
                                  VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
   if (download_func)
-    gsk_vulkan_download_op (self, self->target, download_func, download_data);
+    gsk_vk_old_download_op (self, self->target, download_func, download_data);
 
-  gsk_vulkan_render_seal_ops (self);
-  gsk_vulkan_render_verbose_print (self, "start of frame");
-  gsk_vulkan_render_sort_ops (self);
-  gsk_vulkan_render_verbose_print (self, "after sort");
+  gsk_vk_old_render_seal_ops (self);
+  gsk_vk_old_render_verbose_print (self, "start of frame");
+  gsk_vk_old_render_sort_ops (self);
+  gsk_vk_old_render_verbose_print (self, "after sort");
 }
 
 VkPipelineLayout
-gsk_vulkan_render_get_pipeline_layout (GskVulkanRender *self)
+gsk_vk_old_render_get_pipeline_layout (GskVkOldRender *self)
 {
   return self->pipeline_layout;
 }
 
 VkPipeline
-gsk_vulkan_render_get_pipeline (GskVulkanRender        *self,
-                                const GskVulkanOpClass *op_class,
-                                GskVulkanShaderClip     clip,
+gsk_vk_old_render_get_pipeline (GskVkOldRender        *self,
+                                const GskVkOldOpClass *op_class,
+                                GskVkOldShaderClip     clip,
                                 VkRenderPass            render_pass)
 {
-  const GskVulkanShaderOpClass *shader_op_class = (const GskVulkanShaderOpClass *) op_class;
+  const GskVkOldShaderOpClass *shader_op_class = (const GskVkOldShaderOpClass *) op_class;
   static const char *clip_names[] = { "", "-clip", "-clip-rounded" };
   PipelineCacheKey cache_key;
   VkPipeline pipeline;
@@ -533,7 +533,7 @@ gsk_vulkan_render_get_pipeline (GskVulkanRender        *self,
   cache_key = (PipelineCacheKey) {
     .op_class = op_class,
     .clip = clip,
-    .format = gsk_vulkan_image_get_vk_format (self->target)
+    .format = gsk_vk_old_image_get_vk_format (self->target)
   };
   pipeline = g_hash_table_lookup (self->pipeline_cache, &cache_key);
   if (pipeline)
@@ -637,7 +637,7 @@ gsk_vulkan_render_get_pipeline (GskVulkanRender        *self,
 }
 
 VkRenderPass
-gsk_vulkan_render_get_render_pass (GskVulkanRender *self,
+gsk_vk_old_render_get_render_pass (GskVkOldRender *self,
                                    VkFormat         format,
                                    VkImageLayout    from_layout,
                                    VkImageLayout    to_layout)
@@ -700,9 +700,9 @@ gsk_vulkan_render_get_render_pass (GskVulkanRender *self,
 }
 
 gsize
-gsk_vulkan_render_get_image_descriptor (GskVulkanRender        *self,
-                                        GskVulkanImage         *image,
-                                        GskVulkanRenderSampler  render_sampler)
+gsk_vk_old_render_get_image_descriptor (GskVkOldRender        *self,
+                                        GskVkOldImage         *image,
+                                        GskVkOldRenderSampler  render_sampler)
 {
   gsize result;
 
@@ -710,7 +710,7 @@ gsk_vulkan_render_get_image_descriptor (GskVulkanRender        *self,
   gsk_descriptor_image_infos_append (&self->descriptor_images,
                                      &(VkDescriptorImageInfo) {
                                        .sampler = self->samplers[render_sampler],
-                                       .imageView = gsk_vulkan_image_get_image_view (image),
+                                       .imageView = gsk_vk_old_image_get_image_view (image),
                                        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
                                      });
 
@@ -720,38 +720,38 @@ gsk_vulkan_render_get_image_descriptor (GskVulkanRender        *self,
 }
 
 static void
-gsk_vulkan_render_ensure_storage_buffer (GskVulkanRender *self)
+gsk_vk_old_render_ensure_storage_buffer (GskVkOldRender *self)
 {
   if (self->storage_buffer_memory != NULL)
     return;
 
   if (self->storage_buffer == NULL)
     {
-      self->storage_buffer = gsk_vulkan_buffer_new_storage (self->vulkan,
+      self->storage_buffer = gsk_vk_old_buffer_new_storage (self->vulkan,
                                                             /* random */
                                                             sizeof (float) * 1024 * 1024);
     }
 
-  self->storage_buffer_memory = gsk_vulkan_buffer_map (self->storage_buffer);
+  self->storage_buffer_memory = gsk_vk_old_buffer_map (self->storage_buffer);
 
-  if (gsk_vulkan_render_get_buffer_descriptor (self, self->storage_buffer) != 0)
+  if (gsk_vk_old_render_get_buffer_descriptor (self, self->storage_buffer) != 0)
     {
       g_assert_not_reached ();
     }
 }
 
 gsize
-gsk_vulkan_render_get_buffer_descriptor (GskVulkanRender *self,
-                                         GskVulkanBuffer *buffer)
+gsk_vk_old_render_get_buffer_descriptor (GskVkOldRender *self,
+                                         GskVkOldBuffer *buffer)
 {
   gsize result;
 
-  gsk_vulkan_render_ensure_storage_buffer (self);
+  gsk_vk_old_render_ensure_storage_buffer (self);
 
   result = gsk_descriptor_buffer_infos_get_size (&self->descriptor_buffers);
   gsk_descriptor_buffer_infos_append (&self->descriptor_buffers,
                                       &(VkDescriptorBufferInfo) {
-                                        .buffer = gsk_vulkan_buffer_get_buffer (buffer),
+                                        .buffer = gsk_vk_old_buffer_get_buffer (buffer),
                                         .offset = 0,
                                         .range = VK_WHOLE_SIZE
                                       });
@@ -768,7 +768,7 @@ round_up (gsize number, gsize divisor)
 }
 
 guchar *
-gsk_vulkan_render_get_buffer_memory (GskVulkanRender *self,
+gsk_vk_old_render_get_buffer_memory (GskVkOldRender *self,
                                      gsize            size,
                                      gsize            alignment,
                                      gsize           *out_offset)
@@ -777,7 +777,7 @@ gsk_vulkan_render_get_buffer_memory (GskVulkanRender *self,
 
   g_assert (alignment >= sizeof (float));
 
-  gsk_vulkan_render_ensure_storage_buffer (self);
+  gsk_vk_old_render_ensure_storage_buffer (self);
 
   self->storage_buffer_used = round_up (self->storage_buffer_used, alignment);
   result = self->storage_buffer_memory + self->storage_buffer_used;
@@ -789,23 +789,23 @@ gsk_vulkan_render_get_buffer_memory (GskVulkanRender *self,
 }
 
 static void
-gsk_vulkan_render_prepare_descriptor_sets (GskVulkanRender *self)
+gsk_vk_old_render_prepare_descriptor_sets (GskVkOldRender *self)
 {
   VkDevice device;
   VkWriteDescriptorSet descriptor_sets[N_DESCRIPTOR_SETS];
   gsize n_descriptor_sets;
-  GskVulkanOp *op;
+  GskVkOldOp *op;
 
   device = gdk_vulkan_context_get_device (self->vulkan);
 
   for (op = self->first_op; op; op = op->next)
     {
-      gsk_vulkan_op_reserve_descriptor_sets (op, self);
+      gsk_vk_old_op_reserve_descriptor_sets (op, self);
     }
   
   if (self->storage_buffer_memory)
     {
-      gsk_vulkan_buffer_unmap (self->storage_buffer);
+      gsk_vk_old_buffer_unmap (self->storage_buffer);
       self->storage_buffer_memory = NULL;
       self->storage_buffer_used = 0;
     }
@@ -860,57 +860,57 @@ gsk_vulkan_render_prepare_descriptor_sets (GskVulkanRender *self)
 }
 
 static void
-gsk_vulkan_render_collect_vertex_buffer (GskVulkanRender *self)
+gsk_vk_old_render_collect_vertex_buffer (GskVkOldRender *self)
 {
-  GskVulkanOp *op;
+  GskVkOldOp *op;
   gsize n_bytes;
   guchar *data;
 
   n_bytes = 0;
   for (op = self->first_op; op; op = op->next)
     {
-      n_bytes = gsk_vulkan_op_count_vertex_data (op, n_bytes);
+      n_bytes = gsk_vk_old_op_count_vertex_data (op, n_bytes);
     }
   if (n_bytes == 0)
     return;
 
-  if (self->vertex_buffer && gsk_vulkan_buffer_get_size (self->vertex_buffer) < n_bytes)
-    g_clear_pointer (&self->vertex_buffer, gsk_vulkan_buffer_free);
+  if (self->vertex_buffer && gsk_vk_old_buffer_get_size (self->vertex_buffer) < n_bytes)
+    g_clear_pointer (&self->vertex_buffer, gsk_vk_old_buffer_free);
 
   if (self->vertex_buffer == NULL)
-    self->vertex_buffer = gsk_vulkan_buffer_new (self->vulkan, round_up (n_bytes, VERTEX_BUFFER_SIZE_STEP));
+    self->vertex_buffer = gsk_vk_old_buffer_new (self->vulkan, round_up (n_bytes, VERTEX_BUFFER_SIZE_STEP));
 
-  data = gsk_vulkan_buffer_map (self->vertex_buffer);
+  data = gsk_vk_old_buffer_map (self->vertex_buffer);
   for (op = self->first_op; op; op = op->next)
     {
-      gsk_vulkan_op_collect_vertex_data (op, data);
+      gsk_vk_old_op_collect_vertex_data (op, data);
     }
-  gsk_vulkan_buffer_unmap (self->vertex_buffer);
+  gsk_vk_old_buffer_unmap (self->vertex_buffer);
 }
 
 static void
-gsk_vulkan_render_submit (GskVulkanRender *self)
+gsk_vk_old_render_submit (GskVkOldRender *self)
 {
   VkCommandBuffer command_buffer;
-  GskVulkanOp *op;
+  GskVkOldOp *op;
 
 #ifdef G_ENABLE_DEBUG
   if (GSK_RENDERER_DEBUG_CHECK (self->renderer, SYNC))
     gsk_profiler_timer_begin (gsk_renderer_get_profiler (self->renderer), self->gpu_time_timer);
 #endif
 
-  gsk_vulkan_render_prepare_descriptor_sets (self);
+  gsk_vk_old_render_prepare_descriptor_sets (self);
 
-  gsk_vulkan_render_collect_vertex_buffer (self);
+  gsk_vk_old_render_collect_vertex_buffer (self);
 
-  command_buffer = gsk_vulkan_command_pool_get_buffer (self->command_pool);
+  command_buffer = gsk_vk_old_command_pool_get_buffer (self->command_pool);
 
   if (self->vertex_buffer)
     vkCmdBindVertexBuffers (command_buffer,
                             0,
                             1,
                             (VkBuffer[1]) {
-                                gsk_vulkan_buffer_get_buffer (self->vertex_buffer)
+                                gsk_vk_old_buffer_get_buffer (self->vertex_buffer)
                             },
                             (VkDeviceSize[1]) { 0 });
 
@@ -926,10 +926,10 @@ gsk_vulkan_render_submit (GskVulkanRender *self)
   op = self->first_op;
   while (op)
     {
-      op = gsk_vulkan_op_command (op, self, VK_NULL_HANDLE, command_buffer);
+      op = gsk_vk_old_op_command (op, self, VK_NULL_HANDLE, command_buffer);
     }
 
-  gsk_vulkan_command_pool_submit_buffer (self->command_pool,
+  gsk_vk_old_command_pool_submit_buffer (self->command_pool,
                                          command_buffer,
                                          0,
                                          NULL,
@@ -957,10 +957,10 @@ gsk_vulkan_render_submit (GskVulkanRender *self)
 }
 
 static void
-gsk_vulkan_render_cleanup (GskVulkanRender *self)
+gsk_vk_old_render_cleanup (GskVkOldRender *self)
 {
   VkDevice device = gdk_vulkan_context_get_device (self->vulkan);
-  GskVulkanOp *op;
+  GskVkOldOp *op;
   gsize i;
 
   /* XXX: Wait for fence here or just in reset()? */
@@ -974,15 +974,15 @@ gsk_vulkan_render_cleanup (GskVulkanRender *self)
                                1,
                                &self->fence);
 
-  for (i = 0; i < gsk_vulkan_render_ops_get_size (&self->render_ops); i += op->op_class->size)
+  for (i = 0; i < gsk_vk_old_render_ops_get_size (&self->render_ops); i += op->op_class->size)
     {
-      op = (GskVulkanOp *) gsk_vulkan_render_ops_index (&self->render_ops, i);
+      op = (GskVkOldOp *) gsk_vk_old_render_ops_index (&self->render_ops, i);
 
-      gsk_vulkan_op_finish (op);
+      gsk_vk_old_op_finish (op);
     }
-  gsk_vulkan_render_ops_set_size (&self->render_ops, 0);
+  gsk_vk_old_render_ops_set_size (&self->render_ops, 0);
 
-  gsk_vulkan_command_pool_reset (self->command_pool);
+  gsk_vk_old_command_pool_reset (self->command_pool);
 
   GSK_VK_CHECK (vkResetDescriptorPool, device,
                                        self->descriptor_pool,
@@ -995,17 +995,17 @@ gsk_vulkan_render_cleanup (GskVulkanRender *self)
 }
 
 void
-gsk_vulkan_render_free (GskVulkanRender *self)
+gsk_vk_old_render_free (GskVkOldRender *self)
 {
   VkDevice device;
   GHashTableIter iter;
   gpointer key, value;
   guint i;
   
-  gsk_vulkan_render_cleanup (self);
+  gsk_vk_old_render_cleanup (self);
 
-  g_clear_pointer (&self->storage_buffer, gsk_vulkan_buffer_free);
-  g_clear_pointer (&self->vertex_buffer, gsk_vulkan_buffer_free);
+  g_clear_pointer (&self->storage_buffer, gsk_vk_old_buffer_free);
+  g_clear_pointer (&self->vertex_buffer, gsk_vk_old_buffer_free);
 
   device = gdk_vulkan_context_get_device (self->vulkan);
 
@@ -1025,7 +1025,7 @@ gsk_vulkan_render_free (GskVulkanRender *self)
     }
   g_hash_table_unref (self->render_pass_cache);
 
-  gsk_vulkan_render_ops_clear (&self->render_ops);
+  gsk_vk_old_render_ops_clear (&self->render_ops);
 
 
   vkDestroyPipelineLayout (device,
@@ -1054,61 +1054,61 @@ gsk_vulkan_render_free (GskVulkanRender *self)
                         NULL);
     }
 
-  gsk_vulkan_command_pool_free (self->command_pool);
+  gsk_vk_old_command_pool_free (self->command_pool);
 
   g_free (self);
 }
 
 gboolean
-gsk_vulkan_render_is_busy (GskVulkanRender *self)
+gsk_vk_old_render_is_busy (GskVkOldRender *self)
 {
   return vkGetFenceStatus (gdk_vulkan_context_get_device (self->vulkan), self->fence) != VK_SUCCESS;
 }
 
 void
-gsk_vulkan_render_render (GskVulkanRender       *self,
-                          GskVulkanImage        *target,
+gsk_vk_old_render_render (GskVkOldRender       *self,
+                          GskVkOldImage        *target,
                           const graphene_rect_t *rect,
                           const cairo_region_t  *clip,
                           GskRenderNode         *node,
-                          GskVulkanDownloadFunc  download_func,
+                          GskVkOldDownloadFunc  download_func,
                           gpointer               download_data)
 {
-  gsk_vulkan_render_cleanup (self);
+  gsk_vk_old_render_cleanup (self);
 
-  gsk_vulkan_render_setup (self, target, rect, clip);
+  gsk_vk_old_render_setup (self, target, rect, clip);
 
-  gsk_vulkan_render_add_node (self, node, download_func, download_data);
+  gsk_vk_old_render_add_node (self, node, download_func, download_data);
 
-  gsk_vulkan_render_submit (self);
+  gsk_vk_old_render_submit (self);
 }
 
 GskRenderer *
-gsk_vulkan_render_get_renderer (GskVulkanRender *self)
+gsk_vk_old_render_get_renderer (GskVkOldRender *self)
 {
   return self->renderer;
 }
 
 GdkVulkanContext *
-gsk_vulkan_render_get_context (GskVulkanRender *self)
+gsk_vk_old_render_get_context (GskVkOldRender *self)
 {
   return self->vulkan;
 }
 
 gpointer
-gsk_vulkan_render_alloc_op (GskVulkanRender *self,
+gsk_vk_old_render_alloc_op (GskVkOldRender *self,
                             gsize            size)
 {
   gsize pos;
 
-  pos = gsk_vulkan_render_ops_get_size (&self->render_ops);
+  pos = gsk_vk_old_render_ops_get_size (&self->render_ops);
 
-  gsk_vulkan_render_ops_splice (&self->render_ops,
+  gsk_vk_old_render_ops_splice (&self->render_ops,
                                 pos,
                                 0, FALSE,
                                 NULL,
                                 size);
 
-  return gsk_vulkan_render_ops_index (&self->render_ops, pos);
+  return gsk_vk_old_render_ops_index (&self->render_ops, pos);
 }
 

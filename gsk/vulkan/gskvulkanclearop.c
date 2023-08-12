@@ -4,27 +4,27 @@
 
 #include "gskvulkanprivate.h"
 
-typedef struct _GskVulkanClearOp GskVulkanClearOp;
+typedef struct _GskVkOldClearOp GskVkOldClearOp;
 
-struct _GskVulkanClearOp
+struct _GskVkOldClearOp
 {
-  GskVulkanOp op;
+  GskVkOldOp op;
 
   cairo_rectangle_int_t rect;
   GdkRGBA color;
 };
 
 static void
-gsk_vulkan_clear_op_finish (GskVulkanOp *op)
+gsk_vk_old_clear_op_finish (GskVkOldOp *op)
 {
 }
 
 static void
-gsk_vulkan_clear_op_print (GskVulkanOp *op,
+gsk_vk_old_clear_op_print (GskVkOldOp *op,
                            GString     *string,
                            guint        indent)
 {
-  GskVulkanClearOp *self = (GskVulkanClearOp *) op;
+  GskVkOldClearOp *self = (GskVkOldClearOp *) op;
 
   print_indent (string, indent);
   print_int_rect (string, &self->rect);
@@ -34,41 +34,41 @@ gsk_vulkan_clear_op_print (GskVulkanOp *op,
 }
 
 static gsize
-gsk_vulkan_clear_op_count_vertex_data (GskVulkanOp *op,
+gsk_vk_old_clear_op_count_vertex_data (GskVkOldOp *op,
                                        gsize        n_bytes)
 {
   return n_bytes;
 }
 
 static void
-gsk_vulkan_clear_op_collect_vertex_data (GskVulkanOp *op,
+gsk_vk_old_clear_op_collect_vertex_data (GskVkOldOp *op,
                                          guchar      *data)
 {
 }
 
 static void
-gsk_vulkan_clear_op_reserve_descriptor_sets (GskVulkanOp     *op,
-                                             GskVulkanRender *render)
+gsk_vk_old_clear_op_reserve_descriptor_sets (GskVkOldOp     *op,
+                                             GskVkOldRender *render)
 {
 }
 
 static void
-gsk_vulkan_init_clear_value (VkClearValue  *value,
+gsk_vk_old_init_clear_value (VkClearValue  *value,
                              const GdkRGBA *rgba)
 {
-  gsk_vulkan_rgba_to_float (rgba, value->color.float32);
+  gsk_vk_old_rgba_to_float (rgba, value->color.float32);
 }
 
-static GskVulkanOp *
-gsk_vulkan_clear_op_command (GskVulkanOp      *op,
-                             GskVulkanRender  *render,
+static GskVkOldOp *
+gsk_vk_old_clear_op_command (GskVkOldOp      *op,
+                             GskVkOldRender  *render,
                              VkRenderPass      render_pass,
                              VkCommandBuffer   command_buffer)
 {
-  GskVulkanClearOp *self = (GskVulkanClearOp *) op;
+  GskVkOldClearOp *self = (GskVkOldClearOp *) op;
   VkClearValue clear_value;
 
-  gsk_vulkan_init_clear_value (&clear_value, &self->color);
+  gsk_vk_old_init_clear_value (&clear_value, &self->color);
 
   vkCmdClearAttachments (command_buffer,
                          1,
@@ -90,25 +90,25 @@ gsk_vulkan_clear_op_command (GskVulkanOp      *op,
   return op->next;
 }
 
-static const GskVulkanOpClass GSK_VULKAN_SCISSOR_OP_CLASS = {
-  GSK_VULKAN_OP_SIZE (GskVulkanClearOp),
-  GSK_VULKAN_STAGE_COMMAND,
-  gsk_vulkan_clear_op_finish,
-  gsk_vulkan_clear_op_print,
-  gsk_vulkan_clear_op_count_vertex_data,
-  gsk_vulkan_clear_op_collect_vertex_data,
-  gsk_vulkan_clear_op_reserve_descriptor_sets,
-  gsk_vulkan_clear_op_command
+static const GskVkOldOpClass GSK_VK_OLD_SCISSOR_OP_CLASS = {
+  GSK_VK_OLD_OP_SIZE (GskVkOldClearOp),
+  GSK_VK_OLD_STAGE_COMMAND,
+  gsk_vk_old_clear_op_finish,
+  gsk_vk_old_clear_op_print,
+  gsk_vk_old_clear_op_count_vertex_data,
+  gsk_vk_old_clear_op_collect_vertex_data,
+  gsk_vk_old_clear_op_reserve_descriptor_sets,
+  gsk_vk_old_clear_op_command
 };
 
 void
-gsk_vulkan_clear_op (GskVulkanRender             *render,
+gsk_vk_old_clear_op (GskVkOldRender             *render,
                      const cairo_rectangle_int_t *rect,
                      const GdkRGBA               *color)
 {
-  GskVulkanClearOp *self;
+  GskVkOldClearOp *self;
 
-  self = (GskVulkanClearOp *) gsk_vulkan_op_alloc (render, &GSK_VULKAN_SCISSOR_OP_CLASS);
+  self = (GskVkOldClearOp *) gsk_vk_old_op_alloc (render, &GSK_VK_OLD_SCISSOR_OP_CLASS);
 
   self->rect = *rect;
   self->color = *color;

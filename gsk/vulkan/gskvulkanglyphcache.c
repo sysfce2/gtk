@@ -27,13 +27,13 @@
 #define PADDING 1
 
 typedef struct {
-  GskVulkanImage *image;
+  GskVkOldImage *image;
   int width, height;
   int x, y, y0;
   guint old_pixels;
 } Atlas;
 
-struct _GskVulkanGlyphCache {
+struct _GskVkOldGlyphCache {
   GObject parent_instance;
 
   GdkVulkanContext *vulkan;
@@ -45,11 +45,11 @@ struct _GskVulkanGlyphCache {
   guint64 timestamp;
 };
 
-struct _GskVulkanGlyphCacheClass {
+struct _GskVkOldGlyphCacheClass {
   GObjectClass parent_class;
 };
 
-G_DEFINE_TYPE (GskVulkanGlyphCache, gsk_vulkan_glyph_cache, G_TYPE_OBJECT)
+G_DEFINE_TYPE (GskVkOldGlyphCache, gsk_vk_old_glyph_cache, G_TYPE_OBJECT)
 
 static guint    glyph_cache_hash       (gconstpointer v);
 static gboolean glyph_cache_equal      (gconstpointer v1,
@@ -58,7 +58,7 @@ static void     glyph_cache_key_free   (gpointer      v);
 static void     glyph_cache_value_free (gpointer      v);
 
 static Atlas *
-create_atlas (GskVulkanGlyphCache *cache)
+create_atlas (GskVkOldGlyphCache *cache)
 {
   Atlas *atlas;
 
@@ -70,7 +70,7 @@ create_atlas (GskVulkanGlyphCache *cache)
   atlas->x = 0;
   atlas->image = NULL;
 
-  atlas->image = gsk_vulkan_image_new_for_atlas (cache->vulkan, atlas->width, atlas->height);
+  atlas->image = gsk_vk_old_image_new_for_atlas (cache->vulkan, atlas->width, atlas->height);
 
   return atlas;
 }
@@ -85,7 +85,7 @@ free_atlas (gpointer v)
 }
 
 static void
-gsk_vulkan_glyph_cache_init (GskVulkanGlyphCache *cache)
+gsk_vk_old_glyph_cache_init (GskVkOldGlyphCache *cache)
 {
   cache->hash_table = g_hash_table_new_full (glyph_cache_hash, glyph_cache_equal,
                                              glyph_cache_key_free, glyph_cache_value_free);
@@ -93,22 +93,22 @@ gsk_vulkan_glyph_cache_init (GskVulkanGlyphCache *cache)
 }
 
 static void
-gsk_vulkan_glyph_cache_finalize (GObject *object)
+gsk_vk_old_glyph_cache_finalize (GObject *object)
 {
-  GskVulkanGlyphCache *cache = GSK_VULKAN_GLYPH_CACHE (object);
+  GskVkOldGlyphCache *cache = GSK_VK_OLD_GLYPH_CACHE (object);
 
   g_ptr_array_unref (cache->atlases);
   g_hash_table_unref (cache->hash_table);
 
-  G_OBJECT_CLASS (gsk_vulkan_glyph_cache_parent_class)->finalize (object);
+  G_OBJECT_CLASS (gsk_vk_old_glyph_cache_parent_class)->finalize (object);
 }
 
 static void
-gsk_vulkan_glyph_cache_class_init (GskVulkanGlyphCacheClass *klass)
+gsk_vk_old_glyph_cache_class_init (GskVkOldGlyphCacheClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = gsk_vulkan_glyph_cache_finalize;
+  object_class->finalize = gsk_vk_old_glyph_cache_finalize;
 }
 
 typedef struct {
@@ -156,10 +156,10 @@ glyph_cache_value_free (gpointer v)
 }
 
 static void
-add_to_cache (GskVulkanGlyphCache  *cache,
-              GskVulkanRender      *render,
+add_to_cache (GskVkOldGlyphCache  *cache,
+              GskVkOldRender      *render,
               GlyphCacheKey        *key,
-              GskVulkanCachedGlyph *value)
+              GskVkOldCachedGlyph *value)
 {
   Atlas *atlas;
   int i;
@@ -211,7 +211,7 @@ add_to_cache (GskVulkanGlyphCache  *cache,
   atlas->x = atlas->x + width_with_padding;
   atlas->y = MAX (atlas->y, atlas->y0 + height_with_padding);
 
-  gsk_vulkan_upload_glyph_op (render,
+  gsk_vk_old_upload_glyph_op (render,
                               atlas->image,
                               &(cairo_rectangle_int_t) {
                                   .x = value->atlas_x,
@@ -244,12 +244,12 @@ add_to_cache (GskVulkanGlyphCache  *cache,
 #endif
 }
 
-GskVulkanGlyphCache *
-gsk_vulkan_glyph_cache_new (GdkVulkanContext *vulkan)
+GskVkOldGlyphCache *
+gsk_vk_old_glyph_cache_new (GdkVulkanContext *vulkan)
 {
-  GskVulkanGlyphCache *cache;
+  GskVkOldGlyphCache *cache;
 
-  cache = GSK_VULKAN_GLYPH_CACHE (g_object_new (GSK_TYPE_VULKAN_GLYPH_CACHE, NULL));
+  cache = GSK_VK_OLD_GLYPH_CACHE (g_object_new (GSK_TYPE_VK_OLD_GLYPH_CACHE, NULL));
   cache->vulkan = vulkan;
   g_ptr_array_add (cache->atlases, create_atlas (cache));
 
@@ -258,9 +258,9 @@ gsk_vulkan_glyph_cache_new (GdkVulkanContext *vulkan)
 
 #define PHASE(x) ((x % PANGO_SCALE) * 4 / PANGO_SCALE)
 
-GskVulkanCachedGlyph *
-gsk_vulkan_glyph_cache_lookup (GskVulkanGlyphCache *cache,
-                               GskVulkanRender     *render,
+GskVkOldCachedGlyph *
+gsk_vk_old_glyph_cache_lookup (GskVkOldGlyphCache *cache,
+                               GskVkOldRender     *render,
                                PangoFont           *font,
                                PangoGlyph           glyph,
                                int                  x,
@@ -268,7 +268,7 @@ gsk_vulkan_glyph_cache_lookup (GskVulkanGlyphCache *cache,
                                float                scale)
 {
   GlyphCacheKey lookup_key;
-  GskVulkanCachedGlyph *value;
+  GskVkOldCachedGlyph *value;
   guint xshift;
   guint yshift;
 
@@ -300,7 +300,7 @@ gsk_vulkan_glyph_cache_lookup (GskVulkanGlyphCache *cache,
       PangoRectangle ink_rect;
 
       key = g_new (GlyphCacheKey, 1);
-      value = g_new0 (GskVulkanCachedGlyph, 1);
+      value = g_new0 (GskVkOldCachedGlyph, 1);
 
       pango_font_get_glyph_extents (font, glyph, &ink_rect, NULL);
       pango_extents_to_pixels (&ink_rect, NULL);
@@ -332,7 +332,7 @@ gsk_vulkan_glyph_cache_lookup (GskVulkanGlyphCache *cache,
 }
 
 void
-gsk_vulkan_glyph_cache_begin_frame (GskVulkanGlyphCache *cache)
+gsk_vk_old_glyph_cache_begin_frame (GskVkOldGlyphCache *cache)
 {
   int i, j;
   guint *drops;
@@ -340,7 +340,7 @@ gsk_vulkan_glyph_cache_begin_frame (GskVulkanGlyphCache *cache)
   guint len;
   GHashTableIter iter;
   GlyphCacheKey *key;
-  GskVulkanCachedGlyph *value;
+  GskVkOldCachedGlyph *value;
   G_GNUC_UNUSED guint dropped = 0;
 
   cache->timestamp++;

@@ -6,9 +6,9 @@
 
 G_BEGIN_DECLS
 
-#define GSK_TYPE_VULKAN_GLYPH_CACHE (gsk_vulkan_glyph_cache_get_type ())
+#define GSK_TYPE_VK_OLD_GLYPH_CACHE (gsk_vk_old_glyph_cache_get_type ())
 
-G_DECLARE_FINAL_TYPE(GskVulkanGlyphCache, gsk_vulkan_glyph_cache, GSK, VULKAN_GLYPH_CACHE, GObject)
+G_DECLARE_FINAL_TYPE(GskVkOldGlyphCache, gsk_vk_old_glyph_cache, GSK, VK_OLD_GLYPH_CACHE, GObject)
 
 typedef struct
 {
@@ -24,17 +24,17 @@ typedef struct
   int draw_width;
   int draw_height;
 
-  GskVulkanImage *atlas_image;
+  GskVkOldImage *atlas_image;
   int atlas_x;
   int atlas_y;
 
   guint64 timestamp;
-} GskVulkanCachedGlyph;
+} GskVkOldCachedGlyph;
 
-GskVulkanGlyphCache  *gsk_vulkan_glyph_cache_new            (GdkVulkanContext    *vulkan);
+GskVkOldGlyphCache  *gsk_vk_old_glyph_cache_new            (GdkVulkanContext    *vulkan);
 
-GskVulkanCachedGlyph *gsk_vulkan_glyph_cache_lookup         (GskVulkanGlyphCache *cache,
-                                                             GskVulkanRender     *render,
+GskVkOldCachedGlyph *gsk_vk_old_glyph_cache_lookup         (GskVkOldGlyphCache *cache,
+                                                             GskVkOldRender     *render,
                                                              PangoFont           *font,
                                                              PangoGlyph           glyph,
                                                              int                  x,
@@ -42,5 +42,5 @@ GskVulkanCachedGlyph *gsk_vulkan_glyph_cache_lookup         (GskVulkanGlyphCache
 
                                                              float                scale);
 
-void                  gsk_vulkan_glyph_cache_begin_frame    (GskVulkanGlyphCache *cache);
+void                  gsk_vk_old_glyph_cache_begin_frame    (GskVkOldGlyphCache *cache);
 

@@ -1431,7 +1431,7 @@ main (int argc, char *argv[])
     }
 
 #ifdef GDK_RENDERING_VULKAN
-  vulkan_renderer = gsk_vulkan_renderer_new ();
+  vulkan_renderer = gsk_vk_old_renderer_new ();
   if (!gsk_renderer_realize (vulkan_renderer, NULL, NULL))
     {
       g_clear_object (&vulkan_renderer);

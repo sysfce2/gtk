@@ -7,13 +7,13 @@
 
 #include "vulkan/resources/texture.vert.h"
 
-typedef struct _GskVulkanTextureOp GskVulkanTextureOp;
+typedef struct _GskVkOldTextureOp GskVkOldTextureOp;
 
-struct _GskVulkanTextureOp
+struct _GskVkOldTextureOp
 {
-  GskVulkanShaderOp op;
+  GskVkOldShaderOp op;
 
-  GskVulkanRenderSampler sampler;
+  GskVkOldRenderSampler sampler;
   graphene_rect_t rect;
   graphene_rect_t tex_rect;
 
@@ -21,12 +21,12 @@ struct _GskVulkanTextureOp
 };
 
 static void
-gsk_vulkan_texture_op_print (GskVulkanOp *op,
+gsk_vk_old_texture_op_print (GskVkOldOp *op,
                              GString     *string,
                              guint        indent)
 {
-  GskVulkanTextureOp *self = (GskVulkanTextureOp *) op;
-  GskVulkanShaderOp *shader = (GskVulkanShaderOp *) op;
+  GskVkOldTextureOp *self = (GskVkOldTextureOp *) op;
+  GskVkOldShaderOp *shader = (GskVkOldShaderOp *) op;
 
   print_indent (string, indent);
   print_rect (string, &self->rect);
@@ -36,11 +36,11 @@ gsk_vulkan_texture_op_print (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_texture_op_collect_vertex_data (GskVulkanOp *op,
+gsk_vk_old_texture_op_collect_vertex_data (GskVkOldOp *op,
                                            guchar      *data)
 {
-  GskVulkanTextureOp *self = (GskVulkanTextureOp *) op;
-  GskVulkanTextureInstance *instance = (GskVulkanTextureInstance *) (data + ((GskVulkanShaderOp *) op)->vertex_offset);
+  GskVkOldTextureOp *self = (GskVkOldTextureOp *) op;
+  GskVkOldTextureInstance *instance = (GskVkOldTextureInstance *) (data + ((GskVkOldShaderOp *) op)->vertex_offset);
 
   instance->rect[0] = self->rect.origin.x;
   instance->rect[1] = self->rect.origin.y;
@@ -54,48 +54,48 @@ gsk_vulkan_texture_op_collect_vertex_data (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_texture_op_reserve_descriptor_sets (GskVulkanOp     *op,
-                                               GskVulkanRender *render)
+gsk_vk_old_texture_op_reserve_descriptor_sets (GskVkOldOp     *op,
+                                               GskVkOldRender *render)
 {
-  GskVulkanTextureOp *self = (GskVulkanTextureOp *) op;
-  GskVulkanShaderOp *shader = (GskVulkanShaderOp *) op;
+  GskVkOldTextureOp *self = (GskVkOldTextureOp *) op;
+  GskVkOldShaderOp *shader = (GskVkOldShaderOp *) op;
 
-  self->image_descriptor = gsk_vulkan_render_get_image_descriptor (render, shader->images[0], self->sampler);
+  self->image_descriptor = gsk_vk_old_render_get_image_descriptor (render, shader->images[0], self->sampler);
 }
 
-static const GskVulkanShaderOpClass GSK_VULKAN_TEXTURE_OP_CLASS = {
+static const GskVkOldShaderOpClass GSK_VK_OLD_TEXTURE_OP_CLASS = {
   {
-    GSK_VULKAN_OP_SIZE (GskVulkanTextureOp),
-    GSK_VULKAN_STAGE_SHADER,
-    gsk_vulkan_shader_op_finish,
-    gsk_vulkan_texture_op_print,
-    gsk_vulkan_shader_op_count_vertex_data,
-    gsk_vulkan_texture_op_collect_vertex_data,
-    gsk_vulkan_texture_op_reserve_descriptor_sets,
-    gsk_vulkan_shader_op_command
+    GSK_VK_OLD_OP_SIZE (GskVkOldTextureOp),
+    GSK_VK_OLD_STAGE_SHADER,
+    gsk_vk_old_shader_op_finish,
+    gsk_vk_old_texture_op_print,
+    gsk_vk_old_shader_op_count_vertex_data,
+    gsk_vk_old_texture_op_collect_vertex_data,
+    gsk_vk_old_texture_op_reserve_descriptor_sets,
+    gsk_vk_old_shader_op_command
   },
   "texture",
   1,
-  &gsk_vulkan_texture_info,
+  &gsk_vk_old_texture_info,
 };
 
 void
-gsk_vulkan_texture_op (GskVulkanRender        *render,
-                       GskVulkanShaderClip     clip,
-                       GskVulkanImage         *image,
-                       GskVulkanRenderSampler  sampler,
+gsk_vk_old_texture_op (GskVkOldRender        *render,
+                       GskVkOldShaderClip     clip,
+                       GskVkOldImage         *image,
+                       GskVkOldRenderSampler  sampler,
                        const graphene_rect_t  *rect,
                        const graphene_point_t *offset,
                        const graphene_rect_t  *tex_rect)
 {
-  GskVulkanTextureOp *self;
+  GskVkOldTextureOp *self;
 
-  self = (GskVulkanTextureOp *) gsk_vulkan_shader_op_alloc (render,
-                                                            &GSK_VULKAN_TEXTURE_OP_CLASS,
+  self = (GskVkOldTextureOp *) gsk_vk_old_shader_op_alloc (render,
+                                                            &GSK_VK_OLD_TEXTURE_OP_CLASS,
                                                             clip,
                                                             &image);
 
   self->sampler = sampler;
   graphene_rect_offset_r (rect, offset->x, offset->y, &self->rect);
-  gsk_vulkan_normalize_tex_coords (&self->tex_rect, rect, tex_rect);
+  gsk_vk_old_normalize_tex_coords (&self->tex_rect, rect, tex_rect);
 }

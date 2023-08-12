@@ -10,12 +10,12 @@
 G_BEGIN_DECLS
 
 
-GskVulkanRenderPass *   gsk_vulkan_render_pass_new                      (void);
+GskVkOldRenderPass *   gsk_vk_old_render_pass_new                      (void);
 
-void                    gsk_vulkan_render_pass_free                     (GskVulkanRenderPass    *self);
+void                    gsk_vk_old_render_pass_free                     (GskVkOldRenderPass    *self);
 
-void                    gsk_vulkan_render_pass_add                      (GskVulkanRenderPass    *self,
-                                                                         GskVulkanRender        *render,
+void                    gsk_vk_old_render_pass_add                      (GskVkOldRenderPass    *self,
+                                                                         GskVkOldRender        *render,
                                                                          int                     width,
                                                                          int                     height,
                                                                          cairo_rectangle_int_t  *clip,

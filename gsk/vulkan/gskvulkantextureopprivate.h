@@ -4,10 +4,10 @@
 
 G_BEGIN_DECLS
 
-void                    gsk_vulkan_texture_op                           (GskVulkanRender                *render,
-                                                                         GskVulkanShaderClip             clip,
-                                                                         GskVulkanImage                 *image,
-                                                                         GskVulkanRenderSampler          sampler,
+void                    gsk_vk_old_texture_op                           (GskVkOldRender                *render,
+                                                                         GskVkOldShaderClip             clip,
+                                                                         GskVkOldImage                 *image,
+                                                                         GskVkOldRenderSampler          sampler,
                                                                          const graphene_rect_t          *rect,
                                                                          const graphene_point_t         *offset,
                                                                          const graphene_rect_t          *tex_rect);

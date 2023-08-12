@@ -10,7 +10,7 @@
 
 #include <string.h>
 
-struct _GskVulkanImage
+struct _GskVkOldImage
 {
   GObject parent_instance;
 
@@ -25,16 +25,16 @@ struct _GskVulkanImage
   VkImage vk_image;
   VkImageView vk_image_view;
   VkFramebuffer vk_framebuffer;
-  GskVulkanImagePostprocess postprocess;
+  GskVkOldImagePostprocess postprocess;
 
   VkPipelineStageFlags vk_pipeline_stage;
   VkImageLayout vk_image_layout;
   VkAccessFlags vk_access;
 
-  GskVulkanMemory *memory;
+  GskVkOldMemory *memory;
 };
 
-G_DEFINE_TYPE (GskVulkanImage, gsk_vulkan_image, G_TYPE_OBJECT)
+G_DEFINE_TYPE (GskVkOldImage, gsk_vk_old_image, G_TYPE_OBJECT)
 
 typedef struct _GskMemoryFormatInfo GskMemoryFormatInfo;
 
@@ -42,7 +42,7 @@ struct _GskMemoryFormatInfo
 {
   VkFormat format;
   VkComponentMapping components;
-  GskVulkanImagePostprocess postprocess;
+  GskVkOldImagePostprocess postprocess;
 };
 
 static const GskMemoryFormatInfo *
@@ -83,8 +83,8 @@ gsk_memory_format_get_vk_format_infos (GdkMemoryFormat format)
     case GDK_MEMORY_B8G8R8A8:
       {
         static const GskMemoryFormatInfo info[] = {
-          { VK_FORMAT_B8G8R8A8_UNORM, DEFAULT_SWIZZLE,     GSK_VULKAN_IMAGE_PREMULTIPLY },
-          { VK_FORMAT_R8G8B8A8_UNORM, SWIZZLE(B, G, R, A), GSK_VULKAN_IMAGE_PREMULTIPLY },
+          { VK_FORMAT_B8G8R8A8_UNORM, DEFAULT_SWIZZLE,     GSK_VK_OLD_IMAGE_PREMULTIPLY },
+          { VK_FORMAT_R8G8B8A8_UNORM, SWIZZLE(B, G, R, A), GSK_VK_OLD_IMAGE_PREMULTIPLY },
           { VK_FORMAT_UNDEFINED }
         };
         return info;
@@ -93,7 +93,7 @@ gsk_memory_format_get_vk_format_infos (GdkMemoryFormat format)
     case GDK_MEMORY_A8R8G8B8:
       {
         static const GskMemoryFormatInfo info[] = {
-          { VK_FORMAT_R8G8B8A8_UNORM, SWIZZLE(G, B, A, R), GSK_VULKAN_IMAGE_PREMULTIPLY },
+          { VK_FORMAT_R8G8B8A8_UNORM, SWIZZLE(G, B, A, R), GSK_VK_OLD_IMAGE_PREMULTIPLY },
           { VK_FORMAT_UNDEFINED }
         };
         return info;
@@ -102,7 +102,7 @@ gsk_memory_format_get_vk_format_infos (GdkMemoryFormat format)
     case GDK_MEMORY_R8G8B8A8:
       {
         static const GskMemoryFormatInfo info[] = {
-          { VK_FORMAT_R8G8B8A8_UNORM, DEFAULT_SWIZZLE, GSK_VULKAN_IMAGE_PREMULTIPLY },
+          { VK_FORMAT_R8G8B8A8_UNORM, DEFAULT_SWIZZLE, GSK_VK_OLD_IMAGE_PREMULTIPLY },
           { VK_FORMAT_UNDEFINED }
         };
         return info;
@@ -111,7 +111,7 @@ gsk_memory_format_get_vk_format_infos (GdkMemoryFormat format)
     case GDK_MEMORY_A8B8G8R8:
       {
         static const GskMemoryFormatInfo info[] = {
-          { VK_FORMAT_R8G8B8A8_UNORM, SWIZZLE(A, B, G, R), GSK_VULKAN_IMAGE_PREMULTIPLY },
+          { VK_FORMAT_R8G8B8A8_UNORM, SWIZZLE(A, B, G, R), GSK_VK_OLD_IMAGE_PREMULTIPLY },
           { VK_FORMAT_UNDEFINED }
         };
         return info;
@@ -157,7 +157,7 @@ gsk_memory_format_get_vk_format_infos (GdkMemoryFormat format)
     case GDK_MEMORY_R16G16B16A16:
       {
         static const GskMemoryFormatInfo info[] = {
-          { VK_FORMAT_R16G16B16A16_UNORM, DEFAULT_SWIZZLE, GSK_VULKAN_IMAGE_PREMULTIPLY },
+          { VK_FORMAT_R16G16B16A16_UNORM, DEFAULT_SWIZZLE, GSK_VK_OLD_IMAGE_PREMULTIPLY },
           { VK_FORMAT_UNDEFINED }
         };
         return info;
@@ -184,7 +184,7 @@ gsk_memory_format_get_vk_format_infos (GdkMemoryFormat format)
     case GDK_MEMORY_R16G16B16A16_FLOAT:
       {
         static const GskMemoryFormatInfo info[] = {
-          { VK_FORMAT_R16G16B16A16_SFLOAT, DEFAULT_SWIZZLE, GSK_VULKAN_IMAGE_PREMULTIPLY },
+          { VK_FORMAT_R16G16B16A16_SFLOAT, DEFAULT_SWIZZLE, GSK_VK_OLD_IMAGE_PREMULTIPLY },
           { VK_FORMAT_UNDEFINED }
         };
         return info;
@@ -211,7 +211,7 @@ gsk_memory_format_get_vk_format_infos (GdkMemoryFormat format)
     case GDK_MEMORY_R32G32B32A32_FLOAT:
       {
         static const GskMemoryFormatInfo info[] = {
-          { VK_FORMAT_R32G32B32A32_SFLOAT, DEFAULT_SWIZZLE, GSK_VULKAN_IMAGE_PREMULTIPLY },
+          { VK_FORMAT_R32G32B32A32_SFLOAT, DEFAULT_SWIZZLE, GSK_VK_OLD_IMAGE_PREMULTIPLY },
           { VK_FORMAT_UNDEFINED }
         };
         return info;
@@ -229,7 +229,7 @@ gsk_memory_format_get_vk_format_infos (GdkMemoryFormat format)
     case GDK_MEMORY_G8A8:
       {
         static const GskMemoryFormatInfo info[] = {
-          { VK_FORMAT_R8G8_UNORM, SWIZZLE (R, R, R, G), GSK_VULKAN_IMAGE_PREMULTIPLY },
+          { VK_FORMAT_R8G8_UNORM, SWIZZLE (R, R, R, G), GSK_VK_OLD_IMAGE_PREMULTIPLY },
           { VK_FORMAT_UNDEFINED }
         };
         return info;
@@ -256,7 +256,7 @@ gsk_memory_format_get_vk_format_infos (GdkMemoryFormat format)
     case GDK_MEMORY_G16A16:
       {
         static const GskMemoryFormatInfo info[] = {
-          { VK_FORMAT_R16G16_UNORM, SWIZZLE (R, R, R, G), GSK_VULKAN_IMAGE_PREMULTIPLY },
+          { VK_FORMAT_R16G16_UNORM, SWIZZLE (R, R, R, G), GSK_VK_OLD_IMAGE_PREMULTIPLY },
           { VK_FORMAT_UNDEFINED }
         };
         return info;
@@ -385,7 +385,7 @@ gsk_memory_format_get_fallback (GdkMemoryFormat format)
 }
 
 static gboolean
-gsk_vulkan_context_supports_format (GdkVulkanContext  *context,
+gsk_vk_old_context_supports_format (GdkVulkanContext  *context,
                                     VkFormat           format,
                                     VkImageTiling      tiling,
                                     VkImageUsageFlags  usage,
@@ -439,7 +439,7 @@ gsk_vulkan_context_supports_format (GdkVulkanContext  *context,
 }
 
 static void
-gsk_vulkan_image_create_view (GskVulkanImage            *self,
+gsk_vk_old_image_create_view (GskVkOldImage            *self,
                               const GskMemoryFormatInfo *format)
 {
   GSK_VK_CHECK (vkCreateImageView, gdk_vulkan_context_get_device (self->vulkan),
@@ -461,12 +461,12 @@ gsk_vulkan_image_create_view (GskVulkanImage            *self,
                                  &self->vk_image_view);
 }
 
-static GskVulkanImage *
-gsk_vulkan_image_new (GdkVulkanContext          *context,
+static GskVkOldImage *
+gsk_vk_old_image_new (GdkVulkanContext          *context,
                       GdkMemoryFormat            format,
                       gsize                      width,
                       gsize                      height,
-                      GskVulkanImagePostprocess  allowed_postprocess,
+                      GskVkOldImagePostprocess  allowed_postprocess,
                       VkImageTiling              tiling,
                       VkImageUsageFlags          usage,
                       VkPipelineStageFlags       stage,
@@ -475,7 +475,7 @@ gsk_vulkan_image_new (GdkVulkanContext          *context,
                       VkMemoryPropertyFlags      memory)
 {
   VkMemoryRequirements requirements;
-  GskVulkanImage *self;
+  GskVkOldImage *self;
   const GskMemoryFormatInfo *vk_format;
 
   g_assert (width > 0 && height > 0);
@@ -489,14 +489,14 @@ gsk_vulkan_image_new (GdkVulkanContext          *context,
           if (vk_format->postprocess & ~allowed_postprocess)
             continue;
 
-          if (gsk_vulkan_context_supports_format (context,
+          if (gsk_vk_old_context_supports_format (context,
                                                   vk_format->format,
                                                   tiling, usage,
                                                   width, height))
             break;
 
           if (tiling != VK_IMAGE_TILING_OPTIMAL &&
-              gsk_vulkan_context_supports_format (context,
+              gsk_vk_old_context_supports_format (context,
                                                   vk_format->format,
                                                   VK_IMAGE_TILING_OPTIMAL, usage,
                                                   width, height))
@@ -511,7 +511,7 @@ gsk_vulkan_image_new (GdkVulkanContext          *context,
       format = gsk_memory_format_get_fallback (format);
     }
 
-  self = g_object_new (GSK_TYPE_VULKAN_IMAGE, NULL);
+  self = g_object_new (GSK_TYPE_VK_OLD_IMAGE, NULL);
 
   self->vulkan = g_object_ref (context);
   self->format = format;
@@ -547,30 +547,30 @@ gsk_vulkan_image_new (GdkVulkanContext          *context,
                                 self->vk_image,
                                 &requirements);
 
-  self->memory = gsk_vulkan_memory_new (context,
+  self->memory = gsk_vk_old_memory_new (context,
                                         requirements.memoryTypeBits,
                                         memory,
                                         requirements.size);
 
   GSK_VK_CHECK (vkBindImageMemory, gdk_vulkan_context_get_device (context),
                                    self->vk_image,
-                                   gsk_vulkan_memory_get_device_memory (self->memory),
+                                   gsk_vk_old_memory_get_device_memory (self->memory),
                                    0);
 
-  gsk_vulkan_image_create_view (self, vk_format);
+  gsk_vk_old_image_create_view (self, vk_format);
 
   return self;
 }
 
-GskVulkanImage *
-gsk_vulkan_image_new_for_upload (GdkVulkanContext  *context,
+GskVkOldImage *
+gsk_vk_old_image_new_for_upload (GdkVulkanContext  *context,
                                  GdkMemoryFormat    format,
                                  gsize              width,
                                  gsize              height)
 {
-  GskVulkanImage *self;
+  GskVkOldImage *self;
 
-  self = gsk_vulkan_image_new (context,
+  self = gsk_vk_old_image_new (context,
                                format,
                                width,
                                height,
@@ -587,7 +587,7 @@ gsk_vulkan_image_new_for_upload (GdkVulkanContext  *context,
 }
 
 static gboolean
-gsk_vulkan_image_can_map (GskVulkanImage *self)
+gsk_vk_old_image_can_map (GskVkOldImage *self)
 {
   if (GSK_DEBUG_CHECK (STAGING))
     return FALSE;
@@ -599,21 +599,21 @@ gsk_vulkan_image_can_map (GskVulkanImage *self)
       self->vk_image_layout != VK_IMAGE_LAYOUT_GENERAL)
     return FALSE;
 
-  return gsk_vulkan_memory_can_map (self->memory, TRUE);
+  return gsk_vk_old_memory_can_map (self->memory, TRUE);
 }
 
 guchar *
-gsk_vulkan_image_try_map (GskVulkanImage *self,
+gsk_vk_old_image_try_map (GskVkOldImage *self,
                           gsize          *out_stride)
 {
   VkImageSubresource image_res;
   VkSubresourceLayout image_layout;
   guchar *result;
 
-  if (!gsk_vulkan_image_can_map (self))
+  if (!gsk_vk_old_image_can_map (self))
     return NULL;
 
-  result = gsk_vulkan_memory_map (self->memory);
+  result = gsk_vk_old_memory_map (self->memory);
   if (result == NULL)
     return NULL;
 
@@ -630,21 +630,21 @@ gsk_vulkan_image_try_map (GskVulkanImage *self,
 }
 
 void
-gsk_vulkan_image_unmap (GskVulkanImage *self)
+gsk_vk_old_image_unmap (GskVkOldImage *self)
 {
-  gsk_vulkan_memory_unmap (self->memory);
+  gsk_vk_old_memory_unmap (self->memory);
 }
 
-GskVulkanImage *
-gsk_vulkan_image_new_for_swapchain (GdkVulkanContext *context,
+GskVkOldImage *
+gsk_vk_old_image_new_for_swapchain (GdkVulkanContext *context,
                                     VkImage           image,
                                     VkFormat          format,
                                     gsize             width,
                                     gsize             height)
 {
-  GskVulkanImage *self;
+  GskVkOldImage *self;
 
-  self = g_object_new (GSK_TYPE_VULKAN_IMAGE, NULL);
+  self = g_object_new (GSK_TYPE_VK_OLD_IMAGE, NULL);
 
   self->vulkan = g_object_ref (context);
   self->width = width;
@@ -656,7 +656,7 @@ gsk_vulkan_image_new_for_swapchain (GdkVulkanContext *context,
   self->vk_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
   self->vk_access = 0;
 
-  gsk_vulkan_image_create_view (self,
+  gsk_vk_old_image_create_view (self,
                                 &(GskMemoryFormatInfo) {
                                   format,
                                   { VK_COMPONENT_SWIZZLE_R,
@@ -669,14 +669,14 @@ gsk_vulkan_image_new_for_swapchain (GdkVulkanContext *context,
   return self;
 }
 
-GskVulkanImage *
-gsk_vulkan_image_new_for_atlas (GdkVulkanContext *context,
+GskVkOldImage *
+gsk_vk_old_image_new_for_atlas (GdkVulkanContext *context,
                                 gsize             width,
                                 gsize             height)
 {
-  GskVulkanImage *self;
+  GskVkOldImage *self;
 
-  self = gsk_vulkan_image_new (context,
+  self = gsk_vk_old_image_new (context,
                                GDK_MEMORY_DEFAULT,
                                width,
                                height,
@@ -691,15 +691,15 @@ gsk_vulkan_image_new_for_atlas (GdkVulkanContext *context,
   return self;
 }
 
-GskVulkanImage *
-gsk_vulkan_image_new_for_offscreen (GdkVulkanContext *context,
+GskVkOldImage *
+gsk_vk_old_image_new_for_offscreen (GdkVulkanContext *context,
                                     GdkMemoryFormat   preferred_format,
                                     gsize             width,
                                     gsize             height)
 {
-  GskVulkanImage *self;
+  GskVkOldImage *self;
 
-  self = gsk_vulkan_image_new (context,
+  self = gsk_vk_old_image_new (context,
                                preferred_format,
                                width,
                                height,
@@ -717,9 +717,9 @@ gsk_vulkan_image_new_for_offscreen (GdkVulkanContext *context,
 }
 
 static void
-gsk_vulkan_image_finalize (GObject *object)
+gsk_vk_old_image_finalize (GObject *object)
 {
-  GskVulkanImage *self = GSK_VULKAN_IMAGE (object);
+  GskVkOldImage *self = GSK_VK_OLD_IMAGE (object);
   VkDevice device;
 
   device = gdk_vulkan_context_get_device (self->vulkan);
@@ -735,26 +735,26 @@ gsk_vulkan_image_finalize (GObject *object)
   if (self->memory)
     vkDestroyImage (device, self->vk_image, NULL);
 
-  g_clear_pointer (&self->memory, gsk_vulkan_memory_free);
+  g_clear_pointer (&self->memory, gsk_vk_old_memory_free);
 
   g_object_unref (self->vulkan);
 
-  G_OBJECT_CLASS (gsk_vulkan_image_parent_class)->finalize (object);
+  G_OBJECT_CLASS (gsk_vk_old_image_parent_class)->finalize (object);
 }
 
 static void
-gsk_vulkan_image_class_init (GskVulkanImageClass *klass)
+gsk_vk_old_image_class_init (GskVkOldImageClass *klass)
 {
-  G_OBJECT_CLASS (klass)->finalize = gsk_vulkan_image_finalize;
+  G_OBJECT_CLASS (klass)->finalize = gsk_vk_old_image_finalize;
 }
 
 static void
-gsk_vulkan_image_init (GskVulkanImage *self)
+gsk_vk_old_image_init (GskVkOldImage *self)
 {
 }
 
 VkFramebuffer
-gsk_vulkan_image_get_framebuffer (GskVulkanImage *self,
+gsk_vk_old_image_get_framebuffer (GskVkOldImage *self,
                                   VkRenderPass    render_pass)
 {
   if (self->vk_framebuffer)
@@ -779,55 +779,55 @@ gsk_vulkan_image_get_framebuffer (GskVulkanImage *self,
 }
 
 gsize
-gsk_vulkan_image_get_width (GskVulkanImage *self)
+gsk_vk_old_image_get_width (GskVkOldImage *self)
 {
   return self->width;
 }
 
 gsize
-gsk_vulkan_image_get_height (GskVulkanImage *self)
+gsk_vk_old_image_get_height (GskVkOldImage *self)
 {
   return self->height;
 }
 
-GskVulkanImagePostprocess
-gsk_vulkan_image_get_postprocess (GskVulkanImage *self)
+GskVkOldImagePostprocess
+gsk_vk_old_image_get_postprocess (GskVkOldImage *self)
 {
   return self->postprocess;
 }
 
 VkImage
-gsk_vulkan_image_get_vk_image (GskVulkanImage *self)
+gsk_vk_old_image_get_vk_image (GskVkOldImage *self)
 {
   return self->vk_image;
 }
 
 VkImageView
-gsk_vulkan_image_get_image_view (GskVulkanImage *self)
+gsk_vk_old_image_get_image_view (GskVkOldImage *self)
 {
   return self->vk_image_view;
 }
 
 VkPipelineStageFlags
-gsk_vulkan_image_get_vk_pipeline_stage (GskVulkanImage *self)
+gsk_vk_old_image_get_vk_pipeline_stage (GskVkOldImage *self)
 {
   return self->vk_pipeline_stage;
 }
 
 VkImageLayout
-gsk_vulkan_image_get_vk_image_layout (GskVulkanImage *self)
+gsk_vk_old_image_get_vk_image_layout (GskVkOldImage *self)
 {
   return self->vk_image_layout;
 }
 
 VkAccessFlags
-gsk_vulkan_image_get_vk_access (GskVulkanImage *self)
+gsk_vk_old_image_get_vk_access (GskVkOldImage *self)
 {
   return self->vk_access;
 }
 
 void
-gsk_vulkan_image_set_vk_image_layout (GskVulkanImage       *self,
+gsk_vk_old_image_set_vk_image_layout (GskVkOldImage       *self,
                                       VkPipelineStageFlags  stage,
                                       VkImageLayout         image_layout,
                                       VkAccessFlags         access)
@@ -838,7 +838,7 @@ gsk_vulkan_image_set_vk_image_layout (GskVulkanImage       *self,
 }
 
 void
-gsk_vulkan_image_transition (GskVulkanImage       *self,
+gsk_vk_old_image_transition (GskVkOldImage       *self,
                              VkCommandBuffer       command_buffer,
                              VkPipelineStageFlags  stage,
                              VkImageLayout         image_layout,
@@ -873,17 +873,17 @@ gsk_vulkan_image_transition (GskVulkanImage       *self,
                             },
                         });
 
-  gsk_vulkan_image_set_vk_image_layout (self, stage, image_layout, access);
+  gsk_vk_old_image_set_vk_image_layout (self, stage, image_layout, access);
 }
 
 VkFormat
-gsk_vulkan_image_get_vk_format (GskVulkanImage *self)
+gsk_vk_old_image_get_vk_format (GskVkOldImage *self)
 {
   return self->vk_format;
 }
 
 GdkMemoryFormat
-gsk_vulkan_image_get_format (GskVulkanImage *self)
+gsk_vk_old_image_get_format (GskVkOldImage *self)
 {
   return self->format;
 }

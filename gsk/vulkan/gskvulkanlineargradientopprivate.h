@@ -4,8 +4,8 @@
 
 G_BEGIN_DECLS
 
-void                    gsk_vulkan_linear_gradient_op                   (GskVulkanRender                *render,
-                                                                         GskVulkanShaderClip             clip,
+void                    gsk_vk_old_linear_gradient_op                   (GskVkOldRender                *render,
+                                                                         GskVkOldShaderClip             clip,
                                                                          const graphene_rect_t          *rect,
                                                                          const graphene_point_t         *offset,
                                                                          const graphene_point_t         *start,

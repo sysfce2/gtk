@@ -3,7 +3,7 @@
 #include "gskvulkancommandpoolprivate.h"
 #include "gskvulkanprivate.h"
 
-struct _GskVulkanCommandPool
+struct _GskVkOldCommandPool
 {
   GdkVulkanContext *vulkan;
 
@@ -11,12 +11,12 @@ struct _GskVulkanCommandPool
   GPtrArray *buffers;
 };
 
-GskVulkanCommandPool *
-gsk_vulkan_command_pool_new (GdkVulkanContext *context)
+GskVkOldCommandPool *
+gsk_vk_old_command_pool_new (GdkVulkanContext *context)
 {
-  GskVulkanCommandPool *self;
+  GskVkOldCommandPool *self;
 
-  self = g_new0 (GskVulkanCommandPool, 1);
+  self = g_new0 (GskVkOldCommandPool, 1);
 
   self->vulkan = g_object_ref (context);
 
@@ -35,7 +35,7 @@ gsk_vulkan_command_pool_new (GdkVulkanContext *context)
 }
 
 static void
-gsk_vulkan_command_pool_free_buffers (GskVulkanCommandPool *self)
+gsk_vk_old_command_pool_free_buffers (GskVkOldCommandPool *self)
 {
   if (self->buffers->len != 0)
     vkFreeCommandBuffers (gdk_vulkan_context_get_device (self->vulkan),
@@ -47,9 +47,9 @@ gsk_vulkan_command_pool_free_buffers (GskVulkanCommandPool *self)
 }
 
 void
-gsk_vulkan_command_pool_free (GskVulkanCommandPool *self)
+gsk_vk_old_command_pool_free (GskVkOldCommandPool *self)
 {
-  gsk_vulkan_command_pool_free_buffers (self);
+  gsk_vk_old_command_pool_free_buffers (self);
   g_ptr_array_unref (self->buffers);
 
   vkDestroyCommandPool (gdk_vulkan_context_get_device (self->vulkan),
@@ -61,9 +61,9 @@ gsk_vulkan_command_pool_free (GskVulkanCommandPool *self)
 }
 
 void
-gsk_vulkan_command_pool_reset (GskVulkanCommandPool *self)
+gsk_vk_old_command_pool_reset (GskVkOldCommandPool *self)
 {
-  gsk_vulkan_command_pool_free_buffers (self);
+  gsk_vk_old_command_pool_free_buffers (self);
 
   GSK_VK_CHECK (vkResetCommandPool, gdk_vulkan_context_get_device (self->vulkan),
                                     self->vk_command_pool,
@@ -71,7 +71,7 @@ gsk_vulkan_command_pool_reset (GskVulkanCommandPool *self)
 }
 
 VkCommandBuffer
-gsk_vulkan_command_pool_get_buffer (GskVulkanCommandPool *self)
+gsk_vk_old_command_pool_get_buffer (GskVkOldCommandPool *self)
 {
   VkCommandBuffer command_buffer;
 
@@ -95,7 +95,7 @@ gsk_vulkan_command_pool_get_buffer (GskVulkanCommandPool *self)
 }
 
 void
-gsk_vulkan_command_pool_submit_buffer (GskVulkanCommandPool *self,
+gsk_vk_old_command_pool_submit_buffer (GskVkOldCommandPool *self,
                                        VkCommandBuffer       command_buffer,
                                        gsize                 wait_semaphore_count,
                                        VkSemaphore          *wait_semaphores,

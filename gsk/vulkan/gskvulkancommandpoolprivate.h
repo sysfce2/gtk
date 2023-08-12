@@ -4,15 +4,15 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GskVulkanCommandPool GskVulkanCommandPool;
+typedef struct _GskVkOldCommandPool GskVkOldCommandPool;
 
-GskVulkanCommandPool *  gsk_vulkan_command_pool_new                     (GdkVulkanContext       *context);
-void                    gsk_vulkan_command_pool_free                    (GskVulkanCommandPool   *self);
+GskVkOldCommandPool *  gsk_vk_old_command_pool_new                     (GdkVulkanContext       *context);
+void                    gsk_vk_old_command_pool_free                    (GskVkOldCommandPool   *self);
 
-void                    gsk_vulkan_command_pool_reset                   (GskVulkanCommandPool   *self);
+void                    gsk_vk_old_command_pool_reset                   (GskVkOldCommandPool   *self);
 
-VkCommandBuffer         gsk_vulkan_command_pool_get_buffer              (GskVulkanCommandPool   *self);
-void                    gsk_vulkan_command_pool_submit_buffer           (GskVulkanCommandPool   *self,
+VkCommandBuffer         gsk_vk_old_command_pool_get_buffer              (GskVkOldCommandPool   *self);
+void                    gsk_vk_old_command_pool_submit_buffer           (GskVkOldCommandPool   *self,
                                                                          VkCommandBuffer         buffer,
                                                                          gsize                   wait_semaphore_count,
                                                                          VkSemaphore            *wait_semaphores,

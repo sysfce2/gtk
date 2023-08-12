@@ -7,27 +7,27 @@
 
 #include "vulkan/resources/color.vert.h"
 
-typedef struct _GskVulkanColorOp GskVulkanColorOp;
+typedef struct _GskVkOldColorOp GskVkOldColorOp;
 
-struct _GskVulkanColorOp
+struct _GskVkOldColorOp
 {
-  GskVulkanShaderOp op;
+  GskVkOldShaderOp op;
 
   graphene_rect_t rect;
   GdkRGBA color;
 };
 
 static void
-gsk_vulkan_color_op_finish (GskVulkanOp *op)
+gsk_vk_old_color_op_finish (GskVkOldOp *op)
 {
 }
 
 static void
-gsk_vulkan_color_op_print (GskVulkanOp *op,
+gsk_vk_old_color_op_print (GskVkOldOp *op,
                            GString     *string,
                            guint        indent)
 {
-  GskVulkanColorOp *self = (GskVulkanColorOp *) op;
+  GskVkOldColorOp *self = (GskVkOldColorOp *) op;
 
   print_indent (string, indent);
   print_rect (string, &self->rect);
@@ -37,11 +37,11 @@ gsk_vulkan_color_op_print (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_color_op_collect_vertex_data (GskVulkanOp *op,
+gsk_vk_old_color_op_collect_vertex_data (GskVkOldOp *op,
                                          guchar      *data)
 {
-  GskVulkanColorOp *self = (GskVulkanColorOp *) op;
-  GskVulkanColorInstance *instance = (GskVulkanColorInstance *) (data + ((GskVulkanShaderOp *) op)->vertex_offset);
+  GskVkOldColorOp *self = (GskVkOldColorOp *) op;
+  GskVkOldColorInstance *instance = (GskVkOldColorInstance *) (data + ((GskVkOldShaderOp *) op)->vertex_offset);
 
   instance->rect[0] = self->rect.origin.x;
   instance->rect[1] = self->rect.origin.y;
@@ -54,37 +54,37 @@ gsk_vulkan_color_op_collect_vertex_data (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_color_op_reserve_descriptor_sets (GskVulkanOp     *op,
-                                             GskVulkanRender *render)
+gsk_vk_old_color_op_reserve_descriptor_sets (GskVkOldOp     *op,
+                                             GskVkOldRender *render)
 {
 }
 
-static const GskVulkanShaderOpClass GSK_VULKAN_COLOR_OP_CLASS = {
+static const GskVkOldShaderOpClass GSK_VK_OLD_COLOR_OP_CLASS = {
   {
-    GSK_VULKAN_OP_SIZE (GskVulkanColorOp),
-    GSK_VULKAN_STAGE_SHADER,
-    gsk_vulkan_color_op_finish,
-    gsk_vulkan_color_op_print,
-    gsk_vulkan_shader_op_count_vertex_data,
-    gsk_vulkan_color_op_collect_vertex_data,
-    gsk_vulkan_color_op_reserve_descriptor_sets,
-    gsk_vulkan_shader_op_command
+    GSK_VK_OLD_OP_SIZE (GskVkOldColorOp),
+    GSK_VK_OLD_STAGE_SHADER,
+    gsk_vk_old_color_op_finish,
+    gsk_vk_old_color_op_print,
+    gsk_vk_old_shader_op_count_vertex_data,
+    gsk_vk_old_color_op_collect_vertex_data,
+    gsk_vk_old_color_op_reserve_descriptor_sets,
+    gsk_vk_old_shader_op_command
   },
   "color",
   0,
-  &gsk_vulkan_color_info,
+  &gsk_vk_old_color_info,
 };
 
 void
-gsk_vulkan_color_op (GskVulkanRender        *render,
-                     GskVulkanShaderClip     clip,
+gsk_vk_old_color_op (GskVkOldRender        *render,
+                     GskVkOldShaderClip     clip,
                      const graphene_rect_t  *rect,
                      const graphene_point_t *offset,
                      const GdkRGBA          *color)
 {
-  GskVulkanColorOp *self;
+  GskVkOldColorOp *self;
 
-  self = (GskVulkanColorOp *) gsk_vulkan_shader_op_alloc (render, &GSK_VULKAN_COLOR_OP_CLASS, clip, NULL);
+  self = (GskVkOldColorOp *) gsk_vk_old_shader_op_alloc (render, &GSK_VK_OLD_COLOR_OP_CLASS, clip, NULL);
 
   graphene_rect_offset_r (rect, offset->x, offset->y, &self->rect);
   self->color = *color;

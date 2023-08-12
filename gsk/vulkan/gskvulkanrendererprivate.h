@@ -6,13 +6,13 @@
 
 G_BEGIN_DECLS
 
-GskVulkanImage *        gsk_vulkan_renderer_get_texture_image           (GskVulkanRenderer      *self,
+GskVkOldImage *        gsk_vk_old_renderer_get_texture_image           (GskVkOldRenderer      *self,
                                                                          GdkTexture             *texture);
-void                    gsk_vulkan_renderer_add_texture_image           (GskVulkanRenderer      *self,
+void                    gsk_vk_old_renderer_add_texture_image           (GskVkOldRenderer      *self,
                                                                          GdkTexture             *texture,
-                                                                         GskVulkanImage         *image);
+                                                                         GskVkOldImage         *image);
 
-GskVulkanGlyphCache *   gsk_vulkan_renderer_get_glyph_cache             (GskVulkanRenderer      *self);
+GskVkOldGlyphCache *   gsk_vk_old_renderer_get_glyph_cache             (GskVkOldRenderer      *self);
 
 
 G_END_DECLS

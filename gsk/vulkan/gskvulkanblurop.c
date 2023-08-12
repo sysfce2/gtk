@@ -7,11 +7,11 @@
 
 #include "vulkan/resources/blur.vert.h"
 
-typedef struct _GskVulkanBlurOp GskVulkanBlurOp;
+typedef struct _GskVkOldBlurOp GskVkOldBlurOp;
 
-struct _GskVulkanBlurOp
+struct _GskVkOldBlurOp
 {
-  GskVulkanShaderOp op;
+  GskVkOldShaderOp op;
 
   graphene_rect_t rect;
   graphene_rect_t tex_rect;
@@ -21,11 +21,11 @@ struct _GskVulkanBlurOp
 };
 
 static void
-gsk_vulkan_blur_op_print (GskVulkanOp *op,
+gsk_vk_old_blur_op_print (GskVkOldOp *op,
                           GString     *string,
                           guint        indent)
 {
-  GskVulkanBlurOp *self = (GskVulkanBlurOp *) op;
+  GskVkOldBlurOp *self = (GskVkOldBlurOp *) op;
 
   print_indent (string, indent);
   print_rect (string, &self->rect);
@@ -35,11 +35,11 @@ gsk_vulkan_blur_op_print (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_blur_op_collect_vertex_data (GskVulkanOp *op,
+gsk_vk_old_blur_op_collect_vertex_data (GskVkOldOp *op,
                                         guchar      *data)
 {
-  GskVulkanBlurOp *self = (GskVulkanBlurOp *) op;
-  GskVulkanBlurInstance *instance = (GskVulkanBlurInstance *) (data + ((GskVulkanShaderOp *) op)->vertex_offset);
+  GskVkOldBlurOp *self = (GskVkOldBlurOp *) op;
+  GskVkOldBlurInstance *instance = (GskVkOldBlurInstance *) (data + ((GskVkOldShaderOp *) op)->vertex_offset);
 
   gsk_rect_to_float (&self->rect, instance->rect);
   gsk_rect_to_float (&self->tex_rect, instance->tex_rect);
@@ -48,50 +48,50 @@ gsk_vulkan_blur_op_collect_vertex_data (GskVulkanOp *op,
 }
 
 static void
-gsk_vulkan_blur_op_reserve_descriptor_sets (GskVulkanOp     *op,
-                                            GskVulkanRender *render)
+gsk_vk_old_blur_op_reserve_descriptor_sets (GskVkOldOp     *op,
+                                            GskVkOldRender *render)
 {
-  GskVulkanBlurOp *self = (GskVulkanBlurOp *) op;
-  GskVulkanShaderOp *shader = (GskVulkanShaderOp *) op;
+  GskVkOldBlurOp *self = (GskVkOldBlurOp *) op;
+  GskVkOldShaderOp *shader = (GskVkOldShaderOp *) op;
 
-  self->image_descriptor = gsk_vulkan_render_get_image_descriptor (render,
+  self->image_descriptor = gsk_vk_old_render_get_image_descriptor (render,
                                                                    shader->images[0],
-                                                                   GSK_VULKAN_SAMPLER_DEFAULT);
+                                                                   GSK_VK_OLD_SAMPLER_DEFAULT);
 }
 
-static const GskVulkanShaderOpClass GSK_VULKAN_BLUR_OP_CLASS = {
+static const GskVkOldShaderOpClass GSK_VK_OLD_BLUR_OP_CLASS = {
   {
-    GSK_VULKAN_OP_SIZE (GskVulkanBlurOp),
-    GSK_VULKAN_STAGE_SHADER,
-    gsk_vulkan_shader_op_finish,
-    gsk_vulkan_blur_op_print,
-    gsk_vulkan_shader_op_count_vertex_data,
-    gsk_vulkan_blur_op_collect_vertex_data,
-    gsk_vulkan_blur_op_reserve_descriptor_sets,
-    gsk_vulkan_shader_op_command
+    GSK_VK_OLD_OP_SIZE (GskVkOldBlurOp),
+    GSK_VK_OLD_STAGE_SHADER,
+    gsk_vk_old_shader_op_finish,
+    gsk_vk_old_blur_op_print,
+    gsk_vk_old_shader_op_count_vertex_data,
+    gsk_vk_old_blur_op_collect_vertex_data,
+    gsk_vk_old_blur_op_reserve_descriptor_sets,
+    gsk_vk_old_shader_op_command
   },
   "blur",
   1,
-  &gsk_vulkan_blur_info,
+  &gsk_vk_old_blur_info,
 };
 
 void
-gsk_vulkan_blur_op (GskVulkanRender         *render,
-                    GskVulkanShaderClip      clip,
-                    GskVulkanImage          *image,
+gsk_vk_old_blur_op (GskVkOldRender         *render,
+                    GskVkOldShaderClip      clip,
+                    GskVkOldImage          *image,
                     const graphene_rect_t   *rect,
                     const graphene_point_t  *offset,
                     const graphene_rect_t   *tex_rect,
                     float                    radius)
 {
-  GskVulkanBlurOp *self;
+  GskVkOldBlurOp *self;
 
   g_assert (radius > 0);
 
-  self = (GskVulkanBlurOp *) gsk_vulkan_shader_op_alloc (render, &GSK_VULKAN_BLUR_OP_CLASS, clip, &image);
+  self = (GskVkOldBlurOp *) gsk_vk_old_shader_op_alloc (render, &GSK_VK_OLD_BLUR_OP_CLASS, clip, &image);
 
   graphene_rect_offset_r (rect, offset->x, offset->y, &self->rect);
-  gsk_vulkan_normalize_tex_coords (&self->tex_rect, rect, tex_rect);
+  gsk_vk_old_normalize_tex_coords (&self->tex_rect, rect, tex_rect);
   self->radius = radius;
 }
 

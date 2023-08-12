@@ -6,42 +6,42 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GskVulkanShaderOp GskVulkanShaderOp;
-typedef struct _GskVulkanShaderOpClass GskVulkanShaderOpClass;
+typedef struct _GskVkOldShaderOp GskVkOldShaderOp;
+typedef struct _GskVkOldShaderOpClass GskVkOldShaderOpClass;
 
-struct _GskVulkanShaderOp
+struct _GskVkOldShaderOp
 {
-  GskVulkanOp parent_op;
+  GskVkOldOp parent_op;
 
-  GskVulkanShaderClip clip;
+  GskVkOldShaderClip clip;
   gsize vertex_offset;
-  GskVulkanImage *images[2];
+  GskVkOldImage *images[2];
 };
 
-struct _GskVulkanShaderOpClass
+struct _GskVkOldShaderOpClass
 {
-  GskVulkanOpClass      parent_class;
+  GskVkOldOpClass      parent_class;
 
   const char *          shader_name;
   gsize                 n_images;
   const VkPipelineVertexInputStateCreateInfo *vertex_input_state;
 };
 
-GskVulkanShaderOp *     gsk_vulkan_shader_op_alloc                      (GskVulkanRender        *render,
-                                                                         const GskVulkanShaderOpClass *op_class,
-                                                                         GskVulkanShaderClip     clip,
-                                                                         GskVulkanImage        **images);
+GskVkOldShaderOp *     gsk_vk_old_shader_op_alloc                      (GskVkOldRender        *render,
+                                                                         const GskVkOldShaderOpClass *op_class,
+                                                                         GskVkOldShaderClip     clip,
+                                                                         GskVkOldImage        **images);
 
-void                    gsk_vulkan_shader_op_finish                     (GskVulkanOp            *op);
-gsize                   gsk_vulkan_shader_op_count_vertex_data          (GskVulkanOp            *op,
+void                    gsk_vk_old_shader_op_finish                     (GskVkOldOp            *op);
+gsize                   gsk_vk_old_shader_op_count_vertex_data          (GskVkOldOp            *op,
                                                                          gsize                   n_bytes);
-GskVulkanOp *           gsk_vulkan_shader_op_command_n                  (GskVulkanOp            *op,
-                                                                         GskVulkanRender        *render,
+GskVkOldOp *           gsk_vk_old_shader_op_command_n                  (GskVkOldOp            *op,
+                                                                         GskVkOldRender        *render,
                                                                          VkRenderPass            render_pass,
                                                                          VkCommandBuffer         command_buffer,
                                                                          gsize                   instance_scale);
-GskVulkanOp *           gsk_vulkan_shader_op_command                    (GskVulkanOp            *op,
-                                                                         GskVulkanRender        *render,
+GskVkOldOp *           gsk_vk_old_shader_op_command                    (GskVkOldOp            *op,
+                                                                         GskVkOldRender        *render,
                                                                          VkRenderPass            render_pass,
                                                                          VkCommandBuffer         command_buffer);
 

@@ -8,13 +8,13 @@
 #include <gdk/gdk.h>
 #include <graphene.h>
 
-typedef struct _GskVulkanOp GskVulkanOp;
-typedef struct _GskVulkanOpClass GskVulkanOpClass;
-typedef struct _GskVulkanRender GskVulkanRender;
-typedef struct _GskVulkanRenderPass GskVulkanRenderPass;
+typedef struct _GskVkOldOp GskVkOldOp;
+typedef struct _GskVkOldOpClass GskVkOldOpClass;
+typedef struct _GskVkOldRender GskVkOldRender;
+typedef struct _GskVkOldRenderPass GskVkOldRenderPass;
 
 static inline VkResult
-gsk_vulkan_handle_result (VkResult    res,
+gsk_vk_old_handle_result (VkResult    res,
                           const char *called_function)
 {
   if (res != VK_SUCCESS)
@@ -24,10 +24,10 @@ gsk_vulkan_handle_result (VkResult    res,
   return res;
 }
 
-#define GSK_VK_CHECK(func, ...) gsk_vulkan_handle_result (func (__VA_ARGS__), G_STRINGIFY (func))
+#define GSK_VK_CHECK(func, ...) gsk_vk_old_handle_result (func (__VA_ARGS__), G_STRINGIFY (func))
 
 static inline void
-gsk_vulkan_normalize_tex_coords (graphene_rect_t       *tex_coords,
+gsk_vk_old_normalize_tex_coords (graphene_rect_t       *tex_coords,
                                  const graphene_rect_t *rect,
                                  const graphene_rect_t *tex)
 {
@@ -39,7 +39,7 @@ gsk_vulkan_normalize_tex_coords (graphene_rect_t       *tex_coords,
 }
 
 static inline void
-gsk_vulkan_rgba_to_float (const GdkRGBA *rgba,
+gsk_vk_old_rgba_to_float (const GdkRGBA *rgba,
                           float          values[4])
 {
   values[0] = rgba->red;
@@ -49,7 +49,7 @@ gsk_vulkan_rgba_to_float (const GdkRGBA *rgba,
 }
 
 static inline void
-gsk_vulkan_point_to_float (const graphene_point_t *point,
+gsk_vk_old_point_to_float (const graphene_point_t *point,
                            float                   values[2])
 {
   values[0] = point->x;
