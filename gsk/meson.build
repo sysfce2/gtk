@@ -64,6 +64,20 @@ gsk_private_sources = files([
   'gl/gskglprofiler.c',
   'gl/stb_rect_pack.c',
   'gl/fp16.c',
+  'gpu/gskgldevice.c',
+  'gpu/gskglframe.c',
+  'gpu/gskglimage.c',
+  'gpu/gskgpublitop.c',
+  'gpu/gskgpudownloadop.c',
+  'gpu/gskgpudevice.c',
+  'gpu/gskgpuframe.c',
+  'gpu/gskgpuimage.c',
+  'gpu/gskgpunodeprocessor.c',
+  'gpu/gskgpuop.c',
+  'gpu/gskgpuprint.c',
+  'gpu/gskgpurenderer.c',
+  'gpu/gskgpuuploadop.c',
+  'gpu/gsknglrenderer.c',
 ])
 
 gsk_f16c_sources = files([
@@ -116,6 +130,12 @@ gsk_private_vulkan_shader_headers = []
 
 if have_vulkan
   gsk_private_sources += files([
+    'gpu/gskvulkanbuffer.c',
+    'gpu/gskvulkandevice.c',
+    'gpu/gskvulkanframe.c',
+    'gpu/gskvulkanimage.c',
+    'gpu/gskvulkanmemory.c',
+    'gpu/gskvulkanrenderer.c',
     'vulkan/gskvulkanblendmodeop.c',
     'vulkan/gskvulkanblurop.c',
     'vulkan/gskvulkanborderop.c',

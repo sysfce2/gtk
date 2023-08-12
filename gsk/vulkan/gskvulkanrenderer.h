@@ -26,6 +26,28 @@
 
 G_BEGIN_DECLS
 
+#define GSK_TYPE_VULKAN_RENDERER (gsk_vulkan_renderer_get_type ())
+
+#define GSK_VULKAN_RENDERER(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), GSK_TYPE_VULKAN_RENDERER, GskVulkanRenderer))
+#define GSK_IS_VULKAN_RENDERER(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GSK_TYPE_VULKAN_RENDERER))
+#define GSK_VULKAN_RENDERER_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), GSK_TYPE_VULKAN_RENDERER, GskVulkanRendererClass))
+#define GSK_IS_VULKAN_RENDERER_CLASS(klass)      (G_TYPE_CHECK_CLASS_TYPE ((klass), GSK_TYPE_VULKAN_RENDERER))
+#define GSK_VULKAN_RENDERER_GET_CLASS(obj)       (G_TYPE_INSTANCE_GET_CLASS ((obj), GSK_TYPE_VULKAN_RENDERER, GskVulkanRendererClass))
+
+/**
+ * GskVulkanRenderer:
+ *
+ * A GSK renderer that is using Vulkan.
+ */
+typedef struct _GskVulkanRenderer                GskVulkanRenderer;
+typedef struct _GskVulkanRendererClass           GskVulkanRendererClass;
+
+GDK_AVAILABLE_IN_ALL
+GType                   gsk_vulkan_renderer_get_type            (void) G_GNUC_CONST;
+
+GDK_AVAILABLE_IN_ALL
+GskRenderer *           gsk_vulkan_renderer_new                 (void);
+
 #define GSK_TYPE_VK_OLD_RENDERER (gsk_vk_old_renderer_get_type ())
 
 #define GSK_VK_OLD_RENDERER(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), GSK_TYPE_VK_OLD_RENDERER, GskVkOldRenderer))
