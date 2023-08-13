@@ -514,27 +514,33 @@ get_renderer_for_name (const char *renderer_name)
   else if (g_ascii_strcasecmp (renderer_name, "opengl") == 0 ||
            g_ascii_strcasecmp (renderer_name, "gl") == 0)
     return GSK_TYPE_GL_RENDERER;
+  else if (g_ascii_strcasecmp (renderer_name, "ngl") == 0)
+    return gsk_ngl_renderer_get_type ();
 #ifdef GDK_RENDERING_VULKAN
   else if (g_ascii_strcasecmp (renderer_name, "vulkan") == 0)
+    return GSK_TYPE_VULKAN_RENDERER;
+  else if (g_ascii_strcasecmp (renderer_name, "vulkan-old") == 0)
     return GSK_TYPE_VK_OLD_RENDERER;
 #endif
   else if (g_ascii_strcasecmp (renderer_name, "help") == 0)
     {
       g_print ("Supported arguments for GSK_RENDERER environment variable:\n");
 #ifdef GDK_WINDOWING_BROADWAY
-      g_print ("broadway - Use the Broadway specific renderer\n");
+      g_print ("  broadway - Use the Broadway specific renderer\n");
 #else
-      g_print ("broadway - Disabled during GTK build\n");
+      g_print ("  broadway - Disabled during GTK build\n");
 #endif
-      g_print ("   cairo - Use the Cairo fallback renderer\n");
-      g_print ("  opengl - Use the OpenGL renderer\n");
-      g_print ("      gl - Use the OpenGL renderer\n");
+      g_print ("     cairo - Use the Cairo fallback renderer\n");
+      g_print ("    opengl - Use the OpenGL renderer\n");
+      g_print ("        gl - Use the OpenGL renderer\n");
+      g_print ("       ngl - Use the new OpenGL renderer\n");
 #ifdef GDK_RENDERING_VULKAN
-      g_print ("  vulkan - Use the Vulkan renderer\n");
+      g_print ("    vulkan - Use the Vulkan renderer\n");
 #else
-      g_print ("  vulkan - Disabled during GTK build\n");
+      g_print ("    vulkan - Disabled during GTK build\n");
+      g_print ("vulkan-old - Disabled during GTK build\n");
 #endif
-      g_print ("    help - Print this help\n\n");
+      g_print ("      help - Print this help\n\n");
       g_print ("Other arguments will cause a warning and be ignored.\n");
     }
   else
