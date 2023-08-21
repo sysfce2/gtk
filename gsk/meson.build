@@ -64,18 +64,25 @@ gsk_private_sources = files([
   'gl/gskglprofiler.c',
   'gl/stb_rect_pack.c',
   'gl/fp16.c',
+  'gpu/gskglbuffer.c',
   'gpu/gskgldevice.c',
   'gpu/gskglframe.c',
   'gpu/gskglimage.c',
   'gpu/gskgpublitop.c',
+  'gpu/gskgpubuffer.c',
+  'gpu/gskgpuclip.c',
   'gpu/gskgpudownloadop.c',
   'gpu/gskgpudevice.c',
   'gpu/gskgpuframe.c',
+  'gpu/gskgpuglobalsop.c',
   'gpu/gskgpuimage.c',
   'gpu/gskgpunodeprocessor.c',
   'gpu/gskgpuop.c',
   'gpu/gskgpuprint.c',
   'gpu/gskgpurenderer.c',
+  'gpu/gskgpurenderpassop.c',
+  'gpu/gskgpushaderop.c',
+  'gpu/gskgputextureop.c',
   'gpu/gskgpuuploadop.c',
   'gpu/gsknglrenderer.c',
 ])
@@ -171,6 +178,8 @@ if have_vulkan
   subdir('vulkan/resources')
 endif # have_vulkan
 
+subdir('gpu/shaders')
+
 if get_variable('broadway_enabled')
   gsk_public_sources += files([
     'broadway/gskbroadwayrenderer.c',
@@ -184,7 +193,10 @@ gsk_resources_xml = custom_target(output: 'gsk.resources.xml',
     '@OUTPUT@',
     gsk_private_gl_shaders,
     gsk_private_vulkan_compiled_shaders,
-    gsk_private_vulkan_shaders
+    gsk_private_vulkan_shaders,
+    gsk_private_gpu_gl_shaders,
+    gsk_private_gpu_vulkan_vertex_shaders,
+    gsk_private_gpu_vulkan_fragment_shaders,
   ],
 )
 
@@ -200,7 +212,11 @@ gskenum_h = gsk_enums[1]
 
 gskresources = gnome.compile_resources('gskresources',
   gsk_resources_xml,
-  dependencies: gsk_private_vulkan_compiled_shaders_deps,
+  dependencies: [
+                  gsk_private_vulkan_compiled_shaders_deps,
+                  gsk_private_gpu_vulkan_fragment_shaders,
+                  gsk_private_gpu_vulkan_vertex_shaders,
+                ],
   source_dir: [meson.current_build_dir(), meson.current_source_dir()],
   c_name: '_gsk',
   extra_args: [ '--manual-register', ],
@@ -234,6 +250,7 @@ libgsk = static_library('gsk',
     gsk_enums,
     gskresources,
     gsk_private_vulkan_shader_headers,
+    gsk_private_gpu_shader_headers,
   ],
   dependencies: gsk_deps,
   include_directories: [ confinc, ],
