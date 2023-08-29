@@ -24,6 +24,7 @@ void                    gsk_gl_image_bind_framebuffer                   (GskGLIm
 void                    gsk_gl_image_bind_framebuffer_target            (GskGLImage             *self,
                                                                          GLenum                  target);
 
+gboolean                gsk_gl_image_is_flipped                         (GskGLImage             *self);
 GLuint                  gsk_gl_image_get_gl_internal_format             (GskGLImage             *self);
 GLuint                  gsk_gl_image_get_gl_format                      (GskGLImage             *self);
 GLuint                  gsk_gl_image_get_gl_type                        (GskGLImage             *self);
