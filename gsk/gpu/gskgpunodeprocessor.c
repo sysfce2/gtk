@@ -286,21 +286,28 @@ gsk_gpu_node_processor_add_fallback_node (GskGpuNodeProcessor *self,
                                           GskRenderNode       *node)
 {
   GskGpuImage *image;
+  graphene_rect_t clipped_bounds;
+
+  graphene_rect_offset_r (&self->clip.rect.bounds, - self->offset.x, - self->offset.y, &clipped_bounds);
+  graphene_rect_intersection (&clipped_bounds, &node->bounds, &clipped_bounds);
+
+  if (clipped_bounds.size.width == 0 || clipped_bounds.size.height == 0)
+    return;
 
   gsk_gpu_node_processor_sync_globals (self, 0);
 
   image = gsk_gpu_upload_cairo_op (self->frame,
                                    node,
                                    &self->scale,
-                                   &node->bounds);
+                                   &clipped_bounds);
 
   gsk_gpu_texture_op (self->frame,
-                      gsk_gpu_clip_get_shader_clip (&self->clip, &self->offset, &node->bounds),
+                      gsk_gpu_clip_get_shader_clip (&self->clip, &self->offset, &clipped_bounds),
                       image,
                       GSK_GPU_SAMPLER_DEFAULT,
                       &node->bounds,
                       &self->offset,
-                      &node->bounds);
+                      &clipped_bounds);
 }
 
 static void
