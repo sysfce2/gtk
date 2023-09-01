@@ -52,21 +52,33 @@ static const GskGpuShaderOpClass GSK_GPU_PATTERN_OP_CLASS = {
 };
 
 void
-gsk_gpu_pattern_op (GskGpuFrame            *frame,
-                    GskGpuShaderClip        clip,
-                    const graphene_rect_t  *rect,
-                    const graphene_point_t *offset,
-                    guint32                 pattern_id)
+gsk_gpu_pattern_op (GskGpuFrame             *frame,
+                    GskGpuShaderClip         clip,
+                    const graphene_rect_t   *rect,
+                    const graphene_point_t  *offset,
+                    const GskGpuShaderImage *images,
+                    gsize                    n_images,
+                    guint32                  pattern_id)
 {
   GskGpuPatternInstance *instance;
+  GskGpuShaderOp *shader;
   graphene_rect_t tmp;
+  gsize i;
 
-  gsk_gpu_shader_op_alloc (frame,
-                           &GSK_GPU_PATTERN_OP_CLASS,
-                           clip,
-                           &instance);
+  shader = gsk_gpu_shader_op_alloc (frame,
+                                    &GSK_GPU_PATTERN_OP_CLASS,
+                                    clip,
+                                    &instance);
 
   graphene_rect_offset_r (rect, offset->x, offset->y, &tmp);
   gsk_rect_to_float (&tmp, instance->rect);
+
+  shader->n_images = n_images;
+  for (i = 0; i < n_images; i++)
+    {
+      shader->images[i] = images[i];
+      g_object_ref (images[i].image);
+    }
+
   instance->pattern_id = pattern_id;
 }
