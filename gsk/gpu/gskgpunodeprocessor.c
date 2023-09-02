@@ -768,7 +768,7 @@ gsk_gpu_node_processor_create_texture_pattern (GskGpuNodeProcessor *self,
 
   gsk_gpu_buffer_writer_append_uint (writer, GSK_GPU_PATTERN_TEXTURE);
   gsk_gpu_buffer_writer_append_uint (writer, images[0].descriptor);
-  gsk_gpu_buffer_writer_append_rect (writer, &node->bounds);
+  gsk_gpu_buffer_writer_append_rect (writer, &node->bounds, &self->offset);
 
   return TRUE;
 }
@@ -791,6 +791,29 @@ gsk_gpu_node_processor_create_opacity_pattern (GskGpuNodeProcessor *self,
 
   gsk_gpu_buffer_writer_append_uint (writer, GSK_GPU_PATTERN_OPACITY);
   gsk_gpu_buffer_writer_append_float (writer, gsk_opacity_node_get_opacity (node));
+
+  return TRUE;
+}
+
+static gboolean
+gsk_gpu_node_processor_create_color_matrix_pattern (GskGpuNodeProcessor *self,
+                                                    GskGpuBufferWriter  *writer,
+                                                    GskRenderNode       *node,
+                                                    GskGpuShaderImage   *images,
+                                                    gsize                n_images,
+                                                    gsize               *out_n_images)
+{
+  if (!gsk_gpu_node_processor_create_node_pattern (self,
+                                                   writer,
+                                                   gsk_color_matrix_node_get_child (node),
+                                                   images,
+                                                   n_images,
+                                                   out_n_images))
+    return FALSE;
+
+  gsk_gpu_buffer_writer_append_uint (writer, GSK_GPU_PATTERN_COLOR_MATRIX);
+  gsk_gpu_buffer_writer_append_matrix (writer, gsk_color_matrix_node_get_color_matrix (node));
+  gsk_gpu_buffer_writer_append_vec4 (writer, gsk_color_matrix_node_get_color_offset (node));
 
   return TRUE;
 }
@@ -892,8 +915,8 @@ static const struct
   },
   [GSK_COLOR_MATRIX_NODE] = {
     0,
-    NULL,
-    NULL,
+    gsk_gpu_node_processor_add_node_as_pattern,
+    gsk_gpu_node_processor_create_color_matrix_pattern
   },
   [GSK_REPEAT_NODE] = {
     0,
@@ -1048,7 +1071,7 @@ gsk_gpu_node_processor_create_node_pattern (GskGpuNodeProcessor *self,
 
   gsk_gpu_buffer_writer_append_uint (writer, GSK_GPU_PATTERN_TEXTURE);
   gsk_gpu_buffer_writer_append_uint (writer, images[0].descriptor);
-  gsk_gpu_buffer_writer_append_rect (writer, &bounds);
+  gsk_gpu_buffer_writer_append_rect (writer, &bounds, &self->offset);
 
   return TRUE;
 }
