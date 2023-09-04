@@ -44,6 +44,7 @@
 #include "gtkgestureclick.h"
 #include "gtkgesturelongpress.h"
 #include "gtkgrid.h"
+#include "gtkgridview.h"
 #include "gtkinscription.h"
 #include "gtklabel.h"
 #include "gtkmarshalers.h"
@@ -3536,6 +3537,7 @@ show_and_select_files (GtkFileChooserWidget *impl,
   GtkFileSystemModel *fsmodel;
   gboolean selected_a_file;
   GSList *walk;
+  GtkBitset *selection;
 
   g_assert (impl->load_state == LOAD_FINISHED);
   g_assert (impl->browse_files_model != NULL);
@@ -3609,6 +3611,32 @@ show_and_select_files (GtkFileChooserWidget *impl,
           g_clear_object (&info2);
         }
     }
+
+  /* Scroll to and focus the first selected item. */
+
+  selection = gtk_selection_model_get_selection (impl->selection_model);
+  if (!gtk_bitset_is_empty (selection))
+    {
+      guint pos = gtk_bitset_get_nth (selection, 0);
+
+      switch (impl->view_type)
+        {
+        case VIEW_TYPE_LIST:
+          gtk_column_view_scroll_to (GTK_COLUMN_VIEW (impl->browse_files_column_view),
+                                     pos, NULL, GTK_LIST_SCROLL_FOCUS, NULL);
+          break;
+
+        case VIEW_TYPE_GRID:
+          gtk_grid_view_scroll_to (GTK_GRID_VIEW (impl->browse_files_grid_view),
+                                   pos, GTK_LIST_SCROLL_FOCUS, NULL);
+          break;
+
+        default:
+          g_assert_not_reached ();
+        }
+    }
+
+  gtk_bitset_unref (selection);
 
   return selected_a_file;
 }
