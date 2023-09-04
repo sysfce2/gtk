@@ -1031,6 +1031,8 @@ selection_check (GtkFileChooserWidget *impl,
       g_clear_object (&info);
     }
 
+  gtk_bitset_unref (bitset);
+
   g_assert (n_selected == 0 || !(all_files && all_folders));
 
   if (out_num_selected)
@@ -1135,6 +1137,8 @@ add_to_shortcuts_cb (GSimpleAction *action,
 
       g_clear_object (&info);
     }
+
+  gtk_bitset_unref (bitset);
 }
 
 typedef struct {
@@ -1215,6 +1219,8 @@ delete_file_cb (GSimpleAction *action,
 
       g_clear_object (&info);
     }
+
+  gtk_bitset_unref (bitset);
 }
 
 static void
@@ -1245,6 +1251,8 @@ trash_file_cb (GSimpleAction *action,
 
       g_clear_object (&info);
     }
+
+  gtk_bitset_unref (bitset);
 }
 
 static void
@@ -2643,6 +2651,8 @@ location_bar_update (GtkFileChooserWidget *impl)
 
           if (gtk_bitset_iter_init_first (&iter, bitset, &position))
             put_recent_folder_in_pathbar (impl, position);
+
+          gtk_bitset_unref (bitset);
         }
       visible = FALSE;
       break;
@@ -4069,6 +4079,8 @@ update_chooser_entry (GtkFileChooserWidget *impl)
         n_selected++;
     }
 
+  gtk_bitset_unref (bitset);
+
   if (n_selected == 0)
     {
       if (impl->operation_mode == OPERATION_MODE_RECENT)
@@ -4555,6 +4567,8 @@ gtk_file_chooser_widget_unselect_file (GtkFileChooser *chooser,
 
   if (gtk_bitset_iter_is_valid (&iter))
     gtk_selection_model_unselect_item (impl->selection_model, i);
+
+  gtk_bitset_unref (bitset);
 }
 
 static void
@@ -4770,6 +4784,8 @@ gtk_file_chooser_widget_get_files (GtkFileChooser *chooser)
           if (!file_from_entry || !g_file_equal (file_from_entry, file))
             g_list_store_append (result, file);
         }
+
+      gtk_bitset_unref (bitset);
 
       /* If there is no selection in the file list, we probably have this situation:
        *
@@ -4987,6 +5003,8 @@ switch_to_selected_folder (GtkFileChooserWidget *impl)
 
       g_clear_object (&info);
     }
+
+    gtk_bitset_unref (bitset);
 }
 
 /* Gets the display name of the selected file in the file list; assumes single
@@ -5715,6 +5733,8 @@ gtk_file_chooser_widget_get_selected_files (GtkFileChooserWidget *impl)
 
       g_clear_object (&info);
     }
+
+  gtk_bitset_unref (bitset);
 
   return result;
 }
