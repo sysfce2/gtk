@@ -3547,6 +3547,7 @@ show_and_select_files (GtkFileChooserWidget *impl,
   g_assert (fsmodel == impl->browse_files_model);
 
   selected_a_file = FALSE;
+  selection = gtk_bitset_new_empty ();
 
   for (walk = files; walk; walk = walk->next)
     {
@@ -3602,7 +3603,7 @@ show_and_select_files (GtkFileChooserWidget *impl,
 
           if (info2 == info)
             {
-              gtk_selection_model_select_item (impl->selection_model, i, FALSE);
+              gtk_bitset_add (selection, i);
               g_clear_object (&info2);
               selected_a_file = TRUE;
               break;
@@ -3612,9 +3613,10 @@ show_and_select_files (GtkFileChooserWidget *impl,
         }
     }
 
+  gtk_selection_model_set_selection (impl->selection_model, selection, selection);
+
   /* Scroll to and focus the first selected item. */
 
-  selection = gtk_selection_model_get_selection (impl->selection_model);
   if (!gtk_bitset_is_empty (selection))
     {
       guint pos = gtk_bitset_get_nth (selection, 0);
