@@ -173,12 +173,42 @@ gtk_single_selection_unselect_item (GtkSelectionModel *model,
   return TRUE;
 }
 
+static gboolean
+gtk_single_selection_set_selection (GtkSelectionModel *model,
+                                    GtkBitset         *selected,
+                                    GtkBitset         *mask)
+{
+  GtkSingleSelection *self = GTK_SINGLE_SELECTION (model);
+  guint pos;
+
+  if (gtk_bitset_get_size (selected) > 1)
+    return FALSE;
+
+  if (gtk_bitset_get_size (selected) == 0 &&
+      gtk_bitset_contains (mask, self->selected))
+    {
+      gtk_single_selection_unselect_item (model, self->selected);
+      return TRUE;
+    }
+
+  pos = gtk_bitset_get_nth (selected, 0);
+
+  if (gtk_bitset_contains (mask, pos))
+    {
+      gtk_single_selection_set_selected (self, pos);
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
 static void
 gtk_single_selection_selection_model_init (GtkSelectionModelInterface *iface)
 {
   iface->is_selected = gtk_single_selection_is_selected; 
   iface->get_selection_in_range = gtk_single_selection_get_selection_in_range; 
-  iface->select_item = gtk_single_selection_select_item; 
+  iface->select_item = gtk_single_selection_select_item;
+  iface->set_selection = gtk_single_selection_set_selection;
   iface->unselect_item = gtk_single_selection_unselect_item; 
 }
 
