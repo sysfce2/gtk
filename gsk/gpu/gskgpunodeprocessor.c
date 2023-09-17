@@ -16,6 +16,7 @@
 #include "gskgpuuploadopprivate.h"
 
 #include "gskdebugprivate.h"
+#include "gskrectprivate.h"
 #include "gskrendernodeprivate.h"
 #include "gskroundedrectprivate.h"
 #include "gsktransformprivate.h"
@@ -110,6 +111,7 @@ struct _GskGpuPatternWriter
   graphene_rect_t        bounds;
   graphene_point_t       offset;
   graphene_vec2_t        scale;
+  guint                  stack;
 
   GskGpuBufferWriter     writer;
   GskGpuPatternImages    images;
@@ -221,14 +223,33 @@ gsk_gpu_pattern_writer_init (GskGpuPatternWriter    *self,
   self->bounds = *bounds;
   self->offset = *offset;
   self->scale = *scale;
+  self->stack = 0;
 
   gsk_gpu_frame_write_buffer_memory (frame, &self->writer);
   gsk_gpu_pattern_images_init (&self->images);
 }
 
+static gboolean
+gsk_gpu_pattern_writer_push_stack (GskGpuPatternWriter *self)
+{
+  if (self->stack >= GSK_GPU_PATTERN_STACK_SIZE)
+    return FALSE;
+
+  self->stack++;
+  return TRUE;
+}
+
+static void
+gsk_gpu_pattern_writer_pop_stack (GskGpuPatternWriter *self)
+{
+  g_assert (self->stack > 0);
+  self->stack--;
+}
+
 static void
 gsk_gpu_pattern_writer_finish (GskGpuPatternWriter *self)
 {
+  g_assert (self->stack == 0);
   gsk_gpu_pattern_images_clear (&self->images);
 }
 
@@ -1098,6 +1119,40 @@ gsk_gpu_node_processor_create_color_matrix_pattern (GskGpuPatternWriter *self,
   return TRUE;
 }
 
+static gboolean
+gsk_gpu_node_processor_create_repeat_pattern (GskGpuPatternWriter *self,
+                                              GskRenderNode       *node)
+{
+  GskRenderNode *child;
+  const graphene_rect_t *child_bounds;
+
+  if (!gsk_gpu_pattern_writer_push_stack (self))
+    return FALSE;
+
+  child = gsk_repeat_node_get_child (node);
+  child_bounds = gsk_repeat_node_get_child_bounds (node);
+
+  gsk_gpu_buffer_writer_append_uint (&self->writer, GSK_GPU_PATTERN_REPEAT_PUSH);
+  gsk_gpu_buffer_writer_append_rect (&self->writer, child_bounds, &self->offset);
+
+  if (!gsk_gpu_node_processor_create_node_pattern (self, child))
+    {
+      gsk_gpu_pattern_writer_pop_stack (self);
+      return FALSE;
+    }
+
+  if (!gsk_rect_contains_rect (&child->bounds, child_bounds))
+    {
+      gsk_gpu_buffer_writer_append_uint (&self->writer, GSK_GPU_PATTERN_CLIP);
+      gsk_gpu_buffer_writer_append_rect (&self->writer, &child->bounds, &self->offset);
+    }
+
+  gsk_gpu_buffer_writer_append_uint (&self->writer, GSK_GPU_PATTERN_REPEAT_POP);
+  gsk_gpu_pattern_writer_pop_stack (self);
+
+  return TRUE;
+}
+
 static void
 gsk_gpu_node_processor_add_container_node (GskGpuNodeProcessor *self,
                                            GskRenderNode       *node)
@@ -1210,8 +1265,8 @@ static const struct
   },
   [GSK_REPEAT_NODE] = {
     0,
-    NULL,
-    NULL,
+    gsk_gpu_node_processor_add_node_as_pattern,
+    gsk_gpu_node_processor_create_repeat_pattern
   },
   [GSK_CLIP_NODE] = {
     GSK_GPU_GLOBAL_MATRIX | GSK_GPU_GLOBAL_SCALE | GSK_GPU_GLOBAL_CLIP,
