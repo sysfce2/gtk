@@ -136,6 +136,16 @@ repeat_pop_pattern (inout uint reader,
   pos = stack_pop ().xy;
 }
 
+void
+cross_fade_pattern (inout uint reader,
+                    inout vec4 color)
+{
+  vec4 start = stack_pop ();
+  float progress = read_float (reader);
+
+  color = mix (start, color, progress);
+}
+
 vec4
 glyphs_pattern (inout uint reader,
                 vec2       pos)
@@ -289,6 +299,13 @@ pattern (uint reader,
           break;
         case GSK_GPU_PATTERN_REPEAT_POP:
           repeat_pop_pattern (reader, pos);
+          break;
+        case GSK_GPU_PATTERN_PUSH_COLOR:
+          stack_push (color);
+          color = vec4 (0.0);
+          break;
+        case GSK_GPU_PATTERN_POP_CROSS_FADE:
+          cross_fade_pattern (reader, color);
           break;
       }
     }
