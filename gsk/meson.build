@@ -69,6 +69,7 @@ gsk_private_sources = files([
   'gpu/gskglframe.c',
   'gpu/gskglimage.c',
   'gpu/gskgpublitop.c',
+  'gpu/gskgpublurop.c',
   'gpu/gskgpuborderop.c',
   'gpu/gskgpubuffer.c',
   'gpu/gskgpubufferwriter.c',

@@ -3,6 +3,7 @@
 #include "gskgpunodeprocessorprivate.h"
 
 #include "gskgpuborderopprivate.h"
+#include "gskgpubluropprivate.h"
 #include "gskgpuclipprivate.h"
 #include "gskgpucolorizeopprivate.h"
 #include "gskgpudeviceprivate.h"
@@ -501,6 +502,83 @@ gsk_gpu_node_procesor_get_node_as_image (GskGpuNodeProcessor *self,
 #endif
 
 static void
+gsk_gpu_node_processor_blur_op (GskGpuNodeProcessor       *self,
+                                const graphene_rect_t     *rect,
+                                const graphene_point_t    *shadow_offset,
+                                float                      blur_radius,
+                                const GdkRGBA             *blur_color_or_null,
+                                GskGpuImage               *source,
+                                const graphene_rect_t     *source_rect)
+{
+  GskGpuNodeProcessor other;
+  GskGpuImage *intermediate;
+  graphene_vec2_t direction;
+  graphene_rect_t real_rect, real_source_rect;
+  graphene_point_t real_offset;
+  int width, height;
+
+  real_rect = GRAPHENE_RECT_INIT (0.f, -blur_radius, rect->size.width, rect->size.height + 2 * blur_radius);
+  width = ceil (graphene_vec2_get_x (&self->scale) * real_rect.size.width);
+  height = ceil (graphene_vec2_get_y (&self->scale) * real_rect.size.height);
+  graphene_rect_offset_r (source_rect, - rect->origin.x, - rect->origin.y, &real_source_rect);
+
+  intermediate = gsk_gpu_device_create_offscreen_image (gsk_gpu_frame_get_device (self->frame),
+                                                        gdk_memory_format_get_depth (gsk_gpu_image_get_format (source)),
+                                                        width, height);
+
+  gsk_gpu_node_processor_init (&other,
+                               self->frame,
+                               intermediate,
+                               &(cairo_rectangle_int_t) { 0, 0, width, height },
+                               &real_rect);
+
+  gsk_gpu_render_pass_begin_op (other.frame,
+                                intermediate,
+                                &(cairo_rectangle_int_t) { 0, 0, width, height },
+                                GSK_RENDER_PASS_OFFSCREEN);
+
+  gsk_gpu_node_processor_sync_globals (&other, 0);
+
+  graphene_vec2_init (&direction, 0.0f, blur_radius);
+  gsk_gpu_blur_op (other.frame,
+                   gsk_gpu_clip_get_shader_clip (&other.clip, &other.offset, &real_rect),
+                   source,
+                   GSK_GPU_SAMPLER_TRANSPARENT,
+                   &real_rect,
+                   &other.offset,
+                   &real_source_rect,
+                   &direction,
+                   &(GdkRGBA) { 0, 0, 0, 0 });
+
+  gsk_gpu_render_pass_end_op (other.frame,
+                              intermediate,
+                              GSK_RENDER_PASS_OFFSCREEN);
+
+  gsk_gpu_node_processor_finish (&other);
+
+  graphene_rect_inset_r (rect, -blur_radius, -blur_radius, &real_rect);
+  real_offset = GRAPHENE_POINT_INIT (self->offset.x + shadow_offset->x,
+                                     self->offset.y + shadow_offset->y);
+  graphene_vec2_init (&direction, blur_radius, 0.0f);
+  gsk_gpu_blur_op (self->frame,
+                   gsk_gpu_clip_get_shader_clip (&self->clip, &real_offset, &real_rect),
+                   intermediate,
+                   GSK_GPU_SAMPLER_TRANSPARENT,
+                   &real_rect,
+                   &real_offset,
+                   &GRAPHENE_RECT_INIT (
+                     rect->origin.x,
+                     rect->origin.y - blur_radius, 
+                     rect->size.width,
+                     rect->size.height + 2 * blur_radius
+                   ),
+                   &direction,
+                   blur_color_or_null ? blur_color_or_null : &(GdkRGBA) { 0, 0, 0, 0 });
+
+  g_object_unref (intermediate);
+}
+
+static void
 gsk_gpu_node_processor_add_fallback_node (GskGpuNodeProcessor *self,
                                           GskRenderNode       *node)
 {
@@ -948,6 +1026,67 @@ gsk_gpu_node_processor_create_conic_gradient_pattern (GskGpuPatternWriter *self,
   return TRUE;
 }
 
+static void
+gsk_gpu_node_processor_add_shadow_node (GskGpuNodeProcessor *self,
+                                        GskRenderNode       *node)
+{
+  GskGpuImage *image;
+  graphene_rect_t clip_bounds, tex_rect;
+  GskRenderNode *child;
+  gsize i, n_shadows;
+
+  n_shadows = gsk_shadow_node_get_n_shadows (node);
+  child = gsk_shadow_node_get_child (node);
+  graphene_rect_offset_r (&self->clip.rect.bounds, - self->offset.x, - self->offset.y, &clip_bounds);
+  /* enlarge clip for shadow offsets */
+  clip_bounds = GRAPHENE_RECT_INIT (clip_bounds.origin.x + node->bounds.origin.x - child->bounds.origin.x,
+                                    clip_bounds.origin.y + node->bounds.origin.y - child->bounds.origin.y,
+                                    clip_bounds.size.width + node->bounds.size.width - child->bounds.size.width,
+                                    clip_bounds.size.height + node->bounds.size.height - child->bounds.size.height);
+
+  image = gsk_gpu_get_node_as_image (self->frame,
+                                     &clip_bounds, 
+                                     &self->scale,
+                                     &self->offset,
+                                     child,
+                                     &tex_rect);
+
+  for (i = 0; i < n_shadows; i++)
+    {
+      const GskShadow *shadow = gsk_shadow_node_get_shadow (node, i);
+      if (shadow->radius == 0)
+        {
+          graphene_point_t shadow_offset = GRAPHENE_POINT_INIT (self->offset.x + shadow->dx,
+                                                                self->offset.y + shadow->dy);
+          gsk_gpu_colorize_op (self->frame,
+                               gsk_gpu_clip_get_shader_clip (&self->clip, &shadow_offset, &child->bounds),
+                               image,
+                               &child->bounds,
+                               &shadow_offset,
+                               &tex_rect,
+                               &shadow->color);
+        }
+      else
+        {
+          gsk_gpu_node_processor_blur_op (self,
+                                          &child->bounds,
+                                          &GRAPHENE_POINT_INIT (shadow->dx, shadow->dy),
+                                          shadow->radius,
+                                          &shadow->color,
+                                          image,
+                                          &tex_rect);
+        }
+    }
+
+  gsk_gpu_texture_op (self->frame,
+                      gsk_gpu_clip_get_shader_clip (&self->clip, &self->offset, &child->bounds),
+                      image,
+                      GSK_GPU_SAMPLER_DEFAULT,
+                      &child->bounds,
+                      &self->offset,
+                      &tex_rect);
+}
+
 static gboolean
 gsk_gpu_node_processor_create_cross_fade_pattern (GskGpuPatternWriter *self,
                                                   GskRenderNode       *node)
@@ -1382,7 +1521,7 @@ static const struct
   },
   [GSK_SHADOW_NODE] = {
     0,
-    NULL,
+    gsk_gpu_node_processor_add_shadow_node,
     NULL,
   },
   [GSK_BLEND_NODE] = {
