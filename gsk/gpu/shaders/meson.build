@@ -62,7 +62,6 @@ foreach shader: gsk_private_gpu_shaders
                                   '-std=450',
                                   '-fshader-stage=vertex',
                                   '-DGSK_VERTEX_SHADER=1',
-                                  '-O',
                                   '@INPUT@',
                                   '-o', '@OUTPUT@'
                                 ])
@@ -75,7 +74,6 @@ foreach shader: gsk_private_gpu_shaders
                                   '-std=450',
                                   '-fshader-stage=fragment',
                                   '-DGSK_FRAGMENT_SHADER=1',
-                                  '-O',
                                   '@INPUT@',
                                   '-o', '@OUTPUT@'
                                 ])
