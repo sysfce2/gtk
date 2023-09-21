@@ -1027,6 +1027,39 @@ gsk_gpu_node_processor_create_conic_gradient_pattern (GskGpuPatternWriter *self,
 }
 
 static void
+gsk_gpu_node_processor_add_blur_node (GskGpuNodeProcessor *self,
+                                      GskRenderNode       *node)
+{
+  GskRenderNode *child;
+  GskGpuImage *image;
+  graphene_rect_t tex_rect;
+  float blur_radius;
+
+  child = gsk_blur_node_get_child (node);
+  blur_radius = gsk_blur_node_get_radius (node);
+  if (blur_radius <= 0.f)
+    {
+      gsk_gpu_node_processor_add_node (self, child);
+      return;
+    }
+
+  image = gsk_gpu_get_node_as_image (self->frame,
+                                     &node->bounds,
+                                     &self->scale,
+                                     &self->offset,
+                                     child,
+                                     &tex_rect);
+
+  gsk_gpu_node_processor_blur_op (self,
+                                  &child->bounds,
+                                  graphene_point_zero (),
+                                  blur_radius,
+                                  NULL,
+                                  image,
+                                  &tex_rect);
+}
+
+static void
 gsk_gpu_node_processor_add_shadow_node (GskGpuNodeProcessor *self,
                                         GskRenderNode       *node)
 {
@@ -1541,7 +1574,7 @@ static const struct
   },
   [GSK_BLUR_NODE] = {
     0,
-    NULL,
+    gsk_gpu_node_processor_add_blur_node,
     NULL,
   },
   [GSK_DEBUG_NODE] = {
