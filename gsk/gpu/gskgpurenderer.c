@@ -22,8 +22,8 @@
 #define GSK_GPU_MAX_FRAMES 4
 
 static const GdkDebugKey gsk_gpu_optimization_keys[] = {
-  { "pattern", GSK_GPU_OPTIMIZE_PATTERN, "Dpn't use the pattern shader" },
-  { "clear", GSK_GPU_OPTIMIZE_CLEAR, "Don't vkCmdClerAttachment()/glClear() instead of shaders" },
+  { "pattern", GSK_GPU_OPTIMIZE_PATTERN, "Don't use the pattern shader" },
+  { "clear", GSK_GPU_OPTIMIZE_CLEAR, "Don't vkCmdClearAttachment()/glClear() instead of shaders" },
 
   { "gl-baseinstance", GSK_GPU_OPTIMIZE_GL_BASE_INSTANCE, "Assume no ARB/EXT_base_instance support" },
 };
