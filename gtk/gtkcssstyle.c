@@ -72,6 +72,7 @@ gtk_css_style_finalize (GObject *object)
   gtk_css_values_unref ((GtkCssValues *)style->transition);
   gtk_css_values_unref ((GtkCssValues *)style->size);
   gtk_css_values_unref ((GtkCssValues *)style->other);
+  g_hash_table_unref (style->custom_properties);
 
   G_OBJECT_CLASS (gtk_css_style_parent_class)->finalize (object);
 }
@@ -90,6 +91,10 @@ gtk_css_style_class_init (GtkCssStyleClass *klass)
 static void
 gtk_css_style_init (GtkCssStyle *style)
 {
+  style->custom_properties = g_hash_table_new_full (g_str_hash,
+                                                    g_str_equal,
+                                                    g_free,
+                                                    (GDestroyNotify) gtk_css_token_stream_unref);
 }
 
 GtkCssValue *
@@ -367,6 +372,36 @@ gtk_css_style_print (GtkCssStyle *style,
 
       retval = TRUE;
     }
+
+    if (style->custom_properties)
+      {
+        GHashTableIter iter;
+        const char *name;
+        GtkCssTokenStream *value;
+
+        g_hash_table_iter_init (&iter, style->custom_properties);
+
+        // TODO should sort it too?
+        while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+          {
+            g_string_append_printf (string, "%*s%s: ", indent, "", name);
+            gtk_css_token_stream_print (value, string);
+            g_string_append_c (string, ';');
+
+#if 0
+TODO have sections for custom props too            if (section)
+              {
+                g_string_append (string, " /* ");
+                gtk_css_section_print (section, string);
+                g_string_append (string, " */");
+              }
+#endif
+
+            g_string_append_c (string, '\n');
+          }
+
+        retval = TRUE;
+      }
 
   return retval;
 }
@@ -836,4 +871,11 @@ gtk_css_values_new (GtkCssValuesType type)
   values->type = type;
 
   return values;
+}
+
+GtkCssTokenStream *
+gtk_css_style_get_custom_property (GtkCssStyle *style,
+                                   const char  *name)
+{
+  return g_hash_table_lookup (style->custom_properties, name);
 }

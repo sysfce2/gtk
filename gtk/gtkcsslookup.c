@@ -36,6 +36,9 @@ void
 _gtk_css_lookup_destroy (GtkCssLookup *lookup)
 {
   _gtk_bitmask_free (lookup->set_values);
+
+  if (lookup->custom_values)
+    g_hash_table_unref (lookup->custom_values);
 }
 
 gboolean
@@ -73,4 +76,18 @@ _gtk_css_lookup_set (GtkCssLookup  *lookup,
   lookup->values[id].value = value;
   lookup->values[id].section = section;
   lookup->set_values = _gtk_bitmask_set (lookup->set_values, id, TRUE);
+}
+
+void
+_gtk_css_lookup_set_custom (GtkCssLookup      *lookup,
+                            const char        *name,
+                            GtkCssTokenStream *value)
+{
+  gtk_internal_return_if_fail (lookup != NULL);
+
+  if (!lookup->custom_values)
+    lookup->custom_values = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
+
+  if (!g_hash_table_contains (lookup->custom_values, name))
+    g_hash_table_replace (lookup->custom_values, (char *) name, value);
 }

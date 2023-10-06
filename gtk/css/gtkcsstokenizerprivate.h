@@ -120,6 +120,8 @@ gtk_css_token_get_string (const GtkCssToken *token)
     return token->string.u.string;
 }
 
+void                    gtk_css_token_copy                      (const GtkCssToken      *token,
+                                                                 GtkCssToken            *dest);
 void                    gtk_css_token_clear                     (GtkCssToken            *token);
 
 gboolean                gtk_css_token_is_finite                 (const GtkCssToken      *token) G_GNUC_PURE;

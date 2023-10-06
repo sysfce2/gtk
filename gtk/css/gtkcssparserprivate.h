@@ -22,6 +22,7 @@
 
 #include "gtkcssenums.h"
 #include "gtkcsstokenizerprivate.h"
+#include "gtkcsstokenstreamprivate.h"
 
 #include <gio/gio.h>
 
@@ -48,6 +49,10 @@ typedef void            (* GtkCssParserErrorFunc)               (GtkCssParser   
                                                                  const GError                   *error,
                                                                  gpointer                        user_data);
 
+typedef GtkCssTokenStream * (* GtkCssParserResolveFunc)           (GtkCssParser                   *parser,
+                                                                   const char                     *name,
+                                                                   gpointer                        user_data);
+
 GtkCssParser *          gtk_css_parser_new_for_file             (GFile                          *file,
                                                                  GtkCssParserErrorFunc           error_func,
                                                                  gpointer                        user_data,
@@ -55,6 +60,12 @@ GtkCssParser *          gtk_css_parser_new_for_file             (GFile          
                                                                  GError                        **error);
 GtkCssParser *          gtk_css_parser_new_for_bytes            (GBytes                         *bytes,
                                                                  GFile                          *file,
+                                                                 GtkCssParserErrorFunc           error_func,
+                                                                 gpointer                        user_data,
+                                                                 GDestroyNotify                  user_destroy);
+GtkCssParser *          gtk_css_parser_new_for_token_stream     (GtkCssTokenStream              *stream,
+                                                                 GFile                          *file,
+                                                                 GtkCssParserResolveFunc         resolve_func,
                                                                  GtkCssParserErrorFunc           error_func,
                                                                  gpointer                        user_data,
                                                                  GDestroyNotify                  user_destroy);
@@ -148,6 +159,10 @@ gsize                   gtk_css_parser_consume_any              (GtkCssParser   
                                                                  const GtkCssParseOption        *options,
                                                                  gsize                           n_options,
                                                                  gpointer                        user_data);
+
+GtkCssTokenStream *     gtk_css_parser_parse_value_into_token_stream (GtkCssParser *parser,
+                                                                      gboolean      keep_sections,
+                                                                      gboolean     *has_references);
 
 G_END_DECLS
 

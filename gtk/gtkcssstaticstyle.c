@@ -45,6 +45,12 @@ static void gtk_css_static_style_compute_value (GtkCssStaticStyle *style,
                                                 GtkCssValue       *specified,
                                                 GtkCssSection     *section);
 
+static void gtk_css_static_style_compute_custom_value (GtkCssStaticStyle *style,
+                                                       GtkStyleProvider  *provider,
+                                                       GtkCssStyle       *parent_style,
+                                                       const char        *name,
+                                                       GtkCssTokenStream *value);
+
 static const int core_props[] = {
   GTK_CSS_PROPERTY_COLOR,
   GTK_CSS_PROPERTY_DPI,
@@ -686,6 +692,18 @@ gtk_css_static_style_set_value (GtkCssStaticStyle *sstyle,
     }
 }
 
+static void
+gtk_css_static_style_set_custom_value (GtkCssStaticStyle *sstyle,
+                                       const char        *name,
+                                       GtkCssTokenStream *value)
+{
+  GtkCssStyle *style = (GtkCssStyle *)sstyle;
+
+  g_hash_table_insert (style->custom_properties,
+                       g_strdup (name),
+                       gtk_css_token_stream_ref (value));
+}
+
 static GtkCssStyle *default_style;
 
 static void
@@ -910,7 +928,35 @@ gtk_css_lookup_resolve (GtkCssLookup      *lookup,
   gtk_internal_return_if_fail (lookup != NULL);
   gtk_internal_return_if_fail (GTK_IS_STYLE_PROVIDER (provider));
   gtk_internal_return_if_fail (GTK_IS_CSS_STATIC_STYLE (style));
-  gtk_internal_return_if_fail (parent_style == NULL || GTK_IS_CSS_STYLE (parent_style));
+  gtk_internal_return_if_fail (parent_style == NULL || GTK_IS_CSS_STYLEka (parent_style));
+
+  if (lookup->custom_values)
+    {
+      GHashTableIter iter;
+      const char *name;
+      GtkCssTokenStream *value;
+
+      g_hash_table_iter_init (&iter, lookup->custom_values);
+
+      while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+        gtk_css_static_style_compute_custom_value (sstyle, provider, parent_style, name, value);
+    }
+
+  if (parent_style)
+    {
+      GtkCssStyle *parent_static = GTK_CSS_STYLE (gtk_css_style_get_static_style (parent_style)); // TODO properly handle animations
+      GHashTableIter iter;
+      const char *name;
+      GtkCssTokenStream *value;
+
+      g_hash_table_iter_init (&iter, parent_static->custom_properties);
+
+      while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+        {
+          if (!g_hash_table_contains (style->custom_properties, name))
+            gtk_css_static_style_compute_custom_value (sstyle, provider, parent_static, name, value);
+        }
+    }
 
   if (_gtk_bitmask_is_empty (_gtk_css_lookup_get_set_values (lookup)))
     {
@@ -1100,10 +1146,39 @@ gtk_css_static_style_compute_value (GtkCssStaticStyle *style,
   gtk_css_static_style_set_value (style, id, value, section);
 }
 
+static void
+gtk_css_static_style_compute_custom_value (GtkCssStaticStyle *style,
+                                           GtkStyleProvider  *provider,
+                                           GtkCssStyle       *parent_style,
+                                           const char        *name,
+                                           GtkCssTokenStream *value)
+{
+  gtk_internal_return_if_fail (name != NULL);
+
+  gtk_css_static_style_set_custom_value (style, name, value);
+}
+
 GtkCssChange
 gtk_css_static_style_get_change (GtkCssStaticStyle *style)
 {
   g_return_val_if_fail (GTK_IS_CSS_STATIC_STYLE (style), GTK_CSS_CHANGE_ANY);
 
   return style->change;
+}
+
+void
+gtk_css_custom_values_compute_changes_and_affects (GtkCssStyle    *style1,
+                                                   GtkCssStyle    *style2,
+                                                   GtkBitmask    **changes,
+                                                   GtkCssAffects  *affects)
+{
+  if (g_hash_table_size (style1->custom_properties) == 0 &&
+      g_hash_table_size (style2->custom_properties) == 0)
+    {
+      return;
+    }
+
+  // TODO actually compare things
+
+  *changes = _gtk_bitmask_set (*changes, GTK_CSS_PROPERTY_CUSTOM, TRUE);
 }

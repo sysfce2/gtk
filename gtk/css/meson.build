@@ -8,6 +8,7 @@ gtk_css_private_sources = files([
   'gtkcssparser.c',
   'gtkcsstokenizer.c',
   'gtkcssserializer.c',
+  'gtkcsstokenstream.c',
 ])
 
 gtk_css_public_headers = files([

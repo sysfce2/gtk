@@ -26,6 +26,7 @@
 #include "gtkcssarrayvalueprivate.h"
 #include "gtkcsscolorvalueprivate.h"
 #include "gtkcsskeyframesprivate.h"
+#include "gtkcssreferencevalueprivate.h"
 #include "gtkcssselectorprivate.h"
 #include "gtkcssshorthandpropertyprivate.h"
 #include "gtksettingsprivate.h"
@@ -97,6 +98,7 @@ struct _GtkCssProviderClass
 typedef struct GtkCssRuleset GtkCssRuleset;
 typedef struct _GtkCssScanner GtkCssScanner;
 typedef struct _PropertyValue PropertyValue;
+typedef struct _CustomPropertyValue CustomPropertyValue;
 typedef enum ParserScope ParserScope;
 typedef enum ParserSymbol ParserSymbol;
 
@@ -106,6 +108,16 @@ struct _PropertyValue {
   GtkCssSection       *section;
 };
 
+struct _CustomPropertyValue
+{
+  char           *name;
+  GtkCssToken    *tokens;
+  guint           n_tokens;
+  char          **refs;
+  guint           n_refs;
+  GtkCssSection  *section;
+};
+
 struct GtkCssRuleset
 {
   GtkCssSelector *selector;
@@ -113,6 +125,7 @@ struct GtkCssRuleset
   PropertyValue *styles;
   guint n_styles;
   guint owns_styles : 1;
+  GHashTable *custom_properties;
 };
 
 struct _GtkCssScanner
@@ -270,6 +283,8 @@ gtk_css_ruleset_clear (GtkCssRuleset *ruleset)
 	    gtk_css_section_unref (ruleset->styles[i].section);
         }
       g_free (ruleset->styles);
+      if (ruleset->custom_properties)
+        g_hash_table_unref (ruleset->custom_properties);
     }
   if (ruleset->selector)
     _gtk_css_selector_free (ruleset->selector);
@@ -285,7 +300,7 @@ gtk_css_ruleset_add (GtkCssRuleset       *ruleset,
 {
   guint i;
 
-  g_return_if_fail (ruleset->owns_styles || ruleset->n_styles == 0);
+  g_return_if_fail (ruleset->owns_styles || (ruleset->n_styles == 0 && ruleset->custom_properties == NULL));
 
   ruleset->owns_styles = TRUE;
 
@@ -313,6 +328,28 @@ gtk_css_ruleset_add (GtkCssRuleset       *ruleset,
     ruleset->styles[i].section = gtk_css_section_ref (section);
   else
     ruleset->styles[i].section = NULL;
+}
+
+static void
+gtk_css_ruleset_add_custom (GtkCssRuleset     *ruleset,
+                            const char        *name,
+                            GtkCssTokenStream *stream)
+{
+  g_return_if_fail (ruleset->owns_styles || (ruleset->n_styles == 0 && ruleset->custom_properties == NULL));
+
+  ruleset->owns_styles = TRUE;
+
+  if (ruleset->custom_properties == NULL)
+    {
+      ruleset->custom_properties = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                                          g_free, (GDestroyNotify) gtk_css_token_stream_unref);
+    }
+
+  GString *string = g_string_new (NULL);
+  gtk_css_token_stream_print (stream, string);
+  g_string_free (string, TRUE);
+
+  g_hash_table_replace (ruleset->custom_properties, g_strdup (name), stream);
 }
 
 static void
@@ -490,7 +527,7 @@ gtk_css_style_provider_lookup (GtkStyleProvider             *provider,
         {
           ruleset = gtk_css_selector_matches_get (&tree_rules, i);
 
-          if (ruleset->styles == NULL)
+          if (ruleset->styles == NULL && ruleset->custom_properties == NULL)
             continue;
 
           for (j = 0; j < ruleset->n_styles; j++)
@@ -505,6 +542,22 @@ gtk_css_style_provider_lookup (GtkStyleProvider             *provider,
                                    id,
                                    ruleset->styles[j].section,
                                    ruleset->styles[j].value);
+            }
+
+          if (ruleset->custom_properties)
+            {
+              GHashTableIter iter;
+              const char *name;
+              GtkCssTokenStream *value;
+
+              g_hash_table_iter_init (&iter, ruleset->custom_properties);
+
+              while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+                _gtk_css_lookup_set_custom (lookup, name, value);
+
+              GString *string = g_string_new (NULL);
+              _gtk_css_selector_tree_match_print (ruleset->selector_match, string);
+              g_string_free (string, TRUE);
             }
         }
     }
@@ -572,7 +625,7 @@ css_provider_commit (GtkCssProvider  *css_provider,
   GtkCssProviderPrivate *priv = gtk_css_provider_get_instance_private (css_provider);
   guint i;
 
-  if (ruleset->styles == NULL)
+  if (ruleset->styles == NULL && ruleset->custom_properties == NULL)
     {
       for (i = 0; i < gtk_css_selectors_get_size (selectors); i++)
         _gtk_css_selector_free (gtk_css_selectors_get (selectors, i));
@@ -814,12 +867,10 @@ parse_declaration (GtkCssScanner *scanner,
   if (name == NULL)
     goto out;
 
-  property = _gtk_style_property_lookup (name);
-
-  if (property)
+  /* This is a custom property */
+  if (name[0] == '-' && name[1] == '-')
     {
-      GtkCssSection *section;
-      GtkCssValue *value;
+      GtkCssTokenStream *stream;
 
       if (!gtk_css_parser_try_token (scanner->parser, GTK_CSS_TOKEN_COLON))
         {
@@ -827,15 +878,112 @@ parse_declaration (GtkCssScanner *scanner,
           goto out;
         }
 
-      value = _gtk_style_property_parse_value (property, scanner->parser);
-
-      if (value == NULL)
+      stream = gtk_css_parser_parse_value_into_token_stream (scanner->parser,
+                                                             TRUE /*gtk_keep_css_sections*/, // TODO
+                                                             NULL);
+      if (stream == NULL)
         goto out;
 
-      if (!gtk_css_parser_has_token (scanner->parser, GTK_CSS_TOKEN_EOF))
+      gtk_css_ruleset_add_custom (ruleset, name, stream);
+
+      goto out;
+    }
+
+  property = _gtk_style_property_lookup (name);
+
+  if (property)
+    {
+      GtkCssSection *section;
+      GtkCssTokenStream *stream;
+      GtkCssValue *value;
+      gboolean has_refs;
+
+      if (!gtk_css_parser_try_token (scanner->parser, GTK_CSS_TOKEN_COLON))
         {
-          gtk_css_parser_error_syntax (scanner->parser, "Junk at end of value for %s", property->name);
+          gtk_css_parser_error_syntax (scanner->parser, "Expected ':'");
           goto out;
+        }
+
+      stream = gtk_css_parser_parse_value_into_token_stream (scanner->parser,
+                                                             TRUE /*gtk_keep_css_sections*/, // TODO
+                                                             &has_refs);
+      if (stream == NULL)
+        goto out;
+
+      if (has_refs)
+        {
+          if (!gtk_css_parser_has_token (scanner->parser, GTK_CSS_TOKEN_EOF))
+            {
+              gtk_css_parser_error_syntax (scanner->parser, "Junk at end of value for %s", property->name);
+              gtk_css_token_stream_unref (stream);
+              goto out;
+            }
+
+          if (GTK_IS_CSS_SHORTHAND_PROPERTY (property))
+            {
+              GtkCssShorthandProperty *shorthand = GTK_CSS_SHORTHAND_PROPERTY (property);
+              guint i, n;
+              GtkCssValue **values;
+
+              n = _gtk_css_shorthand_property_get_n_subproperties (shorthand);
+
+              values = g_new (GtkCssValue *, n);
+
+              for (i = 0; i < n; i++)
+                {
+                  GtkCssValue *child =
+                    _gtk_css_reference_value_new (property,
+                                                  stream,
+                                                  gtk_css_parser_get_file (scanner->parser));
+                  _gtk_css_reference_value_set_subproperty (child, i);
+
+                  values[i] = _gtk_css_array_value_get_nth (child, i);
+                }
+
+              value = _gtk_css_array_value_new_from_array (values, n);
+              g_free (values);
+            }
+          else
+            {
+              value = _gtk_css_reference_value_new (property,
+                                                    stream,
+                                                    gtk_css_parser_get_file (scanner->parser));
+            }
+
+          gtk_css_token_stream_unref (stream);
+        }
+      else
+        {
+          GtkCssParser *value_parser =
+            gtk_css_parser_new_for_token_stream (stream,
+                                                 gtk_css_parser_get_file (scanner->parser),
+                                                 NULL,
+                                                 gtk_css_scanner_parser_error,
+                                                 scanner, NULL);
+
+          // TODO: share parser between values? Creating a new one for each
+          // value is likely expensive, tho I'm not seeing slowdowns offhand
+
+          value = _gtk_style_property_parse_value (property, value_parser);
+
+          if (value == NULL)
+            {
+              gtk_css_parser_unref (value_parser);
+              gtk_css_token_stream_unref (stream);
+              goto out;
+            }
+
+          if (!gtk_css_parser_has_token (value_parser, GTK_CSS_TOKEN_EOF))
+            {
+              gtk_css_parser_error_syntax (value_parser, "Junk at end of value for %s", property->name);
+              // TODO free value
+              gtk_css_parser_unref (value_parser);
+              gtk_css_token_stream_unref (stream);
+              goto out;
+            }
+
+          gtk_css_parser_unref (value_parser);
+          gtk_css_token_stream_unref (stream);
         }
 
       if (gtk_keep_css_sections)
@@ -928,6 +1076,8 @@ parse_ruleset (GtkCssScanner *scanner)
   parse_declarations (scanner, &ruleset);
 
   gtk_css_parser_end_block (scanner->parser);
+
+  // TODO: Find custom property cyclic dependencies
 
   css_provider_commit (scanner->provider, &selectors, &ruleset);
   gtk_css_ruleset_clear (&ruleset);
@@ -1502,6 +1652,25 @@ gtk_css_ruleset_print (const GtkCssRuleset *ruleset,
           _gtk_css_value_print (prop->value, str);
           g_string_append (str, ";\n");
         }
+
+        if (ruleset->custom_properties)
+          {
+            GHashTableIter iter;
+            const char *name;
+            GtkCssTokenStream *value;
+
+            g_hash_table_iter_init (&iter, ruleset->custom_properties);
+
+            // TODO should sort it too?
+            while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+              {
+                g_string_append (str, "  ");
+                g_string_append (str, name);
+                g_string_append (str, ": ");
+                gtk_css_token_stream_print (value, str);
+                g_string_append (str, ";\n");
+              }
+          }
 
       g_free (sorted);
     }

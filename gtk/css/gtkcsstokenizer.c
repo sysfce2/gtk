@@ -39,6 +39,64 @@ struct _GtkCssTokenizer
 };
 
 void
+gtk_css_token_copy (const GtkCssToken *token,
+                    GtkCssToken       *dest)
+{
+  memcpy (dest, token, sizeof (GtkCssToken));
+
+  switch (token->type)
+    {
+    case GTK_CSS_TOKEN_STRING:
+    case GTK_CSS_TOKEN_IDENT:
+    case GTK_CSS_TOKEN_FUNCTION:
+    case GTK_CSS_TOKEN_AT_KEYWORD:
+    case GTK_CSS_TOKEN_HASH_UNRESTRICTED:
+    case GTK_CSS_TOKEN_HASH_ID:
+    case GTK_CSS_TOKEN_URL:
+      if (token->string.len >= 16)
+        dest->string.u.string = g_strdup (token->string.u.string);
+      break;
+
+    case GTK_CSS_TOKEN_SIGNED_INTEGER_DIMENSION:
+    case GTK_CSS_TOKEN_SIGNLESS_INTEGER_DIMENSION:
+    case GTK_CSS_TOKEN_SIGNED_DIMENSION:
+    case GTK_CSS_TOKEN_SIGNLESS_DIMENSION:
+    case GTK_CSS_TOKEN_EOF:
+    case GTK_CSS_TOKEN_WHITESPACE:
+    case GTK_CSS_TOKEN_OPEN_PARENS:
+    case GTK_CSS_TOKEN_CLOSE_PARENS:
+    case GTK_CSS_TOKEN_OPEN_SQUARE:
+    case GTK_CSS_TOKEN_CLOSE_SQUARE:
+    case GTK_CSS_TOKEN_OPEN_CURLY:
+    case GTK_CSS_TOKEN_CLOSE_CURLY:
+    case GTK_CSS_TOKEN_COMMA:
+    case GTK_CSS_TOKEN_COLON:
+    case GTK_CSS_TOKEN_SEMICOLON:
+    case GTK_CSS_TOKEN_CDC:
+    case GTK_CSS_TOKEN_CDO:
+    case GTK_CSS_TOKEN_DELIM:
+    case GTK_CSS_TOKEN_SIGNED_INTEGER:
+    case GTK_CSS_TOKEN_SIGNLESS_INTEGER:
+    case GTK_CSS_TOKEN_SIGNED_NUMBER:
+    case GTK_CSS_TOKEN_SIGNLESS_NUMBER:
+    case GTK_CSS_TOKEN_PERCENTAGE:
+    case GTK_CSS_TOKEN_INCLUDE_MATCH:
+    case GTK_CSS_TOKEN_DASH_MATCH:
+    case GTK_CSS_TOKEN_PREFIX_MATCH:
+    case GTK_CSS_TOKEN_SUFFIX_MATCH:
+    case GTK_CSS_TOKEN_SUBSTRING_MATCH:
+    case GTK_CSS_TOKEN_COLUMN:
+    case GTK_CSS_TOKEN_BAD_STRING:
+    case GTK_CSS_TOKEN_BAD_URL:
+    case GTK_CSS_TOKEN_COMMENT:
+      break;
+
+    default:
+      g_assert_not_reached ();
+    }
+}
+
+void
 gtk_css_token_clear (GtkCssToken *token)
 {
   switch (token->type)
