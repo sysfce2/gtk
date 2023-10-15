@@ -474,7 +474,7 @@ gsk_gpu_get_node_as_image (GskGpuFrame            *frame,
         result = gsk_gpu_device_lookup_texture_image (device, texture, timestamp);
         if (result == NULL)
           {
-            result = gsk_gpu_upload_texture_op_try (frame, texture);
+            result = gsk_gpu_frame_upload_texture (frame, texture);
             if (result)
               gsk_gpu_device_cache_texture_image (device, texture, timestamp, result);
           }
@@ -1086,7 +1086,7 @@ gsk_gpu_node_processor_add_texture_node (GskGpuNodeProcessor *self,
   image = gsk_gpu_device_lookup_texture_image (device, texture, timestamp);
   if (image == NULL)
     {
-      image = gsk_gpu_upload_texture_op_try (self->frame, texture);
+      image = gsk_gpu_frame_upload_texture (self->frame, texture);
       if (image == NULL)
         {
           GSK_DEBUG (FALLBACK, "Unsupported texture format %u or size %dx%d",
@@ -1097,7 +1097,6 @@ gsk_gpu_node_processor_add_texture_node (GskGpuNodeProcessor *self,
           return;
         }
       gsk_gpu_device_cache_texture_image (device, texture, timestamp, image);
-      image = g_object_ref (image);
     }
   descriptor = gsk_gpu_node_processor_add_image (self, image, GSK_GPU_SAMPLER_DEFAULT);
 
@@ -1129,7 +1128,7 @@ gsk_gpu_node_processor_create_texture_pattern (GskGpuPatternWriter *self,
   image = gsk_gpu_device_lookup_texture_image (device, texture, timestamp);
   if (image == NULL)
     {
-      image = gsk_gpu_upload_texture_op_try (self->frame, texture);
+      image = gsk_gpu_frame_upload_texture (self->frame, texture);
       if (image == NULL)
         return FALSE;
       gsk_gpu_device_cache_texture_image (device, texture, timestamp, image);
