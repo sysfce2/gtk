@@ -699,6 +699,8 @@ gtk_css_static_style_set_custom_value (GtkCssStaticStyle *sstyle,
 {
   GtkCssStyle *style = (GtkCssStyle *)sstyle;
 
+  g_assert (style->custom_properties);
+
   g_hash_table_insert (style->custom_properties,
                        g_strdup (name),
                        gtk_css_token_stream_ref (value));
@@ -936,25 +938,39 @@ gtk_css_lookup_resolve (GtkCssLookup      *lookup,
       const char *name;
       GtkCssTokenStream *value;
 
+      style->custom_properties =
+        g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+                               (GDestroyNotify) gtk_css_token_stream_unref);
+
       g_hash_table_iter_init (&iter, lookup->custom_values);
 
       while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
         gtk_css_static_style_compute_custom_value (sstyle, provider, parent_style, name, value);
-    }
 
-  if (parent_style)
-    {
-      GtkCssStyle *parent_static = GTK_CSS_STYLE (gtk_css_style_get_static_style (parent_style)); // TODO properly handle animations
-      GHashTableIter iter;
-      const char *name;
-      GtkCssTokenStream *value;
-
-      g_hash_table_iter_init (&iter, parent_static->custom_properties);
-
-      while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+      if (parent_style)
         {
-          if (!g_hash_table_contains (style->custom_properties, name))
-            gtk_css_static_style_compute_custom_value (sstyle, provider, parent_static, name, value);
+          GtkCssStyle *parent_static = GTK_CSS_STYLE (gtk_css_style_get_static_style (parent_style)); // TODO properly handle animations
+
+          if (parent_static->custom_properties)
+            {
+              g_hash_table_iter_init (&iter, parent_static->custom_properties);
+
+              while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+                {
+                  if (!g_hash_table_contains (style->custom_properties, name))
+                    gtk_css_static_style_compute_custom_value (sstyle, provider, parent_static, name, value);
+                }
+            }
+        }
+    }
+  else
+    {
+      if (parent_style)
+        {
+          GtkCssStyle *parent_static = GTK_CSS_STYLE (gtk_css_style_get_static_style (parent_style)); // TODO properly handle animations
+
+          if (parent_static->custom_properties)
+            style->custom_properties = g_hash_table_ref (parent_static->custom_properties);
         }
     }
 
@@ -1175,6 +1191,15 @@ gtk_css_custom_values_compute_changes_and_affects (GtkCssStyle    *style1,
   GHashTableIter iter;
   const char *name;
   GtkCssTokenStream *value;
+
+  if (style1->custom_properties == style2->custom_properties)
+    return;
+
+  if (!style1->custom_properties || !style2->custom_properties)
+    {
+      *changes = _gtk_bitmask_set (*changes, GTK_CSS_PROPERTY_CUSTOM, TRUE);
+      return;
+    }
 
   if (g_hash_table_size (style1->custom_properties) != g_hash_table_size (style2->custom_properties))
     {

@@ -117,6 +117,9 @@ gtk_css_token_stream_equal (const GtkCssTokenStream *stream1,
 {
   guint i;
 
+  if (stream1 == stream2)
+    return TRUE;
+
   if (stream1 == NULL && stream2 == NULL)
     return TRUE;
 
