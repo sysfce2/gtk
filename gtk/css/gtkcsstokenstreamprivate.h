@@ -33,7 +33,7 @@ struct _GtkCssTokenStreamToken {
       GtkCssSection *section;
     } token;
     struct {
-      char *name;
+      int id;
       GtkCssTokenStream *fallback;
     } reference;
   };

@@ -57,10 +57,10 @@ gtk_css_value_reference_parser_error (GtkCssParser         *parser,
 
 static GtkCssTokenStream *
 resolve_reference (GtkCssParser *parser,
-                   const char   *name,
+                   int           id,
                    GtkCssStyle  *style)
 {
-  GtkCssTokenStream *value = gtk_css_style_get_custom_property (style, name);
+  GtkCssTokenStream *value = gtk_css_style_get_custom_property (style, id);
 
   if (value == NULL)
     return NULL;

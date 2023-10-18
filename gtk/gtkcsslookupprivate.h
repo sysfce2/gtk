@@ -49,7 +49,7 @@ void                    _gtk_css_lookup_set                     (GtkCssLookup   
                                                                  GtkCssSection              *section,
                                                                  GtkCssValue                *value);
 void                    _gtk_css_lookup_set_custom              (GtkCssLookup               *lookup,
-                                                                 const char                 *name,
+                                                                 int                         id,
                                                                  GtkCssTokenStream          *value);
 
 static inline const GtkBitmask *

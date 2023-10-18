@@ -49,9 +49,9 @@ typedef void            (* GtkCssParserErrorFunc)               (GtkCssParser   
                                                                  const GError                   *error,
                                                                  gpointer                        user_data);
 
-typedef GtkCssTokenStream * (* GtkCssParserResolveFunc)           (GtkCssParser                   *parser,
-                                                                   const char                     *name,
-                                                                   gpointer                        user_data);
+typedef GtkCssTokenStream * (* GtkCssParserResolveFunc)         (GtkCssParser                   *parser,
+                                                                 int                             id,
+                                                                 gpointer                        user_data);
 
 GtkCssParser *          gtk_css_parser_new_for_file             (GFile                          *file,
                                                                  GtkCssParserErrorFunc           error_func,

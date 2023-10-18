@@ -24,6 +24,7 @@
 
 #include "gtkcssanimationprivate.h"
 #include "gtkcssarrayvalueprivate.h"
+#include "gtkcsscustompropertypoolprivate.h"
 #include "gtkcssenumvalueprivate.h"
 #include "gtkcssinheritvalueprivate.h"
 #include "gtkcssinitialvalueprivate.h"
@@ -89,11 +90,20 @@ gtk_css_style_class_init (GtkCssStyleClass *klass)
 }
 
 static void
+unref_custom_property_name (gpointer pointer)
+{
+  GtkCssCustomPropertyPool *pool;
+
+  pool = gtk_css_custom_property_pool_get ();
+  gtk_css_custom_property_pool_unref (pool, GPOINTER_TO_INT (pointer));
+}
+
+static void
 gtk_css_style_init (GtkCssStyle *style)
 {
-  style->custom_properties = g_hash_table_new_full (g_str_hash,
-                                                    g_str_equal,
-                                                    g_free,
+  style->custom_properties = g_hash_table_new_full (g_direct_hash,
+                                                    g_direct_equal,
+                                                    unref_custom_property_name,
                                                     (GDestroyNotify) gtk_css_token_stream_unref);
 }
 
@@ -376,14 +386,17 @@ gtk_css_style_print (GtkCssStyle *style,
     if (style->custom_properties)
       {
         GHashTableIter iter;
-        const char *name;
+        gpointer id;
         GtkCssTokenStream *value;
 
         g_hash_table_iter_init (&iter, style->custom_properties);
 
         // TODO should sort it too?
-        while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+        while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
           {
+            GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
+            const char *name = gtk_css_custom_property_pool_get_name (pool, GPOINTER_TO_INT (id));
+
             g_string_append_printf (string, "%*s%s: ", indent, "", name);
             gtk_css_token_stream_print (value, string);
             g_string_append_c (string, ';');
@@ -875,7 +888,7 @@ gtk_css_values_new (GtkCssValuesType type)
 
 GtkCssTokenStream *
 gtk_css_style_get_custom_property (GtkCssStyle *style,
-                                   const char  *name)
+                                   int          id)
 {
-  return g_hash_table_lookup (style->custom_properties, name);
+  return g_hash_table_lookup (style->custom_properties, GINT_TO_POINTER (id));
 }

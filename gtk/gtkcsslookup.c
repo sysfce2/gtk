@@ -19,6 +19,7 @@
 
 #include "gtkcsslookupprivate.h"
 
+#include "gtkcsscustompropertypoolprivate.h"
 #include "gtkcssstylepropertyprivate.h"
 #include "gtkcsstypesprivate.h"
 #include "gtkprivatetypebuiltins.h"
@@ -80,14 +81,14 @@ _gtk_css_lookup_set (GtkCssLookup  *lookup,
 
 void
 _gtk_css_lookup_set_custom (GtkCssLookup      *lookup,
-                            const char        *name,
+                            int                id,
                             GtkCssTokenStream *value)
 {
   gtk_internal_return_if_fail (lookup != NULL);
 
   if (!lookup->custom_values)
-    lookup->custom_values = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
+    lookup->custom_values = g_hash_table_new (g_direct_hash, g_direct_equal);
 
-  if (!g_hash_table_contains (lookup->custom_values, name))
-    g_hash_table_replace (lookup->custom_values, (char *) name, value);
+  if (!g_hash_table_contains (lookup->custom_values, GINT_TO_POINTER (id)))
+    g_hash_table_replace (lookup->custom_values, GINT_TO_POINTER (id), value);
 }
