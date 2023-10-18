@@ -756,6 +756,7 @@ if not fs.exists('theme/Default/Default-light.css')
   sassc_opts = [ '-a', '-M', '-t', 'compact' ]
 
   subdir('theme/Default')
+  subdir('theme/libadwaita')
 
   theme_deps += [
     default_theme_deps,
@@ -1012,6 +1013,7 @@ gtk_sources += [
   gtkprivatetypebuiltins,
   gtktypebuiltins,
   font_script_language_sources,
+  libadwaita_stylesheet_resources,
 ]
 
 gtk_deps = [
