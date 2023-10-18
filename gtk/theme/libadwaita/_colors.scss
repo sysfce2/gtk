@@ -64,6 +64,14 @@ window {
 
   --shade-color: @shade_color;
   --scrollbar-outline-color: @scrollbar_outline_color;
+
+  --backdrop-accent-color: #818181;
+  --backdrop-accent-bg-color: #707070;
+
+  &:backdrop {
+    --accent-color: var(--backdrop-accent-color);
+    --accent-bg-color: var(--backdrop-accent-bg-color);
+  }
 }
 
 $accent_bg_color: var(--accent-bg-color);
