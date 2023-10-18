@@ -17,22 +17,13 @@
 
 #include "gtkcsstokenstreamprivate.h"
 
-#include "gtk/gtkcsscustompropertypoolprivate.h" // TODO move this file to gtk/
-
 void
 gtk_css_token_stream_token_clear (GtkCssTokenStreamToken *self)
 {
   if (self->is_reference)
-    {
-      GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
-      gtk_css_custom_property_pool_unref (pool, self->reference.id);
-    }
-  else
-    {
-      gtk_css_token_clear (&self->token.token);
-      if (self->token.section)
-        gtk_css_section_unref (self->token.section);
-    }
+    g_free (self->reference.name);
+  else if (self->token.section)
+    gtk_css_section_unref (self->token.section);
 
   memset (self, 0, sizeof (GtkCssTokenStreamToken));
 }
@@ -73,8 +64,9 @@ gtk_css_token_stream_unref (GtkCssTokenStream *self)
 
       if (token->is_reference)
         {
-          GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
-          gtk_css_custom_property_pool_unref (pool, token->reference.id);
+          g_free (token->reference.name);
+          if (token->reference.fallback)
+            gtk_css_token_stream_unref (token->reference.fallback);
         }
       else
         {
@@ -103,11 +95,8 @@ gtk_css_token_stream_print (GtkCssTokenStream *self,
 
       if (token->is_reference)
         {
-          GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
-          const char *name = gtk_css_custom_property_pool_get_name (pool, token->reference.id);
-
           g_string_append (string, "var(");
-          g_string_append (string, name);
+          g_string_append (string, token->reference.name);
           if (token->reference.fallback)
             {
               g_string_append (string, ", ");

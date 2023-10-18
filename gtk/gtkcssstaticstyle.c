@@ -23,7 +23,6 @@
 
 #include "gtkcssanimationprivate.h"
 #include "gtkcssarrayvalueprivate.h"
-#include "gtkcsscustompropertypoolprivate.h"
 #include "gtkcssenumvalueprivate.h"
 #include "gtkcssinheritvalueprivate.h"
 #include "gtkcssinitialvalueprivate.h"
@@ -49,7 +48,7 @@ static void gtk_css_static_style_compute_value (GtkCssStaticStyle *style,
 static void gtk_css_static_style_compute_custom_value (GtkCssStaticStyle *style,
                                                        GtkStyleProvider  *provider,
                                                        GtkCssStyle       *parent_style,
-                                                       int                id,
+                                                       const char        *name,
                                                        GtkCssTokenStream *value);
 
 static const int core_props[] = {
@@ -695,14 +694,13 @@ gtk_css_static_style_set_value (GtkCssStaticStyle *sstyle,
 
 static void
 gtk_css_static_style_set_custom_value (GtkCssStaticStyle *sstyle,
-                                       int                id,
+                                       const char        *name,
                                        GtkCssTokenStream *value)
 {
   GtkCssStyle *style = (GtkCssStyle *)sstyle;
-  GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
 
   g_hash_table_insert (style->custom_properties,
-                       GINT_TO_POINTER (gtk_css_custom_property_pool_ref (pool, id)),
+                       g_strdup (name),
                        gtk_css_token_stream_ref (value));
 }
 
@@ -935,28 +933,28 @@ gtk_css_lookup_resolve (GtkCssLookup      *lookup,
   if (lookup->custom_values)
     {
       GHashTableIter iter;
-      gpointer id;
+      const char *name;
       GtkCssTokenStream *value;
 
       g_hash_table_iter_init (&iter, lookup->custom_values);
 
-      while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
-        gtk_css_static_style_compute_custom_value (sstyle, provider, parent_style, GPOINTER_TO_INT (id), value);
+      while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+        gtk_css_static_style_compute_custom_value (sstyle, provider, parent_style, name, value);
     }
 
   if (parent_style)
     {
       GtkCssStyle *parent_static = GTK_CSS_STYLE (gtk_css_style_get_static_style (parent_style)); // TODO properly handle animations
       GHashTableIter iter;
-      gpointer id;
+      const char *name;
       GtkCssTokenStream *value;
 
       g_hash_table_iter_init (&iter, parent_static->custom_properties);
 
-      while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
+      while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
         {
-          if (!g_hash_table_contains (style->custom_properties, id))
-            gtk_css_static_style_compute_custom_value (sstyle, provider, parent_static, GPOINTER_TO_INT (id), value);
+          if (!g_hash_table_contains (style->custom_properties, name))
+            gtk_css_static_style_compute_custom_value (sstyle, provider, parent_static, name, value);
         }
     }
 
@@ -1152,12 +1150,12 @@ static void
 gtk_css_static_style_compute_custom_value (GtkCssStaticStyle *style,
                                            GtkStyleProvider  *provider,
                                            GtkCssStyle       *parent_style,
-                                           int                id,
+                                           const char        *name,
                                            GtkCssTokenStream *value)
 {
-  gtk_internal_return_if_fail (id > 0);
+  gtk_internal_return_if_fail (name != NULL);
 
-  gtk_css_static_style_set_custom_value (style, id, value);
+  gtk_css_static_style_set_custom_value (style, name, value);
 }
 
 GtkCssChange
@@ -1174,13 +1172,13 @@ gtk_css_custom_values_compute_changes_and_affects (GtkCssStyle    *style1,
                                                    GtkBitmask    **changes,
                                                    GtkCssAffects  *affects)
 {
-  if (g_hash_table_size (style1->custom_properties) != g_hash_table_size (style2->custom_properties))
+  if (g_hash_table_size (style1->custom_properties) == 0 &&
+      g_hash_table_size (style2->custom_properties) == 0)
     {
-      *changes = _gtk_bitmask_set (*changes, GTK_CSS_PROPERTY_CUSTOM, TRUE);
       return;
     }
 
-  // TODO actually compare things - so try this today
+  // TODO actually compare things
 
-//  *changes = _gtk_bitmask_set (*changes, GTK_CSS_PROPERTY_CUSTOM, TRUE);
+  *changes = _gtk_bitmask_set (*changes, GTK_CSS_PROPERTY_CUSTOM, TRUE);
 }

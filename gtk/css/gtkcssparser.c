@@ -26,8 +26,6 @@
 #include "gtkcsserror.h"
 #include "gtkcsslocationprivate.h"
 
-#include "gtk/gtkcsscustompropertypoolprivate.h" // TODO move this file to gtk/
-
 typedef struct _GtkCssParserBlock GtkCssParserBlock;
 typedef struct _GtkCssParserTokenStreamData GtkCssParserTokenStreamData;
 
@@ -371,7 +369,7 @@ gtk_css_parser_ensure_token (GtkCssParser *self)
                   GtkCssParserTokenStreamData result;
 
                   if (self->resolve_func)
-                    result.stream = self->resolve_func (self, token->reference.id, self->user_data);
+                    result.stream = self->resolve_func (self, token->reference.name, self->user_data);
                   else
                     result.stream = NULL;
 
@@ -1337,8 +1335,6 @@ parse_value_into_token_stream (GtkCssParser *parser,
               if (gtk_css_token_is (token, GTK_CSS_TOKEN_IDENT))
                 {
                   char *var_name = g_strdup (gtk_css_token_get_string (token));
-                  GtkCssTokenStreamToken stream_token;
-                  GtkCssCustomPropertyPool *pool;
 
                   if (var_name[0] != '-' || var_name[1] != '-')
                     {
@@ -1360,12 +1356,9 @@ parse_value_into_token_stream (GtkCssParser *parser,
                       goto error;
                     }
 
-                  pool = gtk_css_custom_property_pool_get ();
-
+                  GtkCssTokenStreamToken stream_token;
                   stream_token.is_reference = TRUE;
-                  stream_token.reference.id =
-                    gtk_css_custom_property_pool_add (pool, var_name);
-                  g_free (var_name);
+                  stream_token.reference.name = var_name;
 
                   if (gtk_css_parser_try_token (parser, GTK_CSS_TOKEN_COMMA))
                     {
