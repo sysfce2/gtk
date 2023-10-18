@@ -345,10 +345,6 @@ gtk_css_ruleset_add_custom (GtkCssRuleset     *ruleset,
                                                           g_free, (GDestroyNotify) gtk_css_token_stream_unref);
     }
 
-  GString *string = g_string_new (NULL);
-  gtk_css_token_stream_print (stream, string);
-  g_string_free (string, TRUE);
-
   g_hash_table_replace (ruleset->custom_properties, g_strdup (name), stream);
 }
 
@@ -554,10 +550,6 @@ gtk_css_style_provider_lookup (GtkStyleProvider             *provider,
 
               while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
                 _gtk_css_lookup_set_custom (lookup, name, value);
-
-              GString *string = g_string_new (NULL);
-              _gtk_css_selector_tree_match_print (ruleset->selector_match, string);
-              g_string_free (string, TRUE);
             }
         }
     }

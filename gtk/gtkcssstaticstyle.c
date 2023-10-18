@@ -1172,13 +1172,43 @@ gtk_css_custom_values_compute_changes_and_affects (GtkCssStyle    *style1,
                                                    GtkBitmask    **changes,
                                                    GtkCssAffects  *affects)
 {
-  if (g_hash_table_size (style1->custom_properties) == 0 &&
-      g_hash_table_size (style2->custom_properties) == 0)
+  GHashTableIter iter;
+  const char *name;
+  GtkCssTokenStream *value;
+
+  if (g_hash_table_size (style1->custom_properties) != g_hash_table_size (style2->custom_properties))
     {
+      *changes = _gtk_bitmask_set (*changes, GTK_CSS_PROPERTY_CUSTOM, TRUE);
       return;
     }
 
-  // TODO actually compare things
+  g_hash_table_iter_init (&iter, style1->custom_properties);
 
-  *changes = _gtk_bitmask_set (*changes, GTK_CSS_PROPERTY_CUSTOM, TRUE);
+  while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+    {
+      if (!g_hash_table_contains (style2->custom_properties, name))
+        {
+          *changes = _gtk_bitmask_set (*changes, GTK_CSS_PROPERTY_CUSTOM, TRUE);
+          return;
+        }
+    }
+
+  g_hash_table_iter_init (&iter, style2->custom_properties);
+
+  while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+    {
+      GtkCssTokenStream *value2 = g_hash_table_lookup (style1->custom_properties, name);
+
+      if (value2 == NULL)
+        {
+          *changes = _gtk_bitmask_set (*changes, GTK_CSS_PROPERTY_CUSTOM, TRUE);
+          return;
+        }
+
+      if (!gtk_css_token_stream_equal (value, value2))
+        {
+          *changes = _gtk_bitmask_set (*changes, GTK_CSS_PROPERTY_CUSTOM, TRUE);
+          return;
+        }
+    }
 }

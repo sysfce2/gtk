@@ -153,6 +153,78 @@ gtk_css_token_clear (GtkCssToken *token)
   token->type = GTK_CSS_TOKEN_EOF;
 }
 
+gboolean
+gtk_css_token_equal (const GtkCssToken *token1,
+                     const GtkCssToken *token2)
+{
+  if (token1->type != token2->type)
+    return FALSE;
+
+  switch (token1->type)
+    {
+    case GTK_CSS_TOKEN_STRING:
+    case GTK_CSS_TOKEN_IDENT:
+    case GTK_CSS_TOKEN_FUNCTION:
+    case GTK_CSS_TOKEN_AT_KEYWORD:
+    case GTK_CSS_TOKEN_HASH_UNRESTRICTED:
+    case GTK_CSS_TOKEN_HASH_ID:
+    case GTK_CSS_TOKEN_URL:
+      if (token1->string.len != token2->string.len)
+        return FALSE;
+
+      if (token1->string.len >= 16)
+        return !g_strcmp0 (token1->string.u.string, token2->string.u.string);
+      else
+        return !g_strcmp0 (token1->string.u.buf, token2->string.u.buf);
+
+    case GTK_CSS_TOKEN_DELIM:
+      return token1->delim.delim == token2->delim.delim;
+
+    case GTK_CSS_TOKEN_SIGNED_INTEGER:
+    case GTK_CSS_TOKEN_SIGNLESS_INTEGER:
+    case GTK_CSS_TOKEN_SIGNED_NUMBER:
+    case GTK_CSS_TOKEN_SIGNLESS_NUMBER:
+    case GTK_CSS_TOKEN_PERCENTAGE:
+      return token1->number.number == token2->number.number;
+
+    case GTK_CSS_TOKEN_SIGNED_INTEGER_DIMENSION:
+    case GTK_CSS_TOKEN_SIGNLESS_INTEGER_DIMENSION:
+    case GTK_CSS_TOKEN_SIGNED_DIMENSION:
+    case GTK_CSS_TOKEN_SIGNLESS_DIMENSION:
+      if (token1->dimension.value != token2->dimension.value)
+        return FALSE;
+
+      return !g_strcmp0 (token1->dimension.dimension, token2->dimension.dimension);
+
+    case GTK_CSS_TOKEN_EOF:
+    case GTK_CSS_TOKEN_WHITESPACE:
+    case GTK_CSS_TOKEN_OPEN_PARENS:
+    case GTK_CSS_TOKEN_CLOSE_PARENS:
+    case GTK_CSS_TOKEN_OPEN_SQUARE:
+    case GTK_CSS_TOKEN_CLOSE_SQUARE:
+    case GTK_CSS_TOKEN_OPEN_CURLY:
+    case GTK_CSS_TOKEN_CLOSE_CURLY:
+    case GTK_CSS_TOKEN_COMMA:
+    case GTK_CSS_TOKEN_COLON:
+    case GTK_CSS_TOKEN_SEMICOLON:
+    case GTK_CSS_TOKEN_CDC:
+    case GTK_CSS_TOKEN_CDO:
+    case GTK_CSS_TOKEN_INCLUDE_MATCH:
+    case GTK_CSS_TOKEN_DASH_MATCH:
+    case GTK_CSS_TOKEN_PREFIX_MATCH:
+    case GTK_CSS_TOKEN_SUFFIX_MATCH:
+    case GTK_CSS_TOKEN_SUBSTRING_MATCH:
+    case GTK_CSS_TOKEN_COLUMN:
+    case GTK_CSS_TOKEN_BAD_STRING:
+    case GTK_CSS_TOKEN_BAD_URL:
+    case GTK_CSS_TOKEN_COMMENT:
+      return TRUE;
+
+    default:
+      g_assert_not_reached ();
+    }
+}
+
 static void
 gtk_css_token_init (GtkCssToken     *token,
                     GtkCssTokenType  type)

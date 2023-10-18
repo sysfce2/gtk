@@ -46,14 +46,16 @@ struct _GtkCssTokenStream
   guint n_tokens;
 };
 
-void               gtk_css_token_stream_token_clear (GtkCssTokenStreamToken *token);
+void               gtk_css_token_stream_token_clear (GtkCssTokenStreamToken  *token);
 
-GtkCssTokenStream *gtk_css_token_stream_new         (GtkCssTokenStreamToken *tokens,
-                                                     guint                   n_tokens);
-GtkCssTokenStream *gtk_css_token_stream_ref         (GtkCssTokenStream      *self);
-void               gtk_css_token_stream_unref       (GtkCssTokenStream      *self);
+GtkCssTokenStream *gtk_css_token_stream_new         (GtkCssTokenStreamToken  *tokens,
+                                                     guint                    n_tokens);
+GtkCssTokenStream *gtk_css_token_stream_ref         (GtkCssTokenStream       *self);
+void               gtk_css_token_stream_unref       (GtkCssTokenStream       *self);
 
-void               gtk_css_token_stream_print       (GtkCssTokenStream      *self,
-                                                     GString                *string);
+void               gtk_css_token_stream_print       (const GtkCssTokenStream *self,
+                                                     GString                 *string);
+gboolean           gtk_css_token_stream_equal       (const GtkCssTokenStream *stream1,
+                                                     const GtkCssTokenStream *stream2) G_GNUC_PURE;
 
 G_END_DECLS

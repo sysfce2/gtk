@@ -81,8 +81,8 @@ gtk_css_token_stream_unref (GtkCssTokenStream *self)
 }
 
 void
-gtk_css_token_stream_print (GtkCssTokenStream *self,
-                            GString           *string)
+gtk_css_token_stream_print (const GtkCssTokenStream *self,
+                            GString                 *string)
 {
   guint i;
 
@@ -111,3 +111,44 @@ gtk_css_token_stream_print (GtkCssTokenStream *self,
     }
 }
 
+gboolean
+gtk_css_token_stream_equal (const GtkCssTokenStream *stream1,
+                            const GtkCssTokenStream *stream2)
+{
+  guint i;
+
+  if (stream1 == NULL && stream2 == NULL)
+    return TRUE;
+
+  if (stream1 == NULL || stream2 == NULL)
+    return FALSE;
+
+  if (stream1->n_tokens != stream2->n_tokens)
+    return FALSE;
+
+  for (i = 0; i < stream1->n_tokens; i++)
+    {
+      GtkCssTokenStreamToken *token1 = &stream1->tokens[i];
+      GtkCssTokenStreamToken *token2 = &stream2->tokens[i];
+
+      if (token1->is_reference != token2->is_reference)
+        return FALSE;
+
+      if (token1->is_reference)
+        {
+          if (g_strcmp0 (token1->reference.name, token2->reference.name))
+            return FALSE;
+
+          if (!gtk_css_token_stream_equal (token1->reference.fallback,
+                                           token2->reference.fallback))
+            return FALSE;
+        }
+      else
+        {
+          if (!gtk_css_token_equal (&token1->token.token, &token2->token.token))
+            return FALSE;
+        }
+    }
+
+  return TRUE;
+}
