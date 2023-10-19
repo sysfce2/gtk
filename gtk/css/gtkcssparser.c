@@ -1377,6 +1377,10 @@ parse_value_into_token_stream (GtkCssParser *parser,
                   if (has_references)
                     *has_references = TRUE;
                 }
+              else
+                {
+                  gtk_css_parser_end_block (parser);
+                }
             }
         }
     }
