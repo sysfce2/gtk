@@ -4,7 +4,7 @@ $focus_border_opacity: if($contrast == 'high', 0.8, 0.5);
 
 // Colors from _defaults.scss
 
-window {
+:root {
   --accent-color: @accent_color;
   --accent-bg-color: @accent_bg_color;
   --accent-fg-color: @accent_fg_color;
@@ -65,8 +65,8 @@ window {
   --shade-color: @shade_color;
   --scrollbar-outline-color: @scrollbar_outline_color;
 
-  --backdrop-accent-color: #818181;
-  --backdrop-accent-bg-color: #707070;
+  --backdrop-accent-color: #666666;
+  --backdrop-accent-bg-color: #7a7a7a;
 
   &:backdrop {
     --accent-color: var(--backdrop-accent-color);
