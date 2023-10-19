@@ -23,6 +23,7 @@
 #include "gdkvulkancontext.h"
 
 #include "gdkdebugprivate.h"
+#include "gdkdmabufprivate.h"
 #include "gdkdrawcontextprivate.h"
 #include "gdkenums.h"
 
@@ -37,6 +38,17 @@ G_BEGIN_DECLS
 #define GDK_VULKAN_CONTEXT_GET_CLASS(obj)	(G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_VULKAN_CONTEXT, GdkVulkanContextClass))
 
 typedef struct _GdkVulkanContextClass GdkVulkanContextClass;
+typedef struct _GdkVulkanDmabufFormat GdkVulkanDmabufFormat;
+
+#ifdef GDK_RENDERING_VULKAN
+struct _GdkVulkanDmabufFormat
+{
+  guint32 drm_format;
+  VkFormat vk_format;
+  VkComponentMapping components;
+  gboolean is_yuv;
+};
+#endif
 
 struct _GdkVulkanContext
 {
@@ -73,6 +85,11 @@ gboolean                gdk_display_init_vulkan                         (GdkDisp
                                                                          GError               **error);
 void                    gdk_display_ref_vulkan                          (GdkDisplay            *display);
 void                    gdk_display_unref_vulkan                        (GdkDisplay            *display);
+
+const GdkDmabufDownloader *
+                        gdk_vulkan_get_dmabuf_downloader                (void) G_GNUC_CONST;
+const GdkVulkanDmabufFormat *
+                        gdk_vulkan_dmabuf_find_format                   (guint32                drm_format);
 
 VkShaderModule          gdk_display_get_vk_shader_module                (GdkDisplay            *display,
                                                                          const char            *resource_name);

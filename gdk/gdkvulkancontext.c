@@ -24,6 +24,10 @@
 
 #include "gdkvulkancontextprivate.h"
 
+#include "gdkdebugprivate.h"
+#include "gdkdmabufformatsbuilderprivate.h"
+#include "gdkdmabuffourccprivate.h"
+#include "gdkdmabuftexture.h"
 #include "gdkdisplayprivate.h"
 #include <glib/gi18n-lib.h>
 #include <math.h>
@@ -1726,6 +1730,7 @@ gdk_display_unref_vulkan (GdkDisplay *display)
 
   GDK_DEBUG (VULKAN, "Closing Vulkan instance");
   display->vulkan_features = 0;
+  g_clear_pointer (&display->vk_dmabuf_formats, gdk_dmabuf_formats_unref);
   g_hash_table_iter_init (&iter, display->vk_shader_modules);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
@@ -1761,6 +1766,142 @@ gdk_display_unref_vulkan (GdkDisplay *display)
     }
   vkDestroyInstance (display->vk_instance, NULL);
   display->vk_instance = VK_NULL_HANDLE;
+}
+
+static const GdkVulkanDmabufFormat vulkan_drm_format_table[] = {
+#ifdef HAVE_DMABUF
+#define SWIZZLE(a, b, c, d) { VK_COMPONENT_SWIZZLE_ ## a, VK_COMPONENT_SWIZZLE_ ## b, VK_COMPONENT_SWIZZLE_ ## c, VK_COMPONENT_SWIZZLE_ ## d }
+#define DEFAULT_SWIZZLE SWIZZLE (R, G, B, A)
+  /* RGBA formats */
+  { DRM_FORMAT_BGR888, VK_FORMAT_R8G8B8_UNORM, DEFAULT_SWIZZLE, FALSE },
+  { DRM_FORMAT_RGB888, VK_FORMAT_B8G8R8_UNORM, DEFAULT_SWIZZLE, FALSE },
+  { DRM_FORMAT_ABGR8888, VK_FORMAT_R8G8B8A8_UNORM, DEFAULT_SWIZZLE, FALSE },
+  { DRM_FORMAT_ARGB8888, VK_FORMAT_B8G8R8A8_UNORM, DEFAULT_SWIZZLE, FALSE },
+  { DRM_FORMAT_XBGR8888, VK_FORMAT_R8G8B8A8_UNORM, SWIZZLE(R, G, B, ONE), FALSE },
+  { DRM_FORMAT_XRGB8888, VK_FORMAT_B8G8R8A8_UNORM, SWIZZLE(R, G, B, ONE), FALSE },
+  /* YUV formats */
+  { DRM_FORMAT_NV12, VK_FORMAT_G8_B8R8_2PLANE_420_UNORM, DEFAULT_SWIZZLE, TRUE },
+  { DRM_FORMAT_YUYV, VK_FORMAT_G8B8G8R8_422_UNORM, DEFAULT_SWIZZLE, TRUE },
+  { DRM_FORMAT_UYVY, VK_FORMAT_B8G8R8G8_422_UNORM, DEFAULT_SWIZZLE, TRUE },
+#undef DEFAULT_SWIZZLE
+#undef SWIZZLE
+#endif
+};
+
+const GdkVulkanDmabufFormat *
+gdk_vulkan_dmabuf_find_format (guint32 drm_format)
+{
+  gsize i;
+
+  for (i = 0; i < G_N_ELEMENTS (vulkan_drm_format_table); i++)
+    {
+      if (vulkan_drm_format_table[i].drm_format == drm_format)
+        return &vulkan_drm_format_table[i];
+    }
+
+  return NULL;
+}
+
+static gboolean
+gdk_vulkan_dmabuf_downloader_add_formats (const GdkDmabufDownloader *downloader,
+                                          GdkDisplay                *display,
+                                          GdkDmabufFormatsBuilder   *builder)
+{
+  GdkDmabufFormatsBuilder *vulkan_builder;
+  VkDrmFormatModifierPropertiesEXT modifier_list[100];
+  VkDrmFormatModifierPropertiesListEXT modifier_props = {
+    .sType = VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT,
+    .pNext = NULL,
+    .pDrmFormatModifierProperties = modifier_list,
+  };
+  VkFormatProperties2 props = {
+    .sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2,
+    .pNext = &modifier_props,
+  };
+  gsize i, j;
+
+  g_assert (display->vulkan_refcount);
+  g_assert (display->vk_dmabuf_formats == NULL);
+
+  if ((display->vulkan_features & GDK_VULKAN_FEATURE_DMABUF) == 0)
+    return FALSE;
+
+  vulkan_builder = gdk_dmabuf_formats_builder_new ();
+
+  for (i = 0; i < G_N_ELEMENTS (vulkan_drm_format_table); i++)
+    {
+      modifier_props.drmFormatModifierCount = sizeof (modifier_list);
+      vkGetPhysicalDeviceFormatProperties2 (display->vk_physical_device,
+                                            vulkan_drm_format_table[i].vk_format,
+                                            &props);
+      g_warn_if_fail (modifier_props.drmFormatModifierCount < sizeof (modifier_list));
+      for (j = 0; j < modifier_props.drmFormatModifierCount; j++)
+        {
+          GDK_DISPLAY_DEBUG (display, DMABUF,
+                             "Vulkan supports dmabuf format %.4s::%016llx with %u planes and features 0x%x",
+                             (char *) &vulkan_drm_format_table[i].drm_format,
+                             (long long unsigned) modifier_list[j].drmFormatModifier,
+                             modifier_list[j].drmFormatModifierPlaneCount,
+                             modifier_list[j].drmFormatModifierTilingFeatures);
+
+          if (modifier_list[j].drmFormatModifier == DRM_FORMAT_MOD_LINEAR ||
+              modifier_list[j].drmFormatModifier == DRM_FORMAT_MOD_INVALID)
+            continue;
+
+          gdk_dmabuf_formats_builder_add_format (vulkan_builder,
+                                                 vulkan_drm_format_table[i].drm_format,
+                                                 modifier_list[j].drmFormatModifier);
+        }
+    }
+
+  display->vk_dmabuf_formats = gdk_dmabuf_formats_builder_free_to_formats (vulkan_builder);
+
+  gdk_dmabuf_formats_builder_add_formats (builder, display->vk_dmabuf_formats);
+
+  return TRUE;
+}
+
+static gboolean
+gdk_vulkan_dmabuf_downloader_supports (const GdkDmabufDownloader *downloader,
+                                       GdkDisplay                *display,
+                                       const GdkDmabuf           *dmabuf,
+                                       gboolean                   premultiplied,
+                                       GdkMemoryFormat           *out_format,
+                                       GError                   **error)
+{
+  if (!gdk_dmabuf_formats_contains (display->vk_dmabuf_formats, dmabuf->fourcc, dmabuf->modifier))
+    {
+      g_set_error (error, GDK_DMABUF_ERROR, GDK_DMABUF_ERROR_UNSUPPORTED_FORMAT,
+                   "Unsupported dmabuf format %.4s::%016llx",
+                   (char *) &dmabuf->fourcc, (unsigned long long) dmabuf->modifier);
+      return FALSE;
+    }
+
+  *out_format = GDK_MEMORY_R8G8B8A8_PREMULTIPLIED;
+  return TRUE;
+}
+
+static void
+gdk_vulkan_dmabuf_downloader_download (const GdkDmabufDownloader *downloader,
+                                       GdkTexture                *texture,
+                                       GdkMemoryFormat            format,
+                                       guchar                    *data,
+                                       gsize                      stride)
+{
+  g_print ("hahaha, not doing anything because I'm LAAAAAZY!\n");
+}
+
+const GdkDmabufDownloader *
+gdk_vulkan_get_dmabuf_downloader (void)
+{
+  static const GdkDmabufDownloader downloader = {
+    "Vulkan",
+    gdk_vulkan_dmabuf_downloader_add_formats,
+    gdk_vulkan_dmabuf_downloader_supports,
+    gdk_vulkan_dmabuf_downloader_download,
+  };
+
+  return &downloader;
 }
 
 VkShaderModule
