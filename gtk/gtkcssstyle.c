@@ -375,7 +375,7 @@ gtk_css_style_print (GtkCssStyle *style,
       {
         GHashTableIter iter;
         const char *name;
-        GtkCssTokenStream *value;
+        GtkCssVariableValue *value;
 
         g_hash_table_iter_init (&iter, style->custom_properties);
 
@@ -383,7 +383,7 @@ gtk_css_style_print (GtkCssStyle *style,
         while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
           {
             g_string_append_printf (string, "%*s%s: ", indent, "", name);
-            gtk_css_token_stream_print (value, string);
+            gtk_css_variable_value_print (value, string);
             g_string_append_c (string, ';');
 
 #if 0
@@ -871,7 +871,7 @@ gtk_css_values_new (GtkCssValuesType type)
   return values;
 }
 
-GtkCssTokenStream *
+GtkCssVariableValue *
 gtk_css_style_get_custom_property (GtkCssStyle *style,
                                    const char  *name)
 {

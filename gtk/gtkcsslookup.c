@@ -79,15 +79,17 @@ _gtk_css_lookup_set (GtkCssLookup  *lookup,
 }
 
 void
-_gtk_css_lookup_set_custom (GtkCssLookup      *lookup,
-                            const char        *name,
-                            GtkCssTokenStream *value)
+_gtk_css_lookup_set_custom (GtkCssLookup        *lookup,
+                            const char          *name,
+                            GtkCssVariableValue *value)
 {
   gtk_internal_return_if_fail (lookup != NULL);
 
   if (!lookup->custom_values)
     lookup->custom_values = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 
-  if (!g_hash_table_contains (lookup->custom_values, name))
-    g_hash_table_replace (lookup->custom_values, (char *) name, value);
+  if (g_hash_table_contains (lookup->custom_values, name)) // TODO should we replace it anyway?
+    return;
+
+  g_hash_table_replace (lookup->custom_values, (char *) name, value);
 }

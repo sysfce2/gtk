@@ -6,9 +6,9 @@ gtk_css_public_sources = files([
 gtk_css_private_sources = files([
   'gtkcssdataurl.c',
   'gtkcssparser.c',
-  'gtkcsstokenizer.c',
   'gtkcssserializer.c',
-  'gtkcsstokenstream.c',
+  'gtkcsstokenizer.c',
+  'gtkcssvariablevalue.c',
 ])
 
 gtk_css_public_headers = files([

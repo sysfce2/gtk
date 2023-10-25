@@ -24,7 +24,7 @@
 
 #include "gtk/gtkbitmaskprivate.h"
 #include "gtk/gtkcssvalueprivate.h"
-#include "gtk/css/gtkcsstokenstreamprivate.h"
+#include "gtk/css/gtkcssvariablevalueprivate.h"
 
 G_BEGIN_DECLS
 
@@ -270,7 +270,7 @@ char *                  gtk_css_style_compute_font_features     (GtkCssStyle    
 PangoAttrList *         gtk_css_style_get_pango_attributes      (GtkCssStyle            *style);
 PangoFontDescription *  gtk_css_style_get_pango_font            (GtkCssStyle            *style);
 
-GtkCssTokenStream *     gtk_css_style_get_custom_property       (GtkCssStyle            *style,
+GtkCssVariableValue *   gtk_css_style_get_custom_property       (GtkCssStyle            *style,
                                                                  const char             *name);
 
 GtkCssValues *gtk_css_values_new   (GtkCssValuesType  type);

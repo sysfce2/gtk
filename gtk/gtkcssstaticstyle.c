@@ -45,12 +45,6 @@ static void gtk_css_static_style_compute_value (GtkCssStaticStyle *style,
                                                 GtkCssValue       *specified,
                                                 GtkCssSection     *section);
 
-static void gtk_css_static_style_compute_custom_value (GtkCssStaticStyle *style,
-                                                       GtkStyleProvider  *provider,
-                                                       GtkCssStyle       *parent_style,
-                                                       const char        *name,
-                                                       GtkCssTokenStream *value);
-
 static const int core_props[] = {
   GTK_CSS_PROPERTY_COLOR,
   GTK_CSS_PROPERTY_DPI,
@@ -693,9 +687,9 @@ gtk_css_static_style_set_value (GtkCssStaticStyle *sstyle,
 }
 
 static void
-gtk_css_static_style_set_custom_value (GtkCssStaticStyle *sstyle,
-                                       const char        *name,
-                                       GtkCssTokenStream *value)
+gtk_css_static_style_set_custom_value (GtkCssStaticStyle   *sstyle,
+                                       const char          *name,
+                                       GtkCssVariableValue *value)
 {
   GtkCssStyle *style = (GtkCssStyle *)sstyle;
 
@@ -703,7 +697,7 @@ gtk_css_static_style_set_custom_value (GtkCssStaticStyle *sstyle,
 
   g_hash_table_insert (style->custom_properties,
                        g_strdup (name),
-                       gtk_css_token_stream_ref (value));
+                       gtk_css_variable_value_ref (value));
 }
 
 static GtkCssStyle *default_style;
@@ -936,16 +930,16 @@ gtk_css_lookup_resolve (GtkCssLookup      *lookup,
     {
       GHashTableIter iter;
       const char *name;
-      GtkCssTokenStream *value;
+      GtkCssVariableValue *value;
 
       style->custom_properties =
         g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
-                               (GDestroyNotify) gtk_css_token_stream_unref);
+                               (GDestroyNotify) gtk_css_variable_value_unref);
 
       g_hash_table_iter_init (&iter, lookup->custom_values);
 
       while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
-        gtk_css_static_style_compute_custom_value (sstyle, provider, parent_style, name, value);
+        gtk_css_static_style_set_custom_value (sstyle, name, value);
 
       if (parent_style)
         {
@@ -958,7 +952,7 @@ gtk_css_lookup_resolve (GtkCssLookup      *lookup,
               while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
                 {
                   if (!g_hash_table_contains (style->custom_properties, name))
-                    gtk_css_static_style_compute_custom_value (sstyle, provider, parent_static, name, value);
+                    gtk_css_static_style_set_custom_value (sstyle, name, value);
                 }
             }
         }
@@ -1162,18 +1156,6 @@ gtk_css_static_style_compute_value (GtkCssStaticStyle *style,
   gtk_css_static_style_set_value (style, id, value, section);
 }
 
-static void
-gtk_css_static_style_compute_custom_value (GtkCssStaticStyle *style,
-                                           GtkStyleProvider  *provider,
-                                           GtkCssStyle       *parent_style,
-                                           const char        *name,
-                                           GtkCssTokenStream *value)
-{
-  gtk_internal_return_if_fail (name != NULL);
-
-  gtk_css_static_style_set_custom_value (style, name, value);
-}
-
 GtkCssChange
 gtk_css_static_style_get_change (GtkCssStaticStyle *style)
 {
@@ -1190,7 +1172,7 @@ gtk_css_custom_values_compute_changes_and_affects (GtkCssStyle    *style1,
 {
   GHashTableIter iter;
   const char *name;
-  GtkCssTokenStream *value;
+  GtkCssVariableValue *value;
 
   if (style1->custom_properties == style2->custom_properties)
     return;
@@ -1222,7 +1204,7 @@ gtk_css_custom_values_compute_changes_and_affects (GtkCssStyle    *style1,
 
   while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
     {
-      GtkCssTokenStream *value2 = g_hash_table_lookup (style1->custom_properties, name);
+      GtkCssVariableValue *value2 = g_hash_table_lookup (style1->custom_properties, name);
 
       if (value2 == NULL)
         {
@@ -1230,7 +1212,7 @@ gtk_css_custom_values_compute_changes_and_affects (GtkCssStyle    *style1,
           return;
         }
 
-      if (!gtk_css_token_stream_equal (value, value2))
+      if (!gtk_css_variable_value_equal (value, value2))
         {
           *changes = _gtk_bitmask_set (*changes, GTK_CSS_PROPERTY_CUSTOM, TRUE);
           return;

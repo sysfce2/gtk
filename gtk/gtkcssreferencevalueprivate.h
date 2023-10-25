@@ -18,17 +18,16 @@
 #pragma once
 
 #include <gtk/css/gtkcss.h>
-#include "gtk/css/gtkcsstokenstreamprivate.h"
-#include "gtkstylepropertyprivate.h"
 #include "gtkcssvalueprivate.h"
+#include "gtkstylepropertyprivate.h"
+#include "css/gtkcssvariablevalueprivate.h"
 
 G_BEGIN_DECLS
 
-GtkCssValue *_gtk_css_reference_value_new             (GtkStyleProperty  *property,
-                                                       GtkCssTokenStream *stream,
-                                                       GFile             *file);
-
-void         _gtk_css_reference_value_set_subproperty (GtkCssValue       *value,
-                                                       guint              property);
+GtkCssValue *_gtk_css_reference_value_new             (GtkStyleProperty    *property,
+                                                       GtkCssVariableValue *value,
+                                                       GFile               *file);
+void         _gtk_css_reference_value_set_subproperty (GtkCssValue         *value,
+                                                       guint                property);
 
 G_END_DECLS

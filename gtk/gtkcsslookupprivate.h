@@ -23,6 +23,8 @@
 #include "gtk/gtkcssstaticstyleprivate.h"
 
 #include "gtk/css/gtkcsssection.h"
+#include "gtk/css/gtkcsstokenizerprivate.h"
+#include "gtk/css/gtkcssvariablevalueprivate.h"
 
 
 G_BEGIN_DECLS
@@ -50,7 +52,7 @@ void                    _gtk_css_lookup_set                     (GtkCssLookup   
                                                                  GtkCssValue                *value);
 void                    _gtk_css_lookup_set_custom              (GtkCssLookup               *lookup,
                                                                  const char                 *name,
-                                                                 GtkCssTokenStream          *value);
+                                                                 GtkCssVariableValue        *value);
 
 static inline const GtkBitmask *
 _gtk_css_lookup_get_set_values (const GtkCssLookup *lookup)
