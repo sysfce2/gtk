@@ -900,6 +900,12 @@ parse_declaration (GtkCssScanner *scanner,
       if (tokens == NULL)
         goto out;
 
+      if (n_tokens == 1 && gtk_css_token_is_ident (&tokens[0], "initial"))
+        {
+          g_clear_pointer (&tokens, g_free);
+          n_tokens = 0;
+        }
+
       if (gtk_keep_css_sections)
         {
           section = gtk_css_section_new (gtk_css_parser_get_file (scanner->parser),

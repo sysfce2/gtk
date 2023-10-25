@@ -117,7 +117,7 @@ resolve_references_do (GtkCssToken *tokens,
               GtkCssVariableValue *value = gtk_css_style_get_custom_property (style, name);
               gboolean success = FALSE;
 
-              if (value != NULL)
+              if (value != NULL && value->n_tokens > 0)
                 {
                   GArray *buffer = g_array_new (FALSE, FALSE, sizeof (GtkCssToken));
 

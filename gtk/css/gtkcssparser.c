@@ -1176,8 +1176,6 @@ gtk_css_parser_parse_value_into_token_stream (GtkCssParser   *parser,
 
   g_array_set_clear_func (tokens, (GDestroyNotify) gtk_css_token_clear);
 
-  // TODO: handle `initial` to reset to guaranteed-invalid value
-
   if (out_has_refs)
     *out_has_refs = FALSE;
 
