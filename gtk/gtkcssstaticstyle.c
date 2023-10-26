@@ -941,13 +941,15 @@ gtk_css_lookup_resolve (GtkCssLookup      *lookup,
       while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
         gtk_css_static_style_set_custom_value (sstyle, name, value);
 
+      // TODO Resolve dep cycles here I guess?
+
       if (parent_style)
         {
-          GtkCssStyle *parent_static = GTK_CSS_STYLE (gtk_css_style_get_static_style (parent_style)); // TODO properly handle animations
+          GtkCssStyle *parent_sstyle = GTK_CSS_STYLE (gtk_css_style_get_static_style (parent_style)); // TODO properly handle animations
 
-          if (parent_static->custom_properties)
+          if (parent_sstyle->custom_properties)
             {
-              g_hash_table_iter_init (&iter, parent_static->custom_properties);
+              g_hash_table_iter_init (&iter, parent_sstyle->custom_properties);
 
               while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
                 {
@@ -957,15 +959,12 @@ gtk_css_lookup_resolve (GtkCssLookup      *lookup,
             }
         }
     }
-  else
+  else if (parent_style)
     {
-      if (parent_style)
-        {
-          GtkCssStyle *parent_static = GTK_CSS_STYLE (gtk_css_style_get_static_style (parent_style)); // TODO properly handle animations
+      GtkCssStyle *parent_sstyle = GTK_CSS_STYLE (gtk_css_style_get_static_style (parent_style)); // TODO properly handle animations
 
-          if (parent_static->custom_properties)
-            style->custom_properties = g_hash_table_ref (parent_static->custom_properties);
-        }
+      if (parent_sstyle->custom_properties)
+        style->custom_properties = g_hash_table_ref (parent_sstyle->custom_properties);
     }
 
   if (_gtk_bitmask_is_empty (_gtk_css_lookup_get_set_values (lookup)))

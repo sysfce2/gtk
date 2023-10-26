@@ -1118,8 +1118,6 @@ parse_ruleset (GtkCssScanner *scanner)
 
   gtk_css_parser_end_block (scanner->parser);
 
-  // TODO: Find custom property cyclic dependencies
-
   css_provider_commit (scanner->provider, &selectors, &ruleset);
   gtk_css_ruleset_clear (&ruleset);
 

@@ -220,7 +220,6 @@ gtk_css_value_reference_compute (GtkCssValue      *value,
 
   if (GTK_IS_CSS_SHORTHAND_PROPERTY (value->property))
     {
-      // TODO handle initial/inherit/unset?
       GtkCssValue *sub = gtk_css_value_ref (_gtk_css_array_value_get_nth (result, value->subproperty));
       gtk_css_value_unref (result);
       result = sub;
