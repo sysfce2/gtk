@@ -271,7 +271,7 @@ PangoAttrList *         gtk_css_style_get_pango_attributes      (GtkCssStyle    
 PangoFontDescription *  gtk_css_style_get_pango_font            (GtkCssStyle            *style);
 
 GtkCssVariableValue *   gtk_css_style_get_custom_property       (GtkCssStyle            *style,
-                                                                 const char             *name);
+                                                                int                      id);
 
 GtkCssValues *gtk_css_values_new   (GtkCssValuesType  type);
 GtkCssValues *gtk_css_values_ref   (GtkCssValues     *values);

@@ -20,6 +20,7 @@
 #include "gtkcssreferencevalueprivate.h"
 
 #include "gtkcssarrayvalueprivate.h"
+#include "gtkcsscustompropertypoolprivate.h"
 #include "gtkcssshorthandpropertyprivate.h"
 #include "gtkcssstyleprivate.h"
 #include "gtkcssunsetvalueprivate.h"
@@ -64,9 +65,10 @@ resolve_references_do (GtkCssToken *tokens,
                        GtkCssStyle *style,
                        GArray      *output)
 {
+  GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
   GArray *blocks;
   gsize i;
-  const char *name = NULL;
+  int var_id = -1;
   int var_level = -1;
   int fallback_start = -1;
 
@@ -82,6 +84,8 @@ resolve_references_do (GtkCssToken *tokens,
           g_array_append_val (blocks, closing_type);
           if (var_level < 0 && gtk_css_token_is_function (token, "var"))
             {
+              const char *name;
+
               var_level = blocks->len;
 
               if (i + 1 >= n_tokens ||
@@ -91,6 +95,7 @@ resolve_references_do (GtkCssToken *tokens,
                 }
 
               name = gtk_css_token_get_string (&tokens[i + 1]);
+              var_id = gtk_css_custom_property_pool_add (pool, name);
 
               if (i + 2 >= n_tokens)
                 goto error;
@@ -114,7 +119,7 @@ resolve_references_do (GtkCssToken *tokens,
         {
           if (var_level == blocks->len)
             {
-              GtkCssVariableValue *value = gtk_css_style_get_custom_property (style, name);
+              GtkCssVariableValue *value = gtk_css_style_get_custom_property (style, var_id);
               gboolean success = FALSE;
 
               if (value != NULL && value->n_tokens > 0)
@@ -144,7 +149,7 @@ resolve_references_do (GtkCssToken *tokens,
               if (limit_length && output->len > MAX_TOKEN_LENGTH)
                 goto error;
 
-              name = NULL;
+              var_id = -1;
               fallback_start = -1;
               var_level = -1;
               continue;

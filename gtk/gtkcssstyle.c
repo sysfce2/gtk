@@ -24,6 +24,7 @@
 
 #include "gtkcssanimationprivate.h"
 #include "gtkcssarrayvalueprivate.h"
+#include "gtkcsscustompropertypoolprivate.h"
 #include "gtkcssenumvalueprivate.h"
 #include "gtkcssinheritvalueprivate.h"
 #include "gtkcssinitialvalueprivate.h"
@@ -373,15 +374,17 @@ gtk_css_style_print (GtkCssStyle *style,
 
     if (style->custom_properties)
       {
+        GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
         GHashTableIter iter;
-        const char *name;
+        gpointer id;
         GtkCssVariableValue *value;
 
         g_hash_table_iter_init (&iter, style->custom_properties);
 
         // TODO should sort it too?
-        while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+        while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
           {
+            const char *name = gtk_css_custom_property_pool_get_name (pool, GPOINTER_TO_INT (id));
             g_string_append_printf (string, "%*s%s: ", indent, "", name);
             gtk_css_variable_value_print (value, string);
             g_string_append_c (string, ';');
@@ -873,10 +876,10 @@ gtk_css_values_new (GtkCssValuesType type)
 
 GtkCssVariableValue *
 gtk_css_style_get_custom_property (GtkCssStyle *style,
-                                   const char  *name)
+                                   int          id)
 {
   if (style->custom_properties)
-    return g_hash_table_lookup (style->custom_properties, name);
+    return g_hash_table_lookup (style->custom_properties, GINT_TO_POINTER (id));
 
   return NULL;
 }

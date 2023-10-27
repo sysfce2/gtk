@@ -23,6 +23,7 @@
 
 #include "gtkcssanimationprivate.h"
 #include "gtkcssarrayvalueprivate.h"
+#include "gtkcsscustompropertypoolprivate.h"
 #include "gtkcssenumvalueprivate.h"
 #include "gtkcssinheritvalueprivate.h"
 #include "gtkcssinitialvalueprivate.h"
@@ -688,15 +689,16 @@ gtk_css_static_style_set_value (GtkCssStaticStyle *sstyle,
 
 static void
 gtk_css_static_style_set_custom_value (GtkCssStaticStyle   *sstyle,
-                                       const char          *name,
+                                       int                  id,
                                        GtkCssVariableValue *value)
 {
   GtkCssStyle *style = (GtkCssStyle *)sstyle;
+  GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
 
   g_assert (style->custom_properties);
 
   g_hash_table_insert (style->custom_properties,
-                       g_strdup (name),
+                       GINT_TO_POINTER (gtk_css_custom_property_pool_ref (pool, id)),
                        gtk_css_variable_value_ref (value));
 }
 
@@ -914,6 +916,15 @@ gtk_css_other_create_initial_values (void)
 }
 
 static void
+unref_custom_property_name (gpointer pointer)
+{
+  GtkCssCustomPropertyPool *pool;
+
+  pool = gtk_css_custom_property_pool_get ();
+  gtk_css_custom_property_pool_unref (pool, GPOINTER_TO_INT (pointer));
+}
+
+static void
 gtk_css_lookup_resolve (GtkCssLookup      *lookup,
                         GtkStyleProvider  *provider,
                         GtkCssStaticStyle *sstyle,
@@ -929,17 +940,18 @@ gtk_css_lookup_resolve (GtkCssLookup      *lookup,
   if (lookup->custom_values)
     {
       GHashTableIter iter;
-      const char *name;
+      gpointer id;
       GtkCssVariableValue *value;
 
       style->custom_properties =
-        g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+        g_hash_table_new_full (g_direct_hash, g_direct_equal,
+                               unref_custom_property_name,
                                (GDestroyNotify) gtk_css_variable_value_unref);
 
       g_hash_table_iter_init (&iter, lookup->custom_values);
 
-      while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
-        gtk_css_static_style_set_custom_value (sstyle, name, value);
+      while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
+        gtk_css_static_style_set_custom_value (sstyle, GPOINTER_TO_INT (id), value);
 
       // TODO Resolve dep cycles here I guess?
 
@@ -951,10 +963,10 @@ gtk_css_lookup_resolve (GtkCssLookup      *lookup,
             {
               g_hash_table_iter_init (&iter, parent_sstyle->custom_properties);
 
-              while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+              while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
                 {
-                  if (!g_hash_table_contains (style->custom_properties, name))
-                    gtk_css_static_style_set_custom_value (sstyle, name, value);
+                  if (!g_hash_table_contains (style->custom_properties, id))
+                    gtk_css_static_style_set_custom_value (sstyle, GPOINTER_TO_INT (id), value);
                 }
             }
         }
@@ -1170,7 +1182,7 @@ gtk_css_custom_values_compute_changes_and_affects (GtkCssStyle    *style1,
                                                    GtkCssAffects  *affects)
 {
   GHashTableIter iter;
-  const char *name;
+  gpointer id;
   GtkCssVariableValue *value;
 
   if (style1->custom_properties == style2->custom_properties)
@@ -1190,9 +1202,9 @@ gtk_css_custom_values_compute_changes_and_affects (GtkCssStyle    *style1,
 
   g_hash_table_iter_init (&iter, style1->custom_properties);
 
-  while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+  while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
     {
-      if (!g_hash_table_contains (style2->custom_properties, name))
+      if (!g_hash_table_contains (style2->custom_properties, id))
         {
           *changes = _gtk_bitmask_set (*changes, GTK_CSS_PROPERTY_CUSTOM, TRUE);
           return;
@@ -1201,9 +1213,9 @@ gtk_css_custom_values_compute_changes_and_affects (GtkCssStyle    *style1,
 
   g_hash_table_iter_init (&iter, style2->custom_properties);
 
-  while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+  while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
     {
-      GtkCssVariableValue *value2 = g_hash_table_lookup (style1->custom_properties, name);
+      GtkCssVariableValue *value2 = g_hash_table_lookup (style1->custom_properties, id);
 
       if (value2 == NULL)
         {

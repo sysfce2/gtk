@@ -26,6 +26,7 @@
 #include "gtkbitmaskprivate.h"
 #include "gtkcssarrayvalueprivate.h"
 #include "gtkcsscolorvalueprivate.h"
+#include "gtkcsscustompropertypoolprivate.h"
 #include "gtkcsskeyframesprivate.h"
 #include "gtkcssreferencevalueprivate.h"
 #include "gtkcssselectorprivate.h"
@@ -339,6 +340,14 @@ free_custom_property_value (CustomPropertyValue *value)
 }
 
 static void
+unref_custom_property_name (gpointer pointer)
+{
+  GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
+
+  gtk_css_custom_property_pool_unref (pool, GPOINTER_TO_INT (pointer));
+}
+
+static void
 gtk_css_ruleset_add_custom (GtkCssRuleset  *ruleset,
                             const char     *name,
                             GtkCssSection  *section,
@@ -347,6 +356,8 @@ gtk_css_ruleset_add_custom (GtkCssRuleset  *ruleset,
                             char          **refs,
                             gsize           n_refs)
 {
+  GtkCssCustomPropertyPool *pool;
+  int id;
   CustomPropertyValue *value;
 
   g_return_if_fail (ruleset->owns_styles || (ruleset->n_styles == 0 && ruleset->custom_properties == NULL));
@@ -355,16 +366,20 @@ gtk_css_ruleset_add_custom (GtkCssRuleset  *ruleset,
 
   if (ruleset->custom_properties == NULL)
     {
-      ruleset->custom_properties = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                                          g_free, (GDestroyNotify) free_custom_property_value);
+      ruleset->custom_properties = g_hash_table_new_full (g_direct_hash, g_direct_equal,
+                                                          unref_custom_property_name,
+                                                          (GDestroyNotify) free_custom_property_value);
     }
+
+  pool = gtk_css_custom_property_pool_get ();
+  id = gtk_css_custom_property_pool_add (pool, name);
 
   value = g_new0 (CustomPropertyValue, 1);
   value->value = gtk_css_variable_value_new (section, tokens, n_tokens);
   value->refs = refs;
   value->n_refs = n_refs;
 
-  g_hash_table_replace (ruleset->custom_properties, g_strdup (name), value);
+  g_hash_table_replace (ruleset->custom_properties, GINT_TO_POINTER (id), value);
 }
 
 static void
@@ -562,13 +577,13 @@ gtk_css_style_provider_lookup (GtkStyleProvider             *provider,
           if (ruleset->custom_properties)
             {
               GHashTableIter iter;
-              const char *name;
+              gpointer id;
               CustomPropertyValue *value;
 
               g_hash_table_iter_init (&iter, ruleset->custom_properties);
 
-              while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
-                _gtk_css_lookup_set_custom (lookup, name, value->value);
+              while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
+                _gtk_css_lookup_set_custom (lookup, GPOINTER_TO_INT (id), value->value);
             }
         }
     }
@@ -1694,15 +1709,19 @@ gtk_css_ruleset_print (const GtkCssRuleset *ruleset,
 
         if (ruleset->custom_properties)
           {
+            GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
             GHashTableIter iter;
-            const char *name;
+            gpointer id;
             CustomPropertyValue *value;
 
             g_hash_table_iter_init (&iter, ruleset->custom_properties);
 
             // TODO should sort it too?
-            while (g_hash_table_iter_next (&iter, (gpointer) &name, (gpointer) &value))
+            while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
               {
+                const char *name =
+                  gtk_css_custom_property_pool_get_name (pool, GPOINTER_TO_INT (id));
+
                 g_string_append (str, "  ");
                 g_string_append (str, name);
                 g_string_append (str, ": ");
