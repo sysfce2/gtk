@@ -15,6 +15,8 @@ if not fs.exists('base.css')
 
     scss_deps = files([
       '_colors.scss',
+      '_colors-var.scss',
+      '_colors-novar.scss',
       '_common.scss',
       '_compat-colors.scss',
       '_defaults.scss',
