@@ -940,9 +940,6 @@ parse_declaration (GtkCssScanner *scanner,
   if (property)
     {
       GtkCssSection *section;
-      GtkCssVariableValueToken *tokens;
-      gsize n_tokens;
-      gboolean has_refs;
       GtkCssValue *value;
 
       if (!gtk_css_parser_try_token (scanner->parser, GTK_CSS_TOKEN_COLON))
@@ -951,17 +948,19 @@ parse_declaration (GtkCssScanner *scanner,
           goto out;
         }
 
-      tokens = gtk_css_parser_parse_value_into_token_stream (scanner->parser,
-                                                             &n_tokens,
-                                                             &has_refs,
-                                                             NULL,
-                                                             NULL);
-      if (tokens == NULL)
-        goto out;
-
-      if (has_refs)
+      if (gtk_css_parser_find_references (scanner->parser, NULL, NULL))
         {
           GtkCssVariableValue *var_value;
+          GtkCssVariableValueToken *tokens;
+          gsize n_tokens;
+
+          tokens = gtk_css_parser_parse_value_into_token_stream (scanner->parser,
+                                                                 &n_tokens,
+                                                                 NULL,
+                                                                 NULL,
+                                                                 NULL);
+          if (tokens == NULL)
+            goto out;
 
           if (!gtk_css_parser_has_token (scanner->parser, GTK_CSS_TOKEN_EOF))
             {
@@ -1007,39 +1006,17 @@ parse_declaration (GtkCssScanner *scanner,
         }
       else
         {
-          GtkCssVariableValue *var_value;
-          GtkCssParser *value_parser;
-
-          var_value = gtk_css_variable_value_new (NULL, tokens, n_tokens);
-          value_parser =
-            gtk_css_parser_new_for_token_stream (var_value,
-                                                 gtk_css_parser_get_file (scanner->parser),
-                                                 gtk_css_scanner_parser_error,
-                                                 scanner, NULL);
-
-          // TODO: share parser between values? Creating a new one for each
-          // value is likely expensive, tho I'm not seeing slowdowns offhand
-
-          value = _gtk_style_property_parse_value (property, value_parser);
+          value = _gtk_style_property_parse_value (property, scanner->parser);
 
           if (value == NULL)
-            {
-              gtk_css_parser_unref (value_parser);
-              gtk_css_variable_value_unref (var_value);
-              goto out;
-            }
+            goto out;
 
-          if (!gtk_css_parser_has_token (value_parser, GTK_CSS_TOKEN_EOF))
+          if (!gtk_css_parser_has_token (scanner->parser, GTK_CSS_TOKEN_EOF))
             {
-              gtk_css_parser_error_syntax (value_parser, "Junk at end of value for %s", property->name);
+              gtk_css_parser_error_syntax (scanner->parser, "Junk at end of value for %s", property->name);
               // TODO free value
-              gtk_css_parser_unref (value_parser);
-              gtk_css_variable_value_unref (var_value);
               goto out;
             }
-
-          gtk_css_parser_unref (value_parser);
-          gtk_css_variable_value_unref (var_value);
         }
 
       if (gtk_keep_css_sections)

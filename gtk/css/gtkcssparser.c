@@ -1162,6 +1162,139 @@ clear_token (GtkCssVariableValueToken *token)
   gtk_css_token_clear (&token->token);
 }
 
+gboolean
+gtk_css_parser_find_references (GtkCssParser   *self,
+                                char         ***out_refs,
+                                gsize          *out_n_refs)
+{
+  GArray *inner_blocks;
+  GPtrArray *refs = NULL;
+  gboolean ret = FALSE;
+
+  inner_blocks = g_array_new (FALSE, FALSE, sizeof (GtkCssTokenType));
+
+  if (out_refs && out_n_refs)
+    refs = g_ptr_array_new_full (0, g_free);
+
+  gtk_css_tokenizer_save (self->tokenizer);
+
+  do {
+      const GtkCssToken *token;
+      GtkCssTokenType closing_type;
+
+      token = gtk_css_parser_get_token (self);
+
+      if (inner_blocks->len == 0)
+        {
+          if (gtk_css_token_is (token, GTK_CSS_TOKEN_EOF))
+            break;
+
+          if (gtk_css_token_is (token, GTK_CSS_TOKEN_CLOSE_PARENS) ||
+              gtk_css_token_is (token, GTK_CSS_TOKEN_CLOSE_SQUARE))
+            {
+              goto error;
+            }
+        }
+
+      if (gtk_css_token_is_preserved (token, &closing_type))
+        {
+          if (inner_blocks->len > 0 && gtk_css_token_is (token, GTK_CSS_TOKEN_EOF))
+            {
+              gtk_css_parser_end_block (self);
+
+              inner_blocks = g_array_remove_index_fast (inner_blocks,
+                                                        inner_blocks->len - 1);
+            }
+          else
+            {
+              gtk_css_parser_consume_token (self);
+            }
+        }
+      else
+        {
+          gboolean is_var = gtk_css_token_is_function (token, "var");
+
+          g_array_append_val (inner_blocks, closing_type);
+          gtk_css_parser_start_block (self);
+
+          if (is_var)
+            {
+              token = gtk_css_parser_get_token (self);
+
+              if (gtk_css_token_is (token, GTK_CSS_TOKEN_IDENT))
+                {
+                  char *var_name = g_strdup (gtk_css_token_get_string (token));
+
+                  if (var_name[0] != '-' || var_name[1] != '-')
+                    {
+                      g_free (var_name);
+                      goto error;
+                    }
+
+                  gtk_css_parser_consume_token (self);
+
+                  if (!gtk_css_parser_has_token (self, GTK_CSS_TOKEN_EOF) &&
+                      !gtk_css_parser_has_token (self, GTK_CSS_TOKEN_COMMA))
+                    {
+                      g_free (var_name);
+                      goto error;
+                    }
+
+                  ret = TRUE;
+
+                  if (refs)
+                    g_ptr_array_add (refs, var_name);
+                  else
+                    g_free (var_name);
+                }
+            }
+        }
+    }
+  while (!gtk_css_parser_has_token (self, GTK_CSS_TOKEN_SEMICOLON) &&
+         !gtk_css_parser_has_token (self, GTK_CSS_TOKEN_CLOSE_CURLY));
+
+  if (inner_blocks->len > 0)
+    goto error;
+
+  if (out_refs && out_n_refs)
+    *out_refs = (char **) g_ptr_array_steal (refs, out_n_refs);
+
+  g_array_free (inner_blocks, TRUE);
+
+  gtk_css_tokenizer_restore (self->tokenizer);
+  self->location = *gtk_css_tokenizer_get_location (self->tokenizer);
+  gtk_css_tokenizer_save (self->tokenizer);
+  gtk_css_tokenizer_read_token (self->tokenizer, &self->token, NULL);
+  gtk_css_tokenizer_restore (self->tokenizer);
+
+  return ret;
+
+error:
+  if (inner_blocks->len > 0)
+    {
+      int i;
+
+      for (i = 0; i < inner_blocks->len; i++)
+        gtk_css_parser_end_block (self);
+    }
+
+  g_array_free (inner_blocks, TRUE);
+
+  if (refs)
+    g_ptr_array_free (refs, TRUE);
+
+  if (out_n_refs)
+    *out_n_refs = 0;
+  if (out_refs)
+    *out_refs = NULL;
+
+  gtk_css_tokenizer_restore (self->tokenizer);
+  self->location = *gtk_css_tokenizer_get_location (self->tokenizer);
+  gtk_css_tokenizer_read_token (self->tokenizer, &self->token, NULL);
+
+  return FALSE;
+}
+
 GtkCssVariableValueToken *
 gtk_css_parser_parse_value_into_token_stream (GtkCssParser   *parser,
                                               gsize          *out_n_tokens,
