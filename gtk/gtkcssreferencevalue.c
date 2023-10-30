@@ -59,11 +59,11 @@ gtk_css_value_reference_parser_error (GtkCssParser         *parser,
 */
 
 static gboolean
-resolve_references_do (GtkCssToken *tokens,
-                       gsize        n_tokens,
-                       gboolean     limit_length,
-                       GtkCssStyle *style,
-                       GArray      *output)
+resolve_references_do (GtkCssVariableValueToken *tokens,
+                       gsize                     n_tokens,
+                       gboolean                  limit_length,
+                       GtkCssStyle              *style,
+                       GArray                   *output)
 {
   GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
   GArray *blocks;
@@ -76,7 +76,7 @@ resolve_references_do (GtkCssToken *tokens,
 
   for (i = 0; i < n_tokens; i++)
     {
-      GtkCssToken *token = &tokens[i];
+      GtkCssToken *token = &tokens[i].token;
       GtkCssTokenType closing_type;
 
       if (!gtk_css_token_is_preserved (token, &closing_type))
@@ -89,18 +89,18 @@ resolve_references_do (GtkCssToken *tokens,
               var_level = blocks->len;
 
               if (i + 1 >= n_tokens ||
-                  !gtk_css_token_is (&tokens[i + 1], GTK_CSS_TOKEN_IDENT))
+                  !gtk_css_token_is (&tokens[i + 1].token, GTK_CSS_TOKEN_IDENT))
                 {
                   goto error;
                 }
 
-              name = gtk_css_token_get_string (&tokens[i + 1]);
+              name = gtk_css_token_get_string (&tokens[i + 1].token);
               var_id = gtk_css_custom_property_pool_add (pool, name);
 
               if (i + 2 >= n_tokens)
                 goto error;
 
-              if (gtk_css_token_is (&tokens[i + 2], GTK_CSS_TOKEN_COMMA))
+              if (gtk_css_token_is (&tokens[i + 2].token, GTK_CSS_TOKEN_COMMA))
                 {
                   i += 3;
 
@@ -124,7 +124,7 @@ resolve_references_do (GtkCssToken *tokens,
 
               if (value != NULL && value->n_tokens > 0)
                 {
-                  GArray *buffer = g_array_new (FALSE, FALSE, sizeof (GtkCssToken));
+                  GArray *buffer = g_array_new (FALSE, FALSE, sizeof (GtkCssVariableValueToken));
 
                   success |= resolve_references_do (value->tokens, value->n_tokens,
                                                     TRUE, style, buffer);
@@ -181,8 +181,8 @@ static GtkCssVariableValue *
 resolve_references (GtkCssVariableValue *input,
                     GtkCssStyle         *style)
 {
-  GArray *tokens = g_array_new (FALSE, FALSE, sizeof (GtkCssToken));
-  GtkCssToken *ret_tokens;
+  GArray *tokens = g_array_new (FALSE, FALSE, sizeof (GtkCssVariableValueToken));
+  GtkCssVariableValueToken *ret_tokens;
   gsize n_tokens;
 
   if (!resolve_references_do (input->tokens, input->n_tokens, FALSE, style, tokens))

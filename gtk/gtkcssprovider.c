@@ -351,7 +351,7 @@ static void
 gtk_css_ruleset_add_custom (GtkCssRuleset  *ruleset,
                             const char     *name,
                             GtkCssSection  *section,
-                            GtkCssToken    *tokens,
+                            GtkCssVariableValueToken *tokens,
                             gsize           n_tokens,
                             char          **refs,
                             gsize           n_refs)
@@ -896,7 +896,7 @@ parse_declaration (GtkCssScanner *scanner,
   /* This is a custom property */
   if (name[0] == '-' && name[1] == '-')
     {
-      GtkCssToken *tokens;
+      GtkCssVariableValueToken *tokens;
       char **refs;
       gsize n_tokens, n_refs;
       GtkCssSection *section;
@@ -915,7 +915,7 @@ parse_declaration (GtkCssScanner *scanner,
       if (tokens == NULL)
         goto out;
 
-      if (n_tokens == 1 && gtk_css_token_is_ident (&tokens[0], "initial"))
+      if (n_tokens == 1 && gtk_css_token_is_ident (&tokens[0].token, "initial"))
         {
           g_clear_pointer (&tokens, g_free);
           n_tokens = 0;
@@ -940,7 +940,7 @@ parse_declaration (GtkCssScanner *scanner,
   if (property)
     {
       GtkCssSection *section;
-      GtkCssToken *tokens;
+      GtkCssVariableValueToken *tokens;
       gsize n_tokens;
       gboolean has_refs;
       GtkCssValue *value;

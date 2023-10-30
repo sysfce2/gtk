@@ -327,12 +327,12 @@ gtk_css_parser_ensure_token (GtkCssParser *self)
         }
       else
         {
-          GtkCssToken *token = &self->value->tokens[self->index];
+          GtkCssVariableValueToken *token = &self->value->tokens[self->index];
 
           gtk_css_token_clear (&self->token);
-          gtk_css_token_copy (token, &self->token);
-//          self->location = *gtk_css_section_get_start_location (token->token.section);
-//          self->end_location = *gtk_css_section_get_end_location (token->token.section);
+          gtk_css_token_copy (&token->token, &self->token);
+          self->location = token->start;
+          self->end_location = token->end;
 
           self->index++;
         }
@@ -1156,25 +1156,31 @@ gtk_css_parser_consume_any (GtkCssParser            *parser,
   return result;
 }
 
-GtkCssToken *
+static void
+clear_token (GtkCssVariableValueToken *token)
+{
+  gtk_css_token_clear (&token->token);
+}
+
+GtkCssVariableValueToken *
 gtk_css_parser_parse_value_into_token_stream (GtkCssParser   *parser,
                                               gsize          *out_n_tokens,
                                               gboolean       *out_has_refs,
                                               char         ***out_refs,
                                               gsize          *out_n_refs)
 {
-  GtkCssToken *ret;
+  GtkCssVariableValueToken *ret;
   GArray *inner_blocks;
   GArray *tokens;
   GPtrArray *refs = NULL;
 
   inner_blocks = g_array_new (FALSE, FALSE, sizeof (GtkCssTokenType));
-  tokens = g_array_new (FALSE, TRUE, sizeof (GtkCssToken));
+  tokens = g_array_new (FALSE, TRUE, sizeof (GtkCssVariableValueToken));
 
   if (out_refs && out_n_refs)
     refs = g_ptr_array_new_full (0, g_free);
 
-  g_array_set_clear_func (tokens, (GDestroyNotify) gtk_css_token_clear);
+  g_array_set_clear_func (tokens, (GDestroyNotify) clear_token);
 
   if (out_has_refs)
     *out_has_refs = FALSE;
@@ -1209,10 +1215,11 @@ gtk_css_parser_parse_value_into_token_stream (GtkCssParser   *parser,
         {
           if (inner_blocks->len > 0 && gtk_css_token_is (token, GTK_CSS_TOKEN_EOF))
             {
-              GtkCssToken closing_token;
-
-              closing_token.type =
+              GtkCssVariableValueToken closing_token;
+              closing_token.token.type =
                 g_array_index (inner_blocks, GtkCssTokenType, inner_blocks->len - 1);
+              closing_token.start = *gtk_css_parser_get_start_location (parser);
+              closing_token.end = *gtk_css_parser_get_end_location (parser);
 
               g_array_append_val (tokens, closing_token);
 
@@ -1223,9 +1230,12 @@ gtk_css_parser_parse_value_into_token_stream (GtkCssParser   *parser,
             }
           else
             {
-              GtkCssToken copy;
+              GtkCssVariableValueToken copy;
 
-              gtk_css_token_copy (token, &copy);
+              gtk_css_token_copy (token, &copy.token);
+              copy.start = *gtk_css_parser_get_start_location (parser);
+              copy.end = *gtk_css_parser_get_end_location (parser);
+
               g_array_append_val (tokens, copy);
 
               gtk_css_parser_consume_token (parser);
@@ -1233,10 +1243,13 @@ gtk_css_parser_parse_value_into_token_stream (GtkCssParser   *parser,
         }
       else
         {
-          GtkCssToken copy;
           gboolean is_var = gtk_css_token_is_function (token, "var");
+          GtkCssVariableValueToken copy;
 
-          gtk_css_token_copy (token, &copy);
+          gtk_css_token_copy (token, &copy.token);
+          copy.start = *gtk_css_parser_get_start_location (parser);
+          copy.end = *gtk_css_parser_get_end_location (parser);
+
           g_array_append_val (tokens, copy);
 
           g_array_append_val (inner_blocks, closing_type);
@@ -1258,7 +1271,9 @@ gtk_css_parser_parse_value_into_token_stream (GtkCssParser   *parser,
                     }
 
                   /* Name token */
-                  gtk_css_token_copy (token, &copy);
+                  gtk_css_token_copy (token, &copy.token);
+                  copy.start = *gtk_css_parser_get_start_location (parser);
+                  copy.end = *gtk_css_parser_get_end_location (parser);
                   g_array_append_val (tokens, copy);
                   gtk_css_parser_consume_token (parser);
 

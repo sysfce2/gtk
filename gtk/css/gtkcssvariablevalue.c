@@ -19,7 +19,7 @@
 
 GtkCssVariableValue *
 gtk_css_variable_value_new (GtkCssSection *section,
-                            GtkCssToken   *tokens,
+                            GtkCssVariableValueToken   *tokens,
                             gsize          n_tokens)
 {
   GtkCssVariableValue *self = g_new0 (GtkCssVariableValue, 1);
@@ -64,7 +64,7 @@ gtk_css_variable_value_print (GtkCssVariableValue *self,
       if (i > 0)
         g_string_append_c (string, ' ');
 
-      gtk_css_token_print (&self->tokens[i], string);
+      gtk_css_token_print (&self->tokens[i].token, string);
     }
 }
 
@@ -88,7 +88,7 @@ gtk_css_variable_value_equal (const GtkCssVariableValue *value1,
 
   for (i = 0; i < value1->n_tokens; i++)
     {
-      if (!gtk_css_token_equal (&value1->tokens[i], &value2->tokens[i]))
+      if (!gtk_css_token_equal (&value1->tokens[i].token, &value2->tokens[i].token))
         return FALSE;
     }
 

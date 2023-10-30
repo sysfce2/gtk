@@ -155,7 +155,7 @@ gsize                   gtk_css_parser_consume_any              (GtkCssParser   
                                                                  gsize                           n_options,
                                                                  gpointer                        user_data);
 
-GtkCssToken *           gtk_css_parser_parse_value_into_token_stream (GtkCssParser              *parser,
+GtkCssVariableValueToken *           gtk_css_parser_parse_value_into_token_stream (GtkCssParser              *parser,
                                                                       gsize                     *out_n_tokens,
                                                                       gboolean                  *out_has_refs,
                                                                       char                    ***out_refs,

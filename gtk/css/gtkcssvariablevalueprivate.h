@@ -22,18 +22,26 @@
 
 G_BEGIN_DECLS
 
+typedef struct _GtkCssVariableValueToken GtkCssVariableValueToken;
 typedef struct _GtkCssVariableValue GtkCssVariableValue;
+
+struct _GtkCssVariableValueToken
+{
+  GtkCssToken token;
+  GtkCssLocation start; // TODO this won't work if they are referenced from another file
+  GtkCssLocation end;
+};
 
 struct _GtkCssVariableValue
 {
   int ref_count;
   GtkCssSection *section;
-  GtkCssToken *tokens;
+  GtkCssVariableValueToken *tokens;
   gsize n_tokens;
 };
 
 GtkCssVariableValue *gtk_css_variable_value_new   (GtkCssSection             *section,
-                                                   GtkCssToken               *tokens,
+                                                   GtkCssVariableValueToken  *tokens,
                                                    gsize                      n_tokens);
 GtkCssVariableValue *gtk_css_variable_value_ref   (GtkCssVariableValue       *self);
 void                 gtk_css_variable_value_unref (GtkCssVariableValue       *self);
