@@ -1654,6 +1654,20 @@ compare_properties (gconstpointer a, gconstpointer b, gpointer style)
                  _gtk_style_property_get_name (GTK_STYLE_PROPERTY (styles[*ub].property)));
 }
 
+static int
+compare_custom_properties (gconstpointer a, gconstpointer b, gpointer user_data)
+{
+  GtkCssCustomPropertyPool *pool = user_data;
+  int id1 = GPOINTER_TO_INT (*((gconstpointer *) a));
+  int id2 = GPOINTER_TO_INT (*((gconstpointer *) b));
+  const char *name1, *name2;
+
+  name1 = gtk_css_custom_property_pool_get_name (pool, id1);
+  name2 = gtk_css_custom_property_pool_get_name (pool, id2);
+
+  return strcmp (name1, name2);
+}
+
 static void
 gtk_css_ruleset_print (const GtkCssRuleset *ruleset,
                        GString             *str)
@@ -1687,17 +1701,17 @@ gtk_css_ruleset_print (const GtkCssRuleset *ruleset,
         if (ruleset->custom_properties)
           {
             GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
-            GHashTableIter iter;
-            gpointer id;
-            CustomPropertyValue *value;
+            GPtrArray *keys;
 
-            g_hash_table_iter_init (&iter, ruleset->custom_properties);
+            keys = g_hash_table_get_keys_as_ptr_array (ruleset->custom_properties);
+            g_ptr_array_sort_with_data (keys, compare_custom_properties, pool);
 
-            // TODO should sort it too?
-            while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
+            for (i = 0; i < keys->len; i++)
               {
-                const char *name =
-                  gtk_css_custom_property_pool_get_name (pool, GPOINTER_TO_INT (id));
+                int id = GPOINTER_TO_INT (g_ptr_array_index (keys, i));
+                const char *name = gtk_css_custom_property_pool_get_name (pool, id);
+                CustomPropertyValue *value = g_hash_table_lookup (ruleset->custom_properties,
+                                                                  GINT_TO_POINTER (id));
 
                 g_string_append (str, "  ");
                 g_string_append (str, name);
@@ -1705,6 +1719,8 @@ gtk_css_ruleset_print (const GtkCssRuleset *ruleset,
                 gtk_css_variable_value_print (value->value, str);
                 g_string_append (str, ";\n");
               }
+
+            g_ptr_array_unref (keys);
           }
 
       g_free (sorted);

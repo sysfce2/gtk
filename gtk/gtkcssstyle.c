@@ -315,6 +315,20 @@ gtk_css_style_get_static_style (GtkCssStyle *style)
   return GTK_CSS_STYLE_GET_CLASS (style)->get_static_style (style);
 }
 
+static int
+compare_custom_properties (gconstpointer a, gconstpointer b, gpointer user_data)
+{
+  GtkCssCustomPropertyPool *pool = user_data;
+  int id1 = GPOINTER_TO_INT (*((gconstpointer *) a));
+  int id2 = GPOINTER_TO_INT (*((gconstpointer *) b));
+  const char *name1, *name2;
+
+  name1 = gtk_css_custom_property_pool_get_name (pool, id1);
+  name2 = gtk_css_custom_property_pool_get_name (pool, id2);
+
+  return strcmp (name1, name2);
+}
+
 /*
  * gtk_css_style_print:
  * @style: a `GtkCssStyle`
@@ -375,28 +389,28 @@ gtk_css_style_print (GtkCssStyle *style,
     if (style->custom_properties)
       {
         GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
-        GHashTableIter iter;
-        gpointer id;
-        GtkCssVariableValue *value;
+        GPtrArray *keys;
 
-        g_hash_table_iter_init (&iter, style->custom_properties);
+        keys = g_hash_table_get_keys_as_ptr_array (style->custom_properties);
+        g_ptr_array_sort_with_data (keys, compare_custom_properties, pool);
 
-        // TODO should sort it too?
-        while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
+        for (i = 0; i < keys->len; i++)
           {
-            const char *name = gtk_css_custom_property_pool_get_name (pool, GPOINTER_TO_INT (id));
+            int id = GPOINTER_TO_INT (g_ptr_array_index (keys, i));
+            const char *name = gtk_css_custom_property_pool_get_name (pool, id);
+            GtkCssVariableValue *value = g_hash_table_lookup (style->custom_properties,
+                                                              GINT_TO_POINTER (id));
+
             g_string_append_printf (string, "%*s%s: ", indent, "", name);
             gtk_css_variable_value_print (value, string);
             g_string_append_c (string, ';');
 
-#if 0
-TODO have sections for custom props too            if (section)
+            if (value->section)
               {
                 g_string_append (string, " /* ");
-                gtk_css_section_print (section, string);
+                gtk_css_section_print (value->section, string);
                 g_string_append (string, " */");
               }
-#endif
 
             g_string_append_c (string, '\n');
           }
