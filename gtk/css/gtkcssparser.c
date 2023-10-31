@@ -1263,9 +1263,7 @@ gtk_css_parser_find_references (GtkCssParser   *self,
 
   gtk_css_tokenizer_restore (self->tokenizer);
   self->location = *gtk_css_tokenizer_get_location (self->tokenizer);
-  gtk_css_tokenizer_save (self->tokenizer);
   gtk_css_tokenizer_read_token (self->tokenizer, &self->token, NULL);
-  gtk_css_tokenizer_restore (self->tokenizer);
 
   return ret;
 
