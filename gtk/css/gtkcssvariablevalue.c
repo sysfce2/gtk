@@ -61,10 +61,31 @@ gtk_css_variable_value_print (GtkCssVariableValue *self,
 
   for (i = 0; i < self->n_tokens; i++)
     {
-      if (i > 0)
-        g_string_append_c (string, ' ');
+      GtkCssToken *token = &self->tokens[i].token;
 
-      gtk_css_token_print (&self->tokens[i].token, string);
+      if (i > 0)
+        {
+          GtkCssToken *prev_token = prev_token = &self->tokens[i - 1].token;
+
+          /* We generally want to have spaces between tokens, so that
+           * `1px solid red` doesn't turn into `1pxsolidred`. However, we also
+           * want `rgb(0, 0, 0)` and not `rgb( 0 , 0 , 0 )`, so omit spaces in
+           * those specific cases - before commas and closing tokens, and after
+           * opening tokens. */
+          if (!gtk_css_token_is (token, GTK_CSS_TOKEN_CLOSE_PARENS) &&
+              !gtk_css_token_is (token, GTK_CSS_TOKEN_CLOSE_SQUARE) &&
+              !gtk_css_token_is (token, GTK_CSS_TOKEN_CLOSE_CURLY) &&
+              !gtk_css_token_is (token, GTK_CSS_TOKEN_COMMA) &&
+              !gtk_css_token_is (prev_token, GTK_CSS_TOKEN_FUNCTION) &&
+              !gtk_css_token_is (prev_token, GTK_CSS_TOKEN_OPEN_PARENS) &&
+              !gtk_css_token_is (prev_token, GTK_CSS_TOKEN_OPEN_SQUARE) &&
+              !gtk_css_token_is (prev_token, GTK_CSS_TOKEN_OPEN_CURLY))
+            {
+              g_string_append_c (string, ' ');
+            }
+        }
+
+      gtk_css_token_print (token, string);
     }
 }
 
