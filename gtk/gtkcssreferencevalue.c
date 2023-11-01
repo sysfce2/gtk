@@ -25,6 +25,7 @@
 #include "gtkcssstyleprivate.h"
 #include "gtkcssunsetvalueprivate.h"
 #include "gtkcssvalueprivate.h"
+#include "gtkstyleproviderprivate.h"
 
 #define MAX_TOKEN_LENGTH 65536
 
@@ -193,6 +194,25 @@ resolve_references (GtkCssVariableValue *input,
   return gtk_css_variable_value_new (input->section, ret_tokens, n_tokens);
 }
 
+static void
+parser_error (GtkCssParser         *parser,
+              const GtkCssLocation *start,
+              const GtkCssLocation *end,
+              const GError         *error,
+              gpointer              user_data)
+{
+  GtkStyleProvider *provider = user_data;
+  GtkCssSection *section;
+
+  section = gtk_css_section_new (gtk_css_parser_get_file (parser),
+                                 start,
+                                 end);
+
+  gtk_style_provider_emit_error (provider, section, (GError *) error);
+
+  gtk_css_section_unref (section);
+}
+
 static GtkCssValue *
 gtk_css_value_reference_compute (GtkCssValue      *value,
                                  guint             property_id,
@@ -210,10 +230,8 @@ gtk_css_value_reference_compute (GtkCssValue      *value,
       GtkCssParser *value_parser =
         gtk_css_parser_new_for_token_stream (var_value,
                                              value->file,
-                                             NULL, style, NULL);//gtk_css_scanner_parser_error,
-    //                                       scanner, NULL);
+                                             parser_error, provider, NULL);
       // TODO: cache parser
-      // TODO: report errors
 
       result = _gtk_style_property_parse_value (value->property, value_parser);
       gtk_css_parser_unref (value_parser);
