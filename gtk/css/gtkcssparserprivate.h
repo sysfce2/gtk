@@ -61,6 +61,8 @@ GtkCssParser *          gtk_css_parser_new_for_bytes            (GBytes         
                                                                  GDestroyNotify                  user_destroy);
 GtkCssParser *          gtk_css_parser_new_for_token_stream     (GtkCssVariableValue            *value,
                                                                  GFile                          *file,
+                                                                 GtkCssVariableValue           **refs,
+                                                                 gsize                           n_refs,
                                                                  GtkCssParserErrorFunc           error_func,
                                                                  gpointer                        user_data,
                                                                  GDestroyNotify                  user_destroy);
@@ -159,11 +161,7 @@ gboolean                gtk_css_parser_find_references          (GtkCssParser   
                                                                  char                         ***refs,
                                                                  gsize                          *n_refs);
 
-GtkCssVariableValueToken *           gtk_css_parser_parse_value_into_token_stream (GtkCssParser              *parser,
-                                                                      gsize                     *out_n_tokens,
-                                                                      gboolean                  *out_has_refs,
-                                                                      char                    ***out_refs,
-                                                                      gsize                     *out_n_refs);
+GtkCssVariableValue *   gtk_css_parser_parse_value_into_token_stream (GtkCssParser              *parser);
 
 G_END_DECLS
 

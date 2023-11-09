@@ -22,32 +22,43 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GtkCssVariableValueToken GtkCssVariableValueToken;
+typedef struct _GtkCssVariableValueReference GtkCssVariableValueReference;
 typedef struct _GtkCssVariableValue GtkCssVariableValue;
 
-struct _GtkCssVariableValueToken
+struct _GtkCssVariableValueReference
 {
-  GtkCssToken token;
-  GtkCssLocation start; // TODO this won't work if they are referenced from another file
-  GtkCssLocation end;
+  char *name;
+  gsize length;
+  GtkCssVariableValue *fallback;
 };
 
 struct _GtkCssVariableValue
 {
   int ref_count;
+
+  GBytes *bytes;
+  gsize offset;
+  gsize end_offset;
+  gsize length;
+
+  GtkCssVariableValueReference *references;
+  gsize n_references;
+
   GtkCssSection *section;
-  GtkCssVariableValueToken *tokens;
-  gsize n_tokens;
 };
 
-GtkCssVariableValue *gtk_css_variable_value_new   (GtkCssSection             *section,
-                                                   GtkCssVariableValueToken  *tokens,
-                                                   gsize                      n_tokens);
-GtkCssVariableValue *gtk_css_variable_value_ref   (GtkCssVariableValue       *self);
-void                 gtk_css_variable_value_unref (GtkCssVariableValue       *self);
-void                 gtk_css_variable_value_print (GtkCssVariableValue       *self,
-                                                   GString                   *string);
-gboolean             gtk_css_variable_value_equal (const GtkCssVariableValue *value1,
-                                                   const GtkCssVariableValue *value2) G_GNUC_PURE;
-
+GtkCssVariableValue *gtk_css_variable_value_new         (GBytes                       *bytes,
+                                                         gsize                         offset,
+                                                         gsize                         end_offset,
+                                                         gsize                         length,
+                                                         GtkCssVariableValueReference *references,
+                                                         gsize                         n_references);
+GtkCssVariableValue *gtk_css_variable_value_ref         (GtkCssVariableValue          *self);
+void                 gtk_css_variable_value_unref       (GtkCssVariableValue          *self);
+void                 gtk_css_variable_value_print       (GtkCssVariableValue          *self,
+                                                         GString                      *string);
+gboolean             gtk_css_variable_value_equal       (const GtkCssVariableValue    *value1,
+                                                         const GtkCssVariableValue    *value2) G_GNUC_PURE;
+void                 gtk_css_variable_value_set_section (GtkCssVariableValue          *self,
+                                                         GtkCssSection                *section);
 G_END_DECLS

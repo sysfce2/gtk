@@ -45,153 +45,82 @@ gtk_css_value_reference_free (GtkCssValue *value)
   if (value->file)
     g_object_unref (value->file);
 }
-/*
-static void
-gtk_css_value_reference_parser_error (GtkCssParser         *parser,
-                                      const GtkCssLocation *start,
-                                      const GtkCssLocation *end,
-                                      const GError         *error,
-                                      gpointer              user_data)
-{
-  GtkCssValue *value = user_data;
-
-//  gtk_css_parser_error_value (parser, "%s", error->message);
-}
-*/
 
 static gboolean
-resolve_references_do (GtkCssVariableValueToken *tokens,
-                       gsize                     n_tokens,
-                       gboolean                  limit_length,
-                       GtkCssStyle              *style,
-                       GArray                   *output)
+resolve_references_do (GtkCssVariableValue *value,
+                       GtkCssStyle         *style,
+                       gboolean             root,
+                       GPtrArray           *refs,
+                       gsize               *out_length,
+                       gsize               *out_n_refs)
 {
   GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
-  GArray *blocks;
   gsize i;
-  int var_id = -1;
-  int var_level = -1;
-  int fallback_start = -1;
+  gsize length = value->length;
+  gsize n_refs = 0;
 
-  blocks = g_array_new (FALSE, FALSE, sizeof (GtkCssTokenType));
-
-  for (i = 0; i < n_tokens; i++)
+  if (!root)
     {
-      GtkCssToken *token = &tokens[i].token;
-      GtkCssTokenType closing_type;
-
-      if (!gtk_css_token_is_preserved (token, &closing_type))
-        {
-          g_array_append_val (blocks, closing_type);
-          if (var_level < 0 && gtk_css_token_is_function (token, "var"))
-            {
-              const char *name;
-
-              var_level = blocks->len;
-
-              if (i + 1 >= n_tokens ||
-                  !gtk_css_token_is (&tokens[i + 1].token, GTK_CSS_TOKEN_IDENT))
-                {
-                  goto error;
-                }
-
-              name = gtk_css_token_get_string (&tokens[i + 1].token);
-              var_id = gtk_css_custom_property_pool_add (pool, name);
-
-              if (i + 2 >= n_tokens)
-                goto error;
-
-              if (gtk_css_token_is (&tokens[i + 2].token, GTK_CSS_TOKEN_COMMA))
-                {
-                  i += 3;
-
-                  if (i >= n_tokens)
-                    goto error;
-
-                  fallback_start = i;
-                }
-              else
-                i++;
-
-              continue;
-            }
-        }
-      else if (blocks->len > 0 && token->type == g_array_index (blocks, GtkCssTokenType, blocks->len - 1))
-        {
-          if (var_level == blocks->len)
-            {
-              GtkCssVariableValue *value = gtk_css_style_get_custom_property (style, var_id);
-              gboolean success = FALSE;
-
-              if (value != NULL && value->n_tokens > 0)
-                {
-                  GArray *buffer = g_array_new (FALSE, FALSE, sizeof (GtkCssVariableValueToken));
-
-                  success |= resolve_references_do (value->tokens, value->n_tokens,
-                                                    TRUE, style, buffer);
-
-                  if (success)
-                    g_array_append_vals (output, buffer->data, buffer->len);
-
-                  g_array_unref (buffer);
-                }
-
-              if (!success)
-                {
-                  if (fallback_start >= 0)
-                    {
-                      resolve_references_do (&tokens[fallback_start], i - fallback_start,
-                                             FALSE, style, output);
-                    }
-                  else
-                    goto error;
-                }
-
-              if (limit_length && output->len > MAX_TOKEN_LENGTH)
-                goto error;
-
-              var_id = -1;
-              fallback_start = -1;
-              var_level = -1;
-              continue;
-            }
-          else
-            g_array_remove_index_fast (blocks, blocks->len - 1);
-        }
-
-      if (var_level < 0)
-        {
-          g_array_append_val (output, tokens[i]);
-
-          if (limit_length && output->len > MAX_TOKEN_LENGTH)
-            goto error;
-        }
+      n_refs += 1;
+      g_ptr_array_add (refs, value);
     }
 
-  g_array_unref (blocks);
+  for (i = 0; i < value->n_references; i++)
+    {
+      GtkCssVariableValueReference *ref = &value->references[i];
+      int id = gtk_css_custom_property_pool_add (pool, ref->name);
+      GtkCssVariableValue *var_value;
+      gsize var_length, var_refs;
+
+      var_value = gtk_css_style_get_custom_property (style, id);
+
+      if (!var_value || !resolve_references_do (var_value, style, FALSE, refs, &var_length, &var_refs))
+        {
+          var_value = ref->fallback;
+
+          if (!var_value || !resolve_references_do (var_value, style, FALSE, refs, &var_length, &var_refs))
+            goto error;
+        }
+
+      length += var_length - ref->length;
+      n_refs += var_refs;
+
+      if (length > MAX_TOKEN_LENGTH)
+        goto error;
+    }
+
+  if (out_length)
+    *out_length = length;
+
+  if (out_n_refs)
+    *out_n_refs = n_refs;
 
   return TRUE;
 
 error:
-  g_array_unref (blocks);
+  /* Remove the references we added as if nothing happened */
+  g_ptr_array_remove_range (refs, refs->len - n_refs, n_refs);
+
+  if (out_length)
+    *out_length = 0;
+
+  if (out_n_refs)
+    *out_n_refs = 0;
 
   return FALSE;
 }
 
-static GtkCssVariableValue *
+static GtkCssVariableValue **
 resolve_references (GtkCssVariableValue *input,
-                    GtkCssStyle         *style)
+                    GtkCssStyle         *style,
+                    gsize               *n_refs)
 {
-  GArray *tokens = g_array_new (FALSE, FALSE, sizeof (GtkCssVariableValueToken));
-  GtkCssVariableValueToken *ret_tokens;
-  gsize n_tokens;
+  GPtrArray *refs = g_ptr_array_new ();
 
-  if (!resolve_references_do (input->tokens, input->n_tokens, FALSE, style, tokens))
+  if (!resolve_references_do (input, style, TRUE, refs, NULL, NULL))
     return NULL;
 
-  ret_tokens = g_array_steal (tokens, &n_tokens);
-
-  return gtk_css_variable_value_new (input->section, ret_tokens, n_tokens);
+  return (GtkCssVariableValue **) g_ptr_array_steal (refs, n_refs);
 }
 
 static void
@@ -220,22 +149,24 @@ gtk_css_value_reference_compute (GtkCssValue      *value,
                                  GtkCssStyle      *style,
                                  GtkCssStyle      *parent_style)
 {
-  GtkCssVariableValue *var_value;
   GtkCssValue *result = NULL, *computed;
+  GtkCssVariableValue **refs;
+  gsize n_refs = 0;
 
-  var_value = resolve_references (value->value, style);
+  refs = resolve_references (value->value, style, &n_refs);
 
-  if (var_value != NULL)
+  if (refs != NULL)
     {
       GtkCssParser *value_parser =
-        gtk_css_parser_new_for_token_stream (var_value,
+        gtk_css_parser_new_for_token_stream (value->value,
                                              value->file,
+                                             refs,
+                                             n_refs,
                                              parser_error, provider, NULL);
       // TODO: cache parser
 
       result = _gtk_style_property_parse_value (value->property, value_parser);
       gtk_css_parser_unref (value_parser);
-      gtk_css_variable_value_unref (var_value);
     }
 
   if (result == NULL)

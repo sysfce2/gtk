@@ -120,11 +120,7 @@ gtk_css_token_get_string (const GtkCssToken *token)
     return token->string.u.string;
 }
 
-void                    gtk_css_token_copy                      (const GtkCssToken      *token,
-                                                                 GtkCssToken            *dest);
 void                    gtk_css_token_clear                     (GtkCssToken            *token);
-gboolean                gtk_css_token_equal                     (const GtkCssToken      *token1,
-                                                                 const GtkCssToken      *token2) G_GNUC_PURE;
 
 gboolean                gtk_css_token_is_finite                 (const GtkCssToken      *token) G_GNUC_PURE;
 gboolean                gtk_css_token_is_preserved              (const GtkCssToken      *token,
@@ -142,10 +138,14 @@ void                    gtk_css_token_print                     (const GtkCssTok
 char *                  gtk_css_token_to_string                 (const GtkCssToken      *token);
 
 GtkCssTokenizer *       gtk_css_tokenizer_new                   (GBytes                 *bytes);
+GtkCssTokenizer *       gtk_css_tokenizer_new_for_range         (GBytes                 *bytes,
+                                                                 gsize                   offset,
+                                                                 gsize                   length);
 
 GtkCssTokenizer *       gtk_css_tokenizer_ref                   (GtkCssTokenizer        *tokenizer);
 void                    gtk_css_tokenizer_unref                 (GtkCssTokenizer        *tokenizer);
 
+GBytes *                gtk_css_tokenizer_get_bytes             (GtkCssTokenizer        *tokenizer);
 const GtkCssLocation *  gtk_css_tokenizer_get_location          (GtkCssTokenizer        *tokenizer) G_GNUC_CONST;
 
 gboolean                gtk_css_tokenizer_read_token            (GtkCssTokenizer        *tokenizer,

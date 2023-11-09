@@ -18,16 +18,24 @@
 #include "gtkcssvariablevalueprivate.h"
 
 GtkCssVariableValue *
-gtk_css_variable_value_new (GtkCssSection *section,
-                            GtkCssVariableValueToken   *tokens,
-                            gsize          n_tokens)
+gtk_css_variable_value_new (GBytes                       *bytes,
+                            gsize                         offset,
+                            gsize                         end_offset,
+                            gsize                         length,
+                            GtkCssVariableValueReference *references,
+                            gsize                         n_references)
 {
   GtkCssVariableValue *self = g_new0 (GtkCssVariableValue, 1);
 
   self->ref_count = 1;
-  self->section = section;
-  self->tokens = tokens;
-  self->n_tokens = n_tokens;
+
+  self->bytes = g_bytes_ref (bytes);
+  self->offset = offset;
+  self->end_offset = end_offset;
+  self->length = length;
+
+  self->references = references;
+  self->n_references = n_references;
 
   return self;
 }
@@ -43,13 +51,24 @@ gtk_css_variable_value_ref (GtkCssVariableValue *self)
 void
 gtk_css_variable_value_unref (GtkCssVariableValue *self)
 {
+  gsize i;
+
   self->ref_count--;
   if (self->ref_count > 0)
     return;
 
-  if (self->section)
-    gtk_css_section_unref (self->section);
-  g_free (self->tokens);
+  g_bytes_unref (self->bytes);
+
+  for (i = 0; i < self->n_references; i++)
+    {
+      GtkCssVariableValueReference *ref = &self->references[i];
+
+      g_free (ref->name);
+      if (ref->fallback)
+        gtk_css_variable_value_unref (ref->fallback);
+    }
+
+  g_free (self->references);
   g_free (self);
 }
 
@@ -57,61 +76,40 @@ void
 gtk_css_variable_value_print (GtkCssVariableValue *self,
                               GString             *string)
 {
-  gsize i;
+  gsize len = self->end_offset - self->offset;
+  gconstpointer data = g_bytes_get_region (self->bytes, 1, self->offset, len);
 
-  for (i = 0; i < self->n_tokens; i++)
-    {
-      GtkCssToken *token = &self->tokens[i].token;
+  g_assert (data != NULL);
 
-      if (i > 0)
-        {
-          GtkCssToken *prev_token = prev_token = &self->tokens[i - 1].token;
-
-          /* We generally want to have spaces between tokens, so that
-           * `1px solid red` doesn't turn into `1pxsolidred`. However, we also
-           * want `rgb(0, 0, 0)` and not `rgb( 0 , 0 , 0 )`, so omit spaces in
-           * those specific cases - before commas and closing tokens, and after
-           * opening tokens. */
-          if (!gtk_css_token_is (token, GTK_CSS_TOKEN_CLOSE_PARENS) &&
-              !gtk_css_token_is (token, GTK_CSS_TOKEN_CLOSE_SQUARE) &&
-              !gtk_css_token_is (token, GTK_CSS_TOKEN_CLOSE_CURLY) &&
-              !gtk_css_token_is (token, GTK_CSS_TOKEN_COMMA) &&
-              !gtk_css_token_is (prev_token, GTK_CSS_TOKEN_FUNCTION) &&
-              !gtk_css_token_is (prev_token, GTK_CSS_TOKEN_OPEN_PARENS) &&
-              !gtk_css_token_is (prev_token, GTK_CSS_TOKEN_OPEN_SQUARE) &&
-              !gtk_css_token_is (prev_token, GTK_CSS_TOKEN_OPEN_CURLY))
-            {
-              g_string_append_c (string, ' ');
-            }
-        }
-
-      gtk_css_token_print (token, string);
-    }
+  // TODO: somehow printing from inspector is wrong?
+  g_string_append_len (string, (const char *) data, len);
 }
 
 gboolean
 gtk_css_variable_value_equal (const GtkCssVariableValue *value1,
                               const GtkCssVariableValue *value2)
 {
-  gsize i;
-
   if (value1 == value2)
-    return TRUE;
-
-  if (value1 == NULL && value2 == NULL)
     return TRUE;
 
   if (value1 == NULL || value2 == NULL)
     return FALSE;
 
-  if (value1->n_tokens != value2->n_tokens)
+  if (value1->bytes != value2->bytes)
     return FALSE;
 
-  for (i = 0; i < value1->n_tokens; i++)
-    {
-      if (!gtk_css_token_equal (&value1->tokens[i].token, &value2->tokens[i].token))
-        return FALSE;
-    }
+  if (value1->offset != value2->offset)
+    return FALSE;
+
+  if (value1->end_offset != value2->end_offset)
+    return FALSE;
 
   return TRUE;
+}
+
+void
+gtk_css_variable_value_set_section (GtkCssVariableValue *self,
+                                    GtkCssSection       *section)
+{
+  self->section = gtk_css_section_ref (section);
 }

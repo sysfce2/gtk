@@ -100,7 +100,6 @@ struct _GtkCssProviderClass
 typedef struct GtkCssRuleset GtkCssRuleset;
 typedef struct _GtkCssScanner GtkCssScanner;
 typedef struct _PropertyValue PropertyValue;
-typedef struct _CustomPropertyValue CustomPropertyValue;
 typedef enum ParserScope ParserScope;
 typedef enum ParserSymbol ParserSymbol;
 
@@ -108,14 +107,6 @@ struct _PropertyValue {
   GtkCssStyleProperty *property;
   GtkCssValue         *value;
   GtkCssSection       *section;
-};
-
-struct _CustomPropertyValue
-{
-  char                 *name;
-  GtkCssVariableValue  *value;
-  char                **refs;
-  guint                n_refs;
 };
 
 struct GtkCssRuleset
@@ -331,15 +322,6 @@ gtk_css_ruleset_add (GtkCssRuleset       *ruleset,
 }
 
 static void
-free_custom_property_value (CustomPropertyValue *value)
-{
-  gtk_css_variable_value_unref (value->value);
-  if (value->refs)
-    g_free (value->refs);
-  g_free (value);
-}
-
-static void
 unref_custom_property_name (gpointer pointer)
 {
   GtkCssCustomPropertyPool *pool = gtk_css_custom_property_pool_get ();
@@ -348,17 +330,12 @@ unref_custom_property_name (gpointer pointer)
 }
 
 static void
-gtk_css_ruleset_add_custom (GtkCssRuleset  *ruleset,
-                            const char     *name,
-                            GtkCssSection  *section,
-                            GtkCssVariableValueToken *tokens,
-                            gsize           n_tokens,
-                            char          **refs,
-                            gsize           n_refs)
+gtk_css_ruleset_add_custom (GtkCssRuleset       *ruleset,
+                            const char          *name,
+                            GtkCssVariableValue *value)
 {
   GtkCssCustomPropertyPool *pool;
   int id;
-  CustomPropertyValue *value;
 
   g_return_if_fail (ruleset->owns_styles || (ruleset->n_styles == 0 && ruleset->custom_properties == NULL));
 
@@ -368,16 +345,11 @@ gtk_css_ruleset_add_custom (GtkCssRuleset  *ruleset,
     {
       ruleset->custom_properties = g_hash_table_new_full (g_direct_hash, g_direct_equal,
                                                           unref_custom_property_name,
-                                                          (GDestroyNotify) free_custom_property_value);
+                                                          (GDestroyNotify) gtk_css_variable_value_unref);
     }
 
   pool = gtk_css_custom_property_pool_get ();
   id = gtk_css_custom_property_pool_add (pool, name);
-
-  value = g_new0 (CustomPropertyValue, 1);
-  value->value = gtk_css_variable_value_new (section, tokens, n_tokens);
-  value->refs = refs;
-  value->n_refs = n_refs;
 
   g_hash_table_replace (ruleset->custom_properties, GINT_TO_POINTER (id), value);
 }
@@ -578,12 +550,12 @@ gtk_css_style_provider_lookup (GtkStyleProvider             *provider,
             {
               GHashTableIter iter;
               gpointer id;
-              CustomPropertyValue *value;
+              GtkCssVariableValue *value;
 
               g_hash_table_iter_init (&iter, ruleset->custom_properties);
 
               while (g_hash_table_iter_next (&iter, &id, (gpointer) &value))
-                _gtk_css_lookup_set_custom (lookup, GPOINTER_TO_INT (id), value->value);
+                _gtk_css_lookup_set_custom (lookup, GPOINTER_TO_INT (id), value);
             }
         }
     }
@@ -896,9 +868,7 @@ parse_declaration (GtkCssScanner *scanner,
   /* This is a custom property */
   if (name[0] == '-' && name[1] == '-')
     {
-      GtkCssVariableValueToken *tokens;
-      char **refs;
-      gsize n_tokens, n_refs;
+      GtkCssVariableValue *value;
       GtkCssSection *section;
 
       if (!gtk_css_parser_try_token (scanner->parser, GTK_CSS_TOKEN_COLON))
@@ -907,19 +877,9 @@ parse_declaration (GtkCssScanner *scanner,
           goto out;
         }
 
-      tokens = gtk_css_parser_parse_value_into_token_stream (scanner->parser,
-                                                             &n_tokens,
-                                                             NULL,
-                                                             &refs,
-                                                             &n_refs);
-      if (tokens == NULL)
+      value = gtk_css_parser_parse_value_into_token_stream (scanner->parser);
+      if (value == NULL)
         goto out;
-
-      if (n_tokens == 1 && gtk_css_token_is_ident (&tokens[0].token, "initial"))
-        {
-          g_clear_pointer (&tokens, g_free);
-          n_tokens = 0;
-        }
 
       if (gtk_keep_css_sections)
         {
@@ -930,7 +890,13 @@ parse_declaration (GtkCssScanner *scanner,
       else
         section = NULL;
 
-      gtk_css_ruleset_add_custom (ruleset, name, section, tokens, n_tokens, refs, n_refs);
+      if (section != NULL)
+        {
+          gtk_css_variable_value_set_section (value, section);
+          gtk_css_section_unref (section);
+        }
+
+      gtk_css_ruleset_add_custom (ruleset, name, value);
 
       goto out;
     }
@@ -951,25 +917,10 @@ parse_declaration (GtkCssScanner *scanner,
       if (gtk_css_parser_find_references (scanner->parser, NULL, NULL))
         {
           GtkCssVariableValue *var_value;
-          GtkCssVariableValueToken *tokens;
-          gsize n_tokens;
 
-          tokens = gtk_css_parser_parse_value_into_token_stream (scanner->parser,
-                                                                 &n_tokens,
-                                                                 NULL,
-                                                                 NULL,
-                                                                 NULL);
-          if (tokens == NULL)
+          var_value = gtk_css_parser_parse_value_into_token_stream (scanner->parser);
+          if (var_value == NULL)
             goto out;
-
-          if (!gtk_css_parser_has_token (scanner->parser, GTK_CSS_TOKEN_EOF))
-            {
-              gtk_css_parser_error_syntax (scanner->parser, "Junk at end of value for %s", property->name);
-              g_free (tokens);
-              goto out;
-            }
-
-          var_value = gtk_css_variable_value_new (NULL, tokens, n_tokens);
 
           if (GTK_IS_CSS_SHORTHAND_PROPERTY (property))
             {
@@ -1320,7 +1271,7 @@ gtk_css_provider_load_from_string (GtkCssProvider *css_provider,
   g_return_if_fail (GTK_IS_CSS_PROVIDER (css_provider));
   g_return_if_fail (string != NULL);
 
-  bytes = g_bytes_new_static (string, strlen (string));
+  bytes = g_bytes_new (string, strlen (string));
 
   gtk_css_provider_load_from_bytes (css_provider, bytes);
 
@@ -1710,13 +1661,13 @@ gtk_css_ruleset_print (const GtkCssRuleset *ruleset,
               {
                 int id = GPOINTER_TO_INT (g_ptr_array_index (keys, i));
                 const char *name = gtk_css_custom_property_pool_get_name (pool, id);
-                CustomPropertyValue *value = g_hash_table_lookup (ruleset->custom_properties,
+                GtkCssVariableValue *value = g_hash_table_lookup (ruleset->custom_properties,
                                                                   GINT_TO_POINTER (id));
 
                 g_string_append (str, "  ");
                 g_string_append (str, name);
                 g_string_append (str, ": ");
-                gtk_css_variable_value_print (value->value, str);
+                gtk_css_variable_value_print (value, str);
                 g_string_append (str, ";\n");
               }
 
