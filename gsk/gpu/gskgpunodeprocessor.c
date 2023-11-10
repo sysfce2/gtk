@@ -1014,12 +1014,13 @@ gsk_gpu_node_processor_add_rounded_clip_node (GskGpuNodeProcessor *self,
   if (gsk_render_node_get_node_type (child) == GSK_COLOR_NODE &&
       gsk_rect_contains_rect (&child->bounds, &original_clip->bounds))
     {
+      const GdkRGBA *rgba = gsk_color_node_get_color (child);
       gsk_gpu_node_processor_sync_globals (self, 0);
       gsk_gpu_rounded_color_op (self->frame,
                                 gsk_gpu_clip_get_shader_clip (&self->clip, &self->offset, &original_clip->bounds),
                                 original_clip,
                                 &self->offset,
-                                gsk_color_node_get_color (child));
+                                &(GdkRGBA) { rgba->red, rgba->green, rgba->blue, rgba->alpha * self->opacity });
       return;
     }
 
@@ -1300,6 +1301,7 @@ gsk_gpu_node_processor_add_color_node (GskGpuNodeProcessor *self,
 
   if (gsk_gpu_frame_should_optimize (self->frame, GSK_GPU_OPTIMIZE_CLEAR) &&
       gdk_rgba_is_opaque (color) &&
+      self->opacity >= 1.0 &&
       node->bounds.size.width * node->bounds.size.height > 100 * 100 && /* not worth the effort for small images */
       gsk_gpu_node_processor_rect_is_integer (self, &clipped, &int_clipped))
     {
@@ -1391,7 +1393,7 @@ gsk_gpu_node_processor_add_color_node (GskGpuNodeProcessor *self,
                     gsk_gpu_clip_get_shader_clip (&self->clip, &self->offset, &node->bounds),
                     &node->bounds,
                     &self->offset,
-                    gsk_color_node_get_color (node));
+                    &(GdkRGBA) { color->red, color->green, color->blue, color->alpha * self->opacity });
 }
 
 static gboolean
@@ -1408,6 +1410,13 @@ static void
 gsk_gpu_node_processor_add_border_node (GskGpuNodeProcessor *self,
                                         GskRenderNode       *node)
 {
+  GdkRGBA colors[4];
+  gsize i;
+
+  memcpy (colors, gsk_border_node_get_colors (node), sizeof (colors));
+  for (i = 0; i < G_N_ELEMENTS (colors); i++)
+    colors[i].alpha *= self->opacity;
+
   gsk_gpu_border_op (self->frame,
                      gsk_gpu_clip_get_shader_clip (&self->clip, &self->offset, &node->bounds),
                      gsk_border_node_get_outline (node),
@@ -1596,11 +1605,12 @@ static void
 gsk_gpu_node_processor_add_inset_shadow_node (GskGpuNodeProcessor *self,
                                               GskRenderNode       *node)
 {
-  const GdkRGBA *color;
+  GdkRGBA color;
   float spread, blur_radius;
 
   spread = gsk_inset_shadow_node_get_spread (node);
-  color = gsk_inset_shadow_node_get_color (node);
+  color = *gsk_inset_shadow_node_get_color (node);
+  color.alpha *= self->opacity;
   blur_radius = gsk_inset_shadow_node_get_blur_radius (node);
 
   if (blur_radius == 0)
@@ -1612,7 +1622,7 @@ gsk_gpu_node_processor_add_inset_shadow_node (GskGpuNodeProcessor *self,
                          &GRAPHENE_POINT_INIT (gsk_inset_shadow_node_get_dx (node),
                                                gsk_inset_shadow_node_get_dy (node)),
                          (float[4]) { spread, spread, spread, spread },
-                         (GdkRGBA[4]) { *color, *color, *color, *color });
+                         (GdkRGBA[4]) { color, color, color, color });
     }
   else
     {
@@ -1626,7 +1636,7 @@ gsk_gpu_node_processor_add_inset_shadow_node (GskGpuNodeProcessor *self,
                              spread,
                              blur_radius,
                              &self->offset,
-                             color);
+                             &color);
     }
 }
 
@@ -1634,11 +1644,12 @@ static void
 gsk_gpu_node_processor_add_outset_shadow_node (GskGpuNodeProcessor *self,
                                                GskRenderNode       *node)
 {
-  const GdkRGBA *color;
+  GdkRGBA color;
   float spread, blur_radius, dx, dy;
 
   spread = gsk_outset_shadow_node_get_spread (node);
-  color = gsk_outset_shadow_node_get_color (node);
+  color = *gsk_outset_shadow_node_get_color (node);
+  color.alpha *= self->opacity;
   blur_radius = gsk_outset_shadow_node_get_blur_radius (node);
   dx = gsk_outset_shadow_node_get_dx (node);
   dy = gsk_outset_shadow_node_get_dy (node);
@@ -1657,7 +1668,7 @@ gsk_gpu_node_processor_add_outset_shadow_node (GskGpuNodeProcessor *self,
                          &self->offset,
                          &GRAPHENE_POINT_INIT (-dx, -dy),
                          (float[4]) { spread, spread, spread, spread },
-                         (GdkRGBA[4]) { *color, *color, *color, *color });
+                         (GdkRGBA[4]) { color, color, color, color });
     }
   else
     {
@@ -1670,7 +1681,7 @@ gsk_gpu_node_processor_add_outset_shadow_node (GskGpuNodeProcessor *self,
                              spread,
                              blur_radius,
                              &self->offset,
-                             color);
+                             &color);
     }
 }
 
@@ -1969,8 +1980,18 @@ gsk_gpu_node_processor_add_glyph_node (GskGpuNodeProcessor *self,
   graphene_point_t offset;
   guint i, num_glyphs;
   float scale, inv_scale;
+  GdkRGBA color;
+
+  if (self->opacity < 1.0 &&
+      gsk_text_node_has_color_glyphs (node))
+    {
+      gsk_gpu_node_processor_add_without_opacity (self, node);
+      return;
+    }
 
   device = gsk_gpu_frame_get_device (self->frame);
+  color = *gsk_text_node_get_color (node);
+  color.alpha *= self->opacity;
   num_glyphs = gsk_text_node_get_num_glyphs (node);
   glyphs = gsk_text_node_get_glyphs (node, NULL);
   font = gsk_text_node_get_font (node);
@@ -2018,7 +2039,7 @@ gsk_gpu_node_processor_add_glyph_node (GskGpuNodeProcessor *self,
                              &glyph_bounds,
                              &glyph_offset,
                              &glyph_tex_rect,
-                             gsk_text_node_get_color (node));
+                             &color);
 
       offset.x += (float) glyphs[i].geometry.width / PANGO_SCALE;
     }
@@ -2247,7 +2268,7 @@ static const struct
   },
   [GSK_COLOR_NODE] = {
     0,
-    0,
+    GSK_GPU_HANDLE_OPACITY,
     gsk_gpu_node_processor_add_color_node,
     gsk_gpu_node_processor_create_color_pattern,
   },
@@ -2283,7 +2304,7 @@ static const struct
   },
   [GSK_BORDER_NODE] = {
     0,
-    0,
+    GSK_GPU_HANDLE_OPACITY,
     gsk_gpu_node_processor_add_border_node,
     NULL,
   },
@@ -2295,13 +2316,13 @@ static const struct
   },
   [GSK_INSET_SHADOW_NODE] = {
     0,
-    0,
+    GSK_GPU_HANDLE_OPACITY,
     gsk_gpu_node_processor_add_inset_shadow_node,
     NULL,
   },
   [GSK_OUTSET_SHADOW_NODE] = {
     0,
-    0,
+    GSK_GPU_HANDLE_OPACITY,
     gsk_gpu_node_processor_add_outset_shadow_node,
     NULL,
   },
@@ -2361,7 +2382,7 @@ static const struct
   },
   [GSK_TEXT_NODE] = {
     0,
-    0,
+    GSK_GPU_HANDLE_OPACITY,
     gsk_gpu_node_processor_add_glyph_node,
     gsk_gpu_node_processor_create_glyph_pattern,
   },
