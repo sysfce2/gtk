@@ -67,13 +67,13 @@ gsk_ngl_renderer_get_backbuffer (GskGpuRenderer *renderer)
   GskNglRenderer *self = GSK_NGL_RENDERER (renderer);
   GdkDrawContext *context;
   GdkSurface *surface;
-  float scale;
-
-  gdk_gl_context_make_current (GDK_GL_CONTEXT (gsk_gpu_renderer_get_context (renderer)));
+  double scale;
 
   context = gsk_gpu_renderer_get_context (renderer);
   surface = gdk_draw_context_get_surface (context);
-  scale = gdk_surface_get_scale (surface);
+  scale = gsk_gpu_renderer_get_scale (renderer);
+
+  gdk_gl_context_make_current (GDK_GL_CONTEXT (context));
 
   if (self->backbuffer == NULL ||
       gsk_gpu_image_get_width (self->backbuffer) != ceil (gdk_surface_get_width (surface) * scale) ||
@@ -94,6 +94,14 @@ gsk_ngl_renderer_wait (GskGpuRenderer  *self,
                        GskGpuFrame    **frame,
                        gsize            n_frames)
 {
+}
+
+static double
+gsk_ngl_renderer_get_scale (GskGpuRenderer *self)
+{
+  GdkDrawContext *context = gsk_gpu_renderer_get_context (self);
+
+  return gdk_gl_context_get_scale (GDK_GL_CONTEXT (context));
 }
 
 static GdkTexture *
@@ -130,6 +138,7 @@ gsk_ngl_renderer_class_init (GskNglRendererClass *klass)
   gpu_renderer_class->create_context = gsk_ngl_renderer_create_context;
   gpu_renderer_class->get_backbuffer = gsk_ngl_renderer_get_backbuffer;
   gpu_renderer_class->wait = gsk_ngl_renderer_wait;
+  gpu_renderer_class->get_scale = gsk_ngl_renderer_get_scale;
 
   renderer_class->render_texture = gsk_ngl_renderer_render_texture;
   renderer_class->unrealize = gsk_ngl_renderer_unrealize;
