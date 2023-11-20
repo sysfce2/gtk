@@ -49,9 +49,8 @@ gtk_css_value_reference_free (GtkCssValue *value)
 static gboolean
 resolve_references_do (GtkCssVariableValue *value,
                        GtkCssStyle         *style,
-                       int                  id,
+                       gboolean             root,
                        GPtrArray           *refs,
-                       GHashTable          *ref_stack,
                        gsize               *out_length,
                        gsize               *out_n_refs)
 {
@@ -60,37 +59,27 @@ resolve_references_do (GtkCssVariableValue *value,
   gsize length = value->length;
   gsize n_refs = 0;
 
-  if (id >= 0)
+  if (!root)
     {
       n_refs += 1;
       g_ptr_array_add (refs, value);
-      g_hash_table_add (ref_stack, GINT_TO_POINTER (id));
     }
 
   for (i = 0; i < value->n_references; i++)
     {
       GtkCssVariableValueReference *ref = &value->references[i];
-      int ref_id = gtk_css_custom_property_pool_add (pool, ref->name);
+      int id = gtk_css_custom_property_pool_add (pool, ref->name);
       GtkCssVariableValue *var_value;
       gsize var_length, var_refs;
 
-      if (id >= 0 && g_hash_table_contains (ref_stack, GINT_TO_POINTER (ref_id)))
-        goto error;
+      var_value = gtk_css_style_get_custom_property (style, id);
 
-      var_value = gtk_css_style_get_custom_property (style, ref_id);
-
-      if (!var_value ||
-          !resolve_references_do (var_value, style, ref_id, refs,
-                                  ref_stack, &var_length, &var_refs))
+      if (!var_value || !resolve_references_do (var_value, style, FALSE, refs, &var_length, &var_refs))
         {
           var_value = ref->fallback;
 
-          if (!var_value ||
-              !resolve_references_do (var_value, style, ref_id, refs,
-                                      ref_stack, &var_length, &var_refs))
-            {
-              goto error;
-            }
+          if (!var_value || !resolve_references_do (var_value, style, FALSE, refs, &var_length, &var_refs))
+            goto error;
         }
 
       length += var_length - ref->length;
@@ -99,9 +88,6 @@ resolve_references_do (GtkCssVariableValue *value,
       if (length > MAX_TOKEN_LENGTH)
         goto error;
     }
-
-  if (id >= 0)
-    g_hash_table_remove (ref_stack, GINT_TO_POINTER (id));
 
   if (out_length)
     *out_length = length;
@@ -114,9 +100,6 @@ resolve_references_do (GtkCssVariableValue *value,
 error:
   /* Remove the references we added as if nothing happened */
   g_ptr_array_remove_range (refs, refs->len - n_refs, n_refs);
-
-  if (id >= 0)
-    g_hash_table_remove (ref_stack, GINT_TO_POINTER (id));
 
   if (out_length)
     *out_length = 0;
@@ -133,12 +116,9 @@ resolve_references (GtkCssVariableValue *input,
                     gsize               *n_refs)
 {
   GPtrArray *refs = g_ptr_array_new ();
-  GHashTable *ref_stack = g_hash_table_new (g_direct_hash, g_direct_equal);
 
-  if (!resolve_references_do (input, style, -1, refs, ref_stack, NULL, NULL))
+  if (!resolve_references_do (input, style, TRUE, refs, NULL, NULL))
     return NULL;
-
-  g_hash_table_unref (ref_stack);
 
   return (GtkCssVariableValue **) g_ptr_array_steal (refs, n_refs);
 }
