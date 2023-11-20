@@ -21,6 +21,7 @@
 
 #include "gtkcssstyleprivate.h"
 #include "gtkcssarrayvalueprivate.h"
+#include "gtkcssreferencevalueprivate.h"
 #include "gtkcssshorthandpropertyprivate.h"
 #include "gtkcssstylepropertyprivate.h"
 #include "gtkstylepropertyprivate.h"
@@ -251,9 +252,53 @@ gtk_css_keyframes_parse_declaration (GtkCssKeyframes *keyframes,
       return FALSE;
     }
 
-  value = _gtk_style_property_parse_value (property, parser);
-  if (value == NULL)
-    return FALSE;
+  if (gtk_css_parser_find_references (parser, NULL, NULL))
+    {
+      GtkCssVariableValue *var_value;
+
+      var_value = gtk_css_parser_parse_value_into_token_stream (parser);
+      if (var_value == NULL)
+        return FALSE;
+
+      if (GTK_IS_CSS_SHORTHAND_PROPERTY (property))
+        {
+          GtkCssShorthandProperty *shorthand = GTK_CSS_SHORTHAND_PROPERTY (property);
+          guint i, n;
+          GtkCssValue **values;
+
+          n = _gtk_css_shorthand_property_get_n_subproperties (shorthand);
+
+          values = g_new (GtkCssValue *, n);
+
+          for (i = 0; i < n; i++)
+            {
+              GtkCssValue *child =
+                _gtk_css_reference_value_new (property,
+                                              var_value,
+                                              gtk_css_parser_get_file (parser));
+              _gtk_css_reference_value_set_subproperty (child, i);
+
+              values[i] = _gtk_css_array_value_get_nth (child, i);
+            }
+
+          value = _gtk_css_array_value_new_from_array (values, n);
+          g_free (values);
+        }
+      else
+        {
+          value = _gtk_css_reference_value_new (property,
+                                                var_value,
+                                                gtk_css_parser_get_file (parser));
+        }
+
+      gtk_css_variable_value_unref (var_value);
+    }
+  else
+    {
+      value = _gtk_style_property_parse_value (property, parser);
+      if (value == NULL)
+        return FALSE;
+    }
 
   if (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
     {
@@ -539,4 +584,5 @@ _gtk_css_keyframes_get_value (GtkCssKeyframes *keyframes,
 
   return result;
 }
+
 
