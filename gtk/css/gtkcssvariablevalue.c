@@ -93,7 +93,6 @@ gtk_css_variable_value_print (GtkCssVariableValue *self,
 
   g_assert (data != NULL);
 
-  // TODO: somehow printing from inspector is wrong?
   g_string_append_len (string, (const char *) data, len);
 }
 
