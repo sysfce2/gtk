@@ -41,6 +41,18 @@ gtk_css_variable_value_new (GBytes                       *bytes,
 }
 
 GtkCssVariableValue *
+gtk_css_variable_value_new_initial (GBytes *bytes,
+                                    gsize   offset,
+                                    gsize   end_offset)
+{
+  GtkCssVariableValue *self = gtk_css_variable_value_new (bytes, offset, end_offset, 1, NULL, 0);
+
+  self->is_invalid = TRUE;
+
+  return self;
+}
+
+GtkCssVariableValue *
 gtk_css_variable_value_ref (GtkCssVariableValue *self)
 {
   self->ref_count++;

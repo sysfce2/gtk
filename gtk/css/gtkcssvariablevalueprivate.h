@@ -45,6 +45,7 @@ struct _GtkCssVariableValue
   gsize n_references;
 
   GtkCssSection *section;
+  gboolean is_invalid;
 };
 
 GtkCssVariableValue *gtk_css_variable_value_new         (GBytes                       *bytes,
@@ -53,6 +54,9 @@ GtkCssVariableValue *gtk_css_variable_value_new         (GBytes                 
                                                          gsize                         length,
                                                          GtkCssVariableValueReference *references,
                                                          gsize                         n_references);
+GtkCssVariableValue *gtk_css_variable_value_new_initial (GBytes                       *bytes,
+                                                         gsize                         offset,
+                                                         gsize                         end_offset);
 GtkCssVariableValue *gtk_css_variable_value_ref         (GtkCssVariableValue          *self);
 void                 gtk_css_variable_value_unref       (GtkCssVariableValue          *self);
 void                 gtk_css_variable_value_print       (GtkCssVariableValue          *self,

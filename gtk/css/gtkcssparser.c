@@ -1312,6 +1312,7 @@ gtk_css_parser_parse_value_into_token_stream (GtkCssParser *self)
   GtkCssVariableValueReference *out_refs;
   gsize n_refs;
   int inner_blocks = 0, i;
+  gboolean is_initial = FALSE;
 
   refs = g_array_new (FALSE, TRUE, sizeof (GtkCssVariableValueReference));
 
@@ -1328,6 +1329,9 @@ gtk_css_parser_parse_value_into_token_stream (GtkCssParser *self)
 
   do {
       token = gtk_css_parser_get_token (self);
+
+      if (length == 0 && gtk_css_token_is_ident (token, "initial"))
+        is_initial = TRUE;
 
       if (gtk_css_token_is (token, GTK_CSS_TOKEN_BAD_STRING) ||
           gtk_css_token_is (token, GTK_CSS_TOKEN_BAD_URL))
@@ -1439,14 +1443,25 @@ gtk_css_parser_parse_value_into_token_stream (GtkCssParser *self)
       goto error;
     }
 
-  out_refs = g_array_steal (refs, &n_refs);
+  if (is_initial && length == 1)
+    {
+      g_array_unref (refs);
 
-  return gtk_css_variable_value_new (bytes,
-                                     offset,
-                                     self->location.bytes,
-                                     length,
-                                     out_refs,
-                                     n_refs);
+      return gtk_css_variable_value_new_initial (bytes,
+                                                 offset,
+                                                 self->location.bytes);
+    }
+  else
+    {
+      out_refs = g_array_steal (refs, &n_refs);
+
+      return gtk_css_variable_value_new (bytes,
+                                         offset,
+                                         self->location.bytes,
+                                         length,
+                                         out_refs,
+                                         n_refs);
+    }
 
 error:
   for (i = 0; i < inner_blocks; i++)

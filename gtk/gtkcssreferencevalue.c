@@ -59,6 +59,9 @@ resolve_references_do (GtkCssVariableValue *value,
   gsize length = value->length;
   gsize n_refs = 0;
 
+  if (value->is_invalid)
+    goto error;
+
   if (!root)
     {
       n_refs += 1;
