@@ -1,6 +1,8 @@
 #pragma once
 
+#include "gdk/gdkdmabufformats.h"
 #include "gdksubsurfaceprivate.h"
+#include "gdkdmabuf-wayland-private.h"
 
 
 typedef struct _GdkWaylandSubsurface GdkWaylandSubsurface;
@@ -28,6 +30,8 @@ struct _GdkWaylandSubsurface
   struct wl_callback *frame_callback;
 
   gboolean above_parent;
+
+  DmabufFormatsInfo *formats;
 };
 
 struct _GdkWaylandSubsurfaceClass
@@ -42,3 +46,11 @@ void gdk_wayland_subsurface_clear_frame_callback (GdkSubsurface *subsurface);
 
 GdkSubsurface * gdk_wayland_surface_create_subsurface (GdkSurface *surface);
 
+GdkDmabufFormats * gdk_wayland_subsurface_get_formats        (GdkSubsurface *subsurface);
+dev_t              gdk_wayland_subsurface_get_main_device    (GdkSubsurface *subsurface);
+dev_t              gdk_wayland_subsurface_get_target_device  (GdkSubsurface *subsurface,
+                                                              guint32        fourcc,
+                                                              guint64        modifier);
+gboolean           gdk_wayland_subsurface_get_allows_scanout (GdkSubsurface *subsurface,
+                                                              guint32        fourcc,
+                                                              guint64        modifier);

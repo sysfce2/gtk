@@ -25,8 +25,16 @@
 #include "gdkdmabuftextureprivate.h"
 #include "gdksurface-wayland-private.h"
 #include "gdksubsurfaceprivate.h"
+#include "gdkprivate.h"
 
 #include "linux-dmabuf-unstable-v1-client-protocol.h"
+
+enum {
+  DMABUF_FORMATS_CHANGED,
+  LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE (GdkWaylandSubsurface, gdk_wayland_subsurface, GDK_TYPE_SUBSURFACE)
 
@@ -47,6 +55,7 @@ gdk_wayland_subsurface_finalize (GObject *object)
   g_clear_pointer (&self->subsurface, wl_subsurface_destroy);
   g_clear_pointer (&self->surface, wl_surface_destroy);
   g_clear_pointer (&self->subsurface, wl_subsurface_destroy);
+  g_clear_pointer (&self->formats, dmabuf_formats_info_free);
 
   G_OBJECT_CLASS (gdk_wayland_subsurface_parent_class)->finalize (object);
 }
@@ -386,6 +395,16 @@ gdk_wayland_subsurface_class_init (GdkWaylandSubsurfaceClass *class)
   subsurface_class->get_texture = gdk_wayland_subsurface_get_texture;
   subsurface_class->get_rect = gdk_wayland_subsurface_get_rect;
   subsurface_class->is_above_parent = gdk_wayland_subsurface_is_above_parent;
+
+  signals[DMABUF_FORMATS_CHANGED] =
+    g_signal_new (I_("dmabuf-formats-changed"),
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_FIRST,
+                  0,
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_NONE,
+                  0);
 };
 
 static void
@@ -424,6 +443,15 @@ gdk_wayland_subsurface_clear_frame_callback (GdkSubsurface *sub)
   g_clear_pointer (&self->frame_callback, wl_callback_destroy);
 }
 
+static void
+dmabuf_formats_callback (gpointer           data,
+                         DmabufFormatsInfo *info)
+{
+  GdkSubsurface *sub = data;
+
+  gdk_subsurface_set_dmabuf_formats (sub, info->formats);
+}
+
 GdkSubsurface *
 gdk_wayland_surface_create_subsurface (GdkSurface *surface)
 {
@@ -432,6 +460,8 @@ gdk_wayland_surface_create_subsurface (GdkSurface *surface)
   GdkWaylandDisplay *disp = GDK_WAYLAND_DISPLAY (display);
   GdkWaylandSubsurface *sub;
   struct wl_region *region;
+  struct zwp_linux_dmabuf_feedback_v1 *feedback;
+  char *name;
 
   if (disp->viewporter == NULL)
     {
@@ -461,8 +491,50 @@ gdk_wayland_surface_create_subsurface (GdkSurface *surface)
 
   sub->above_parent = TRUE;
 
+  gdk_display_init_dmabuf (display);
+
+  if (disp->linux_dmabuf)
+    feedback = zwp_linux_dmabuf_v1_get_surface_feedback (disp->linux_dmabuf, sub->surface);
+  else
+    feedback = NULL;
+
+  name = g_strdup_printf ("subsurface %p", sub);
+  sub->formats = dmabuf_formats_info_new (name,
+                                          display->dmabuf_formats,
+                                          feedback,
+                                          dmabuf_formats_callback,
+                                          sub);
+  g_free (name);
+
   GDK_DISPLAY_DEBUG (display, OFFLOAD, "Subsurface %p of surface %p created", sub, impl);
 
   return GDK_SUBSURFACE (sub);
 }
 
+GdkDmabufFormats *
+gdk_wayland_subsurface_get_formats (GdkSubsurface *subsurface)
+{
+  return NULL;
+}
+
+dev_t
+gdk_wayland_subsurface_get_main_device (GdkSubsurface *subsurface)
+{
+  return 0;
+}
+
+dev_t
+gdk_wayland_subsurface_get_target_device (GdkSubsurface *subsurface,
+                                          guint32        fourcc,
+                                          guint64        modifier)
+{
+  return 0;
+}
+
+gboolean
+gdk_wayland_subsurface_get_allows_scanout (GdkSubsurface *subsurface,
+                                           guint32        fourcc,
+                                           guint64        modifier)
+{
+  return FALSE;
+}
