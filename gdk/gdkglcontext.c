@@ -1692,10 +1692,17 @@ gdk_gl_context_check_extensions (GdkGLContext *context)
 
   if (gdk_gl_context_get_use_es (context))
     {
+      EGLDisplay *egl_display = gdk_display_get_egl_display (display);
       priv->has_unpack_subimage = gdk_gl_version_greater_equal (&priv->gl_version, &GDK_GL_VERSION_INIT (3, 0)) ||
                                   epoxy_has_gl_extension ("GL_EXT_unpack_subimage");
       priv->has_khr_debug = epoxy_has_gl_extension ("GL_KHR_debug");
-      priv->has_bgra = epoxy_has_gl_extension ("GL_EXT_texture_format_BGRA8888");
+
+      /*
+       * sadly, libangle on Windows (D3D) does not support the GL_EXT_texture_format_BGRA8888
+	   * extension well-enough for our purposes here in the current state
+       */
+      priv->has_bgra = !epoxy_has_egl_extension (egl_display, "EGL_ANGLE_d3d_texture_client_buffer") &&
+                        epoxy_has_gl_extension ("GL_EXT_texture_format_BGRA8888");
     }
   else
     {
