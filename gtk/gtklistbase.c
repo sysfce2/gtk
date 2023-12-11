@@ -1137,6 +1137,7 @@ gtk_list_base_move_cursor (GtkWidget *widget,
                            gpointer   unused)
 {
   GtkListBase *self = GTK_LIST_BASE (widget);
+  GtkListBasePrivate *priv = gtk_list_base_get_instance_private (self);
   int amount;
   guint orientation;
   guint old_pos, new_pos;
@@ -1145,6 +1146,22 @@ gtk_list_base_move_cursor (GtkWidget *widget,
   g_variant_get (args, "(ubbbi)", &orientation, &select, &modify, &extend, &amount);
 
   old_pos = gtk_list_base_get_focus_position (self);
+
+  if (select && !modify)
+    {
+      GtkSelectionModel *model;
+
+      /* If the focus item is not selected, try to select it instead of moving.
+       * If the model doesn't allow the selection, move the cursor as usual. */
+      model = gtk_list_item_manager_get_model (priv->item_manager);
+      if (model != NULL && !gtk_selection_model_is_selected (model, old_pos))
+        {
+          gtk_list_base_grab_focus_on_item (GTK_LIST_BASE (self), old_pos, TRUE, FALSE, extend);
+          if (gtk_selection_model_is_selected (model, old_pos))
+            return TRUE;
+        }
+    }
+
   new_pos = gtk_list_base_move_focus (self, old_pos, orientation, amount);
 
   if (old_pos != new_pos)
