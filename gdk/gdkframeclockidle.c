@@ -308,6 +308,17 @@ maybe_stop_idle (GdkFrameClockIdle *self)
 }
 
 static void
+gdk_frame_clock_idle_set_stage (GdkFrameClockIdle *self,
+                                GdkFrameStage      stage)
+{
+  GdkFrameClockIdlePrivate *priv = gdk_frame_clock_idle_get_instance_private (self);
+
+  g_assert (priv->stage + 1 == stage || (priv->stage + 1 == GDK_FRAME_N_STAGES && stage == GDK_FRAME_STAGE_NONE));
+
+  priv->stage = stage;
+}
+
+static void
 gdk_frame_clock_idle_run_flush_events (GdkFrameClockIdle *self)
 {
   GdkFrameClockIdlePrivate *priv = gdk_frame_clock_idle_get_instance_private (self);
@@ -320,7 +331,7 @@ gdk_frame_clock_idle_run_flush_events (GdkFrameClockIdle *self)
       _gdk_frame_clock_emit_flush_events (clock);
     }
 
-  priv->stage = GDK_FRAME_STAGE_BEFORE_PAINT;
+  gdk_frame_clock_idle_set_stage (self, GDK_FRAME_STAGE_BEFORE_PAINT);
 }
 
 /*
@@ -483,7 +494,7 @@ gdk_frame_clock_idle_run_before_paint (GdkFrameClockIdle *self)
   priv->requested &= ~GDK_FRAME_CLOCK_PHASE_BEFORE_PAINT;
   _gdk_frame_clock_emit_before_paint (clock);
 
-  priv->stage = GDK_FRAME_STAGE_UPDATE;
+  gdk_frame_clock_idle_set_stage (self, GDK_FRAME_STAGE_UPDATE);
 }
 
 static void
@@ -505,7 +516,7 @@ gdk_frame_clock_idle_run_update (GdkFrameClockIdle *self)
   if (gdk_frame_clock_is_stopped (clock))
     return;
 
-  priv->stage = GDK_FRAME_STAGE_LAYOUT;
+  gdk_frame_clock_idle_set_stage (self, GDK_FRAME_STAGE_LAYOUT);
 }
 
 static void
@@ -550,7 +561,7 @@ gdk_frame_clock_idle_run_layout (GdkFrameClockIdle *self)
   if (gdk_frame_clock_is_stopped (clock))
     return;
 
-  priv->stage = GDK_FRAME_STAGE_PAINT;
+  gdk_frame_clock_idle_set_stage (self, GDK_FRAME_STAGE_PAINT);
 }
 
 static void
@@ -581,7 +592,7 @@ gdk_frame_clock_idle_run_paint (GdkFrameClockIdle *self)
       _gdk_frame_clock_emit_paint (clock);
     }
 
-  priv->stage = GDK_FRAME_STAGE_AFTER_PAINT;
+  gdk_frame_clock_idle_set_stage (self, GDK_FRAME_STAGE_AFTER_PAINT);
 }
 
 static void
@@ -607,7 +618,7 @@ gdk_frame_clock_idle_run_after_paint (GdkFrameClockIdle *self)
 
   /* the ::after-paint phase doesn't get repeated on freeze/thaw,
    */
-  priv->stage = GDK_FRAME_STAGE_RESUME_EVENTS;
+  gdk_frame_clock_idle_set_stage (self, GDK_FRAME_STAGE_RESUME_EVENTS);
 }
 
 static void
@@ -623,7 +634,7 @@ gdk_frame_clock_idle_run_resume_events (GdkFrameClockIdle *self)
     }
 
   if (!gdk_frame_clock_is_stopped (clock))
-    priv->stage = GDK_FRAME_STAGE_NONE;
+    gdk_frame_clock_idle_set_stage (self, GDK_FRAME_STAGE_NONE);
 }
 
 static void
@@ -639,7 +650,7 @@ gdk_frame_clock_idle_frame (GdkFrameClockIdle *self)
   priv->min_next_frame_time = 0;
 
   if (priv->stage == GDK_FRAME_STAGE_NONE)
-    priv->stage = GDK_FRAME_STAGE_FLUSH_EVENTS;
+    gdk_frame_clock_idle_set_stage (self, GDK_FRAME_STAGE_FLUSH_EVENTS);
 
   switch (priv->stage)
     {
@@ -672,6 +683,7 @@ gdk_frame_clock_idle_frame (GdkFrameClockIdle *self)
       break;
 
     case GDK_FRAME_STAGE_NONE:
+    case GDK_FRAME_N_STAGES:
     default:
       g_assert_not_reached ();
     }
