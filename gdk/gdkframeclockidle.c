@@ -580,10 +580,14 @@ gdk_frame_clock_idle_run_after_paint (GdkFrameClockIdle *self)
       gdk_frame_clock_idle_doing_work (self);
 
       _gdk_frame_clock_emit_after_paint (clock);
-    }
 
-  /* the ::after-paint phase doesn't get repeated on freeze/thaw,
-   */
+      if (!gdk_frame_clock_is_stopped (clock))
+        {
+          GdkFrameTimings *timings = gdk_frame_clock_get_current_timings (clock);
+          gdk_frame_timings_throttling_hint (timings, priv->stage_start_time);
+        }
+    }
+  
   gdk_frame_clock_idle_set_stage (self, GDK_FRAME_STAGE_RESUME_EVENTS);
 }
 
@@ -786,6 +790,16 @@ gdk_frame_clock_idle_start (GdkFrameClock *clock)
   GdkFrameClockIdlePrivate *priv = gdk_frame_clock_idle_get_instance_private (self);
 
   maybe_start_idle (self, TRUE);
+
+  if (priv->stage == GDK_FRAME_STAGE_NONE)
+    {
+      GdkFrameTimings *timings = gdk_frame_clock_get_current_timings (clock);
+
+      if (timings && gdk_frame_timings_get_throttling_hint (timings) == 0)
+        {
+          gdk_frame_timings_throttling_hint (timings, g_get_monotonic_time_ns ());
+        }
+    }
 
   if (GDK_PROFILER_IS_RUNNING)
     {
