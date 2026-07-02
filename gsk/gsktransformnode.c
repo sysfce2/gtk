@@ -151,7 +151,7 @@ gsk_transform_node_diff (GskRenderNode *node1,
       {
         float dx, dy;
         gsk_transform_to_translate (self1->transform, &dx, &dy);
-        if (floorf (dx) == dx && floorf (dy) != dy)
+        if (floorf (dx) == dx && floorf (dy) == dy)
           {
             cairo_region_translate (data->region, -dx, -dy);
             gsk_render_node_diff (self1->child, self2->child, data);
