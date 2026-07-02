@@ -32,8 +32,6 @@ G_BEGIN_DECLS
 #define GDK_CAIRO_CONTEXT(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDK_TYPE_CAIRO_CONTEXT, GdkCairoContext))
 #define GDK_IS_CAIRO_CONTEXT(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDK_TYPE_CAIRO_CONTEXT))
 
-#define GDK_CAIRO_ERROR                    (gdk_cairo_error_quark ())
-
 GDK_AVAILABLE_IN_ALL
 GType                   gdk_cairo_context_get_type                      (void) G_GNUC_CONST;
 
