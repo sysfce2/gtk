@@ -95,6 +95,7 @@ static guint fps_counter;
 #define GDK_ARRAY_FREE_FUNC frame_timings_unref
 #include "gdk/gdkarrayimpl.c"
 
+typedef struct _GdkFrameClockPrivate GdkFrameClockPrivate;
 struct _GdkFrameClockPrivate
 {
   gint64 frame_counter;

@@ -60,12 +60,6 @@ struct _Deserializer
 
 GQueue deserializers = G_QUEUE_INIT;
 
-#define GDK_CONTENT_DESERIALIZER_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_CONTENT_DESERIALIZER, GdkContentDeserializerClass))
-#define GDK_IS_CONTENT_DESERIALIZER_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_CONTENT_DESERIALIZER))
-#define GDK_CONTENT_DESERIALIZER_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_CONTENT_DESERIALIZER, GdkContentDeserializerClass))
-
-typedef struct _GdkContentDeserializerClass GdkContentDeserializerClass;
-
 struct _GdkContentDeserializer
 {
   GObject parent_instance;

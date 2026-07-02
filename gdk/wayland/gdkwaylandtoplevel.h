@@ -28,19 +28,10 @@
 
 G_BEGIN_DECLS
 
-#ifdef GTK_COMPILATION
-typedef struct _GdkWaylandToplevel GdkWaylandToplevel;
-#else
-typedef GdkToplevel GdkWaylandToplevel;
-#endif
-
 #define GDK_TYPE_WAYLAND_TOPLEVEL             (gdk_wayland_toplevel_get_type())
-#define GDK_WAYLAND_TOPLEVEL(object)          (G_TYPE_CHECK_INSTANCE_CAST ((object), GDK_TYPE_WAYLAND_TOPLEVEL, GdkWaylandToplevel))
-#define GDK_IS_WAYLAND_TOPLEVEL(object)       (G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_WAYLAND_TOPLEVEL))
 
 GDK_AVAILABLE_IN_ALL
-GType                    gdk_wayland_toplevel_get_type            (void);
-
+GDK_DECLARE_INTERNAL_TYPE (GdkWaylandToplevel, gdk_wayland_toplevel, GDK, WAYLAND_TOPLEVEL, GdkToplevel)
 
 typedef void (*GdkWaylandToplevelExported) (GdkToplevel *toplevel,
                                             const char  *handle,
@@ -66,7 +57,5 @@ gboolean                 gdk_wayland_toplevel_set_transient_for_exported (GdkTop
 GDK_AVAILABLE_IN_ALL
 void                     gdk_wayland_toplevel_set_application_id (GdkToplevel *toplevel,
                                                                   const char  *application_id);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (GdkWaylandToplevel, g_object_unref)
 
 G_END_DECLS
