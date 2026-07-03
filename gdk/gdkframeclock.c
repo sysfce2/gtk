@@ -469,7 +469,7 @@ gdk_frame_clock_begin_frame (GdkFrameClock *self,
 
       timings = timings_get (&priv->timings, priv->current);
 
-      if (timings->frame_time + G_USEC_PER_SEC > frame_time)
+      if (gdk_frame_timings_get_frame_time (timings) + G_USEC_PER_SEC > frame_time)
         {
           /* Keep the timings, not a second old yet */
           timings = _gdk_frame_timings_new (priv->frame_counter);
@@ -588,29 +588,27 @@ _gdk_frame_clock_debug_print_timings (GdkFrameClock   *clock,
   GString *str;
   gint64 previous_frame_time;
   GdkFrameTimings *previous_timings = _gdk_frame_clock_get_timings (clock,
-                                                                    timings->frame_counter - 1);
+                                                                    gdk_frame_timings_get_frame_counter (timings) - 1);
 
   if (previous_timings != NULL)
-    previous_frame_time = previous_timings->frame_time;
+    previous_frame_time = gdk_frame_timings_get_frame_time (previous_timings);
   else
     previous_frame_time = 0;
 
   str = g_string_new ("");
 
-  g_string_append_printf (str, "%5" G_GINT64_FORMAT ":", timings->frame_counter);
+  g_string_append_printf (str, "%5" G_GINT64_FORMAT ":", gdk_frame_timings_get_frame_counter (timings));
   if (previous_frame_time != 0)
-    g_string_append_printf (str, " interval=%-4.1f", (timings->frame_time - previous_frame_time) / 1000.);
-  g_string_append_printf (str, " layout_start=%-4.1f", (timings->stage_end_time[GDK_FRAME_STAGE_UPDATE] / 1000 - timings->frame_time) / 1000.);
-  g_string_append_printf (str, " paint_start=%-4.1f", (timings->stage_end_time[GDK_FRAME_STAGE_LAYOUT] / 1000 - timings->frame_time) / 1000.);
-  g_string_append_printf (str, " frame_end=%-4.1f", (timings->stage_end_time[GDK_FRAME_STAGE_RESUME_EVENTS] / 1000 - timings->frame_time) / 1000.);
-  if (timings->drawn_time != 0)
-    g_string_append_printf (str, " drawn=%-4.1f", (timings->drawn_time - timings->frame_time) / 1000.);
-  if (timings->presentation_time != 0)
-    g_string_append_printf (str, " present=%-4.1f", (timings->presentation_time - timings->frame_time) / 1000.);
-  if (timings->predicted_presentation_time != 0)
-    g_string_append_printf (str, " predicted=%-4.1f", (timings->predicted_presentation_time - timings->frame_time) / 1000.);
-  if (timings->refresh_interval != 0)
-    g_string_append_printf (str, " refresh_interval=%-4.1f", timings->refresh_interval / 1000.);
+    g_string_append_printf (str, " interval=%-4.1f", (gdk_frame_timings_get_frame_time (timings) - previous_frame_time) / 1000.);
+  g_string_append_printf (str, " layout_start=%-4.1f", (gdk_frame_timings_get_end_time (timings, GDK_FRAME_STAGE_UPDATE) / 1000 - gdk_frame_timings_get_frame_time (timings)) / 1000.);
+  g_string_append_printf (str, " paint_start=%-4.1f", (gdk_frame_timings_get_end_time (timings, GDK_FRAME_STAGE_LAYOUT) / 1000 - gdk_frame_timings_get_frame_time (timings)) / 1000.);
+  g_string_append_printf (str, " frame_end=%-4.1f", (gdk_frame_timings_get_end_time (timings, GDK_FRAME_STAGE_RESUME_EVENTS) / 1000 - gdk_frame_timings_get_frame_time (timings)) / 1000.);
+  if (gdk_frame_timings_get_presentation_time (timings) != 0)
+    g_string_append_printf (str, " present=%-4.1f", (gdk_frame_timings_get_presentation_time (timings) - gdk_frame_timings_get_frame_time (timings)) / 1000.);
+  if (gdk_frame_timings_get_predicted_presentation_time (timings) != 0)
+    g_string_append_printf (str, " predicted=%-4.1f", (gdk_frame_timings_get_predicted_presentation_time (timings) - gdk_frame_timings_get_frame_time (timings)) / 1000.);
+  if (gdk_frame_timings_get_refresh_interval (timings) != 0)
+    g_string_append_printf (str, " refresh_interval=%-4.1f", gdk_frame_timings_get_refresh_interval (timings) / 1000.);
 
   g_message ("%s", str->str);
   g_string_free (str, TRUE);
@@ -660,8 +658,8 @@ gdk_frame_clock_get_refresh_info (GdkFrameClock *frame_clock,
       if (timings == NULL)
         break;
 
-      refresh_interval = timings->refresh_interval;
-      presentation_time = timings->presentation_time;
+      refresh_interval = gdk_frame_timings_get_refresh_interval (timings);
+      presentation_time = gdk_frame_timings_get_presentation_time (timings);
 
       if (refresh_interval == 0)
         refresh_interval = default_refresh_interval;
@@ -753,13 +751,13 @@ _gdk_frame_clock_emit_after_paint (GdkFrameClock *self)
   g_signal_emit (self, signals[AFTER_PAINT], 0);
 
   timings = gdk_frame_clock_get_current_timings (self);
-  if (timings->result == GDK_FRAME_PREPARING)
+  if (gdk_frame_timings_get_result (timings) == GDK_FRAME_PREPARING)
     {
       /* Painting was done and if no surfaces transitioned the frame,
        * either to OUTSTANDING when painting or a backend in
        * after_paint(), then we mark this frame as SKIPPED.
        */
-      timings->result = GDK_FRAME_SKIPPED;
+      gdk_frame_timings_discarded (timings);
 
       if (GDK_DEBUG_CHECK (FRAMES))
         _gdk_frame_clock_debug_print_timings (self, timings);
@@ -860,14 +858,9 @@ void
 _gdk_frame_clock_add_timings_to_profiler (GdkFrameClock   *clock,
                                           GdkFrameTimings *timings)
 {
-  if (timings->drawn_time != 0)
+  if (gdk_frame_timings_get_presentation_time (timings) != 0)
     {
-      gdk_profiler_add_mark (1000 * timings->drawn_time, 0, "Drawn window", NULL);
-    }
-
-  if (timings->presentation_time != 0)
-    {
-      gdk_profiler_add_mark (1000 * timings->presentation_time, 0, "Presented window", NULL);
+      gdk_profiler_add_mark (1000 * gdk_frame_timings_get_presentation_time (timings), 0, "Presented window", NULL);
     }
 
   gdk_profiler_set_counter (fps_counter, gdk_frame_clock_get_fps (clock));
