@@ -693,7 +693,7 @@ display_change_hwnd_procedure (HWND   hwnd,
     {
       int debug_indent;
 
-	  display = GDK_DISPLAY (GetWindowLongPtr (hwnd, GWLP_USERDATA));
+	  display = GDK_DISPLAY ((gpointer) GetWindowLongPtr (hwnd, GWLP_USERDATA));
 
       debug_indent = GDK_WIN32_DISPLAY (display)->event_record->debug_indent_displaychange;
       GDK_NOTE (EVENTS, g_print ("%s%*s%s %p",
