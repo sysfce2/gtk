@@ -173,6 +173,9 @@ gdk_frame_timings_get_complete (GdkFrameTimings *timings)
 {
   g_return_val_if_fail (timings != NULL, FALSE);
 
+  if (timings->throttling_hint == 0)
+    return FALSE;
+
   switch (timings->result)
   {
     case GDK_FRAME_PREPARING:
