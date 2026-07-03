@@ -27,23 +27,10 @@
 
 G_BEGIN_DECLS
 
-#ifdef GTK_COMPILATION
-typedef struct _GdkWaylandDevice GdkWaylandDevice;
-#else
-typedef GdkDevice GdkWaylandDevice;
-#endif
-
-typedef struct _GdkWaylandDeviceClass GdkWaylandDeviceClass;
-
 #define GDK_TYPE_WAYLAND_DEVICE         (gdk_wayland_device_get_type ())
-#define GDK_WAYLAND_DEVICE(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), GDK_TYPE_WAYLAND_DEVICE, GdkWaylandDevice))
-#define GDK_WAYLAND_DEVICE_CLASS(c)     (G_TYPE_CHECK_CLASS_CAST ((c), GDK_TYPE_WAYLAND_DEVICE, GdkWaylandDeviceClass))
-#define GDK_IS_WAYLAND_DEVICE(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), GDK_TYPE_WAYLAND_DEVICE))
-#define GDK_IS_WAYLAND_DEVICE_CLASS(c)  (G_TYPE_CHECK_CLASS_TYPE ((c), GDK_TYPE_WAYLAND_DEVICE))
-#define GDK_WAYLAND_DEVICE_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), GDK_TYPE_WAYLAND_DEVICE, GdkWaylandDeviceClass))
 
 GDK_AVAILABLE_IN_ALL
-GType                gdk_wayland_device_get_type            (void);
+GDK_DECLARE_INTERNAL_TYPE (GdkWaylandDevice, gdk_wayland_device, GDK,WAYLAND_DEVICE, GdkDevice)
 
 GDK_AVAILABLE_IN_ALL
 struct wl_seat      *gdk_wayland_device_get_wl_seat         (GdkDevice *device);
@@ -57,7 +44,4 @@ struct xkb_keymap   *gdk_wayland_device_get_xkb_keymap      (GdkDevice *device);
 GDK_AVAILABLE_IN_ALL
 const char          *gdk_wayland_device_get_node_path       (GdkDevice *device);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (GdkWaylandDevice, g_object_unref)
-
 G_END_DECLS
-

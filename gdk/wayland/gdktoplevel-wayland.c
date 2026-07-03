@@ -172,10 +172,10 @@ struct _GdkWaylandToplevel
   GList *icons;
 };
 
-typedef struct
+struct _GdkWaylandToplevelClass
 {
   GdkWaylandSurfaceClass parent_class;
-} GdkWaylandToplevelClass;
+};
 
 static void gdk_wayland_toplevel_iface_init (GdkToplevelInterface *iface);
 

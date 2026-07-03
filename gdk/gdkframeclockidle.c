@@ -44,6 +44,7 @@ typedef enum {
   SMOOTH_PHASE_STATE_AWAIT_DRAWN,
 } SmoothDeltaState;
 
+typedef struct _GdkFrameClockIdlePrivate GdkFrameClockIdlePrivate;
 struct _GdkFrameClockIdlePrivate
 {
   gint64 frame_time;                   /* The exact time we last ran the clock cycle, or 0 if never */

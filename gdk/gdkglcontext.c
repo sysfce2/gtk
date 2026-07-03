@@ -1160,7 +1160,7 @@ gdk_gl_context_get_matching_version (GdkGLContext *context,
   GdkGLContextPrivate *priv = gdk_gl_context_get_instance_private (context);
   GdkGLVersion min_version;
 
-  g_return_if_fail (GDK_IS_GL_CONTEXT (context));
+  g_assert (GDK_IS_GL_CONTEXT (context));
 
   if (api == GDK_GL_API_GL)
     min_version = GDK_GL_MIN_GL_VERSION;

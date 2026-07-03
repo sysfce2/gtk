@@ -237,10 +237,10 @@ struct _GdkWaylandPopup
   GdkSeat *grab_input_seat;
 };
 
-typedef struct
+struct _GdkWaylandPopupClass
 {
   GdkWaylandSurfaceClass parent_class;
-} GdkWaylandPopupClass;
+};
 
 static void gdk_wayland_popup_iface_init (GdkPopupInterface *iface);
 

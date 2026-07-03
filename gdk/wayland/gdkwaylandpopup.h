@@ -28,19 +28,9 @@
 
 G_BEGIN_DECLS
 
-#ifdef GTK_COMPILATION
-typedef struct _GdkWaylandPopup GdkWaylandPopup;
-#else
-typedef GdkPopup GdkWaylandPopup;
-#endif
-
 #define GDK_TYPE_WAYLAND_POPUP                (gdk_wayland_popup_get_type())
-#define GDK_WAYLAND_POPUP(object)             (G_TYPE_CHECK_INSTANCE_CAST ((object), GDK_TYPE_WAYLAND_POPUP, GdkWaylandPopup))
-#define GDK_IS_WAYLAND_POPUP(object)          (G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_WAYLAND_POPUP))
 
 GDK_AVAILABLE_IN_ALL
-GType                    gdk_wayland_popup_get_type               (void);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (GdkWaylandPopup, g_object_unref)
+GDK_DECLARE_INTERNAL_TYPE (GdkWaylandPopup, gdk_wayland_popup, GDK, WAYLAND_POPUP, GdkPopup)
 
 G_END_DECLS
