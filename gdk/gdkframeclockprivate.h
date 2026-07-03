@@ -114,6 +114,9 @@ void _gdk_frame_clock_emit_paint         (GdkFrameClock *frame_clock);
 void _gdk_frame_clock_emit_after_paint   (GdkFrameClock *self);
 void _gdk_frame_clock_emit_resume_events (GdkFrameClock *frame_clock);
 
+uint64_t        gdk_frame_clock_get_refresh_interval            (GdkFrameClock          *self);
+uint64_t        gdk_frame_clock_get_latest_presentation_time    (GdkFrameClock          *self);
+
 void            gdk_frame_clock_outstanding                     (GdkFrameClock          *self);
 void            gdk_frame_clock_submitted                       (GdkFrameClock          *self,
                                                                  gint64                  frame_counter,

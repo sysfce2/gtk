@@ -1002,3 +1002,46 @@ gdk_frame_clock_presented (GdkFrameClock *self,
     _gdk_frame_clock_add_timings_to_profiler (self, timings);
 }
 
+/*<private>
+ * gdk_frame_clock_get_refresh_interval:
+ * @self: the frame clock
+ *
+ * Gets the latest reported refresh interval. This is intended for
+ * subclasses when computing frame times.
+ * 
+ * If the compositor didn't yet report any refresh interval, 60Hz
+ * is assumed.
+ *
+ * Returns: The latest refresh interval in nanoseconds
+ **/
+uint64_t
+gdk_frame_clock_get_refresh_interval (GdkFrameClock *self)
+{
+  GdkFrameClockPrivate *priv = gdk_frame_clock_get_instance_private (self);
+
+  return priv->latest_refresh_interval;
+}
+
+/*<private>
+ * gdk_frame_clock_get_latest_presentation_time:
+ * @self: the frame clock
+ *
+ * Gets the latest reported presentation time. This is intended for
+ * subclasses when computing frame times.
+ *
+ * This presentation time may be in the future if the compositor is able
+ * to predict presentations.
+ * 
+ * If the compositor didn't yet report any presentation time or does not
+ * support it, 0 is returned.
+ *
+ * Returns: The latest presentation time in nanoseconds
+ **/
+uint64_t
+gdk_frame_clock_get_latest_presentation_time (GdkFrameClock *self)
+{
+  GdkFrameClockPrivate *priv = gdk_frame_clock_get_instance_private (self);
+
+  return priv->latest_presentation_time;
+}
+
