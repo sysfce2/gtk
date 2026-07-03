@@ -574,7 +574,7 @@ svg_animation_update_for_spec (SvgAnimation *animation,
               animation->current.begin = time;
               changed = TRUE;
 
-              animation_set_current_end (animation, animation->current.end);
+              animation_set_current_end (animation, find_first_time (animation->end, animation->current.begin));
             }
         }
     }
@@ -623,7 +623,7 @@ svg_animation_start (SvgAnimation *animation,
           animation->current.begin = current_time;
           changed = TRUE;
 
-          animation_set_current_end (animation, animation->current.end);
+          animation_set_current_end (animation, find_first_time (animation->end, animation->current.begin));
         }
     }
 
