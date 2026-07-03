@@ -380,10 +380,7 @@ gdk_frame_clock_idle_run_before_paint (GdkFrameClockIdle *self,
 {
   GdkFrameClockIdlePrivate *priv = gdk_frame_clock_idle_get_instance_private (self);
   GdkFrameClock *clock = GDK_FRAME_CLOCK (self);
-  gint64 frame_interval = FRAME_INTERVAL;
-  gint64 frame_time;
-  GdkFrameTimings *prev_timings;
-
+  gint64 frame_interval, frame_time;
 
   /* We always emit ::before-paint and ::after-paint if
    * any of the intermediate phases are requested and
@@ -400,11 +397,7 @@ gdk_frame_clock_idle_run_before_paint (GdkFrameClockIdle *self,
                          GDK_FRAME_CLOCK_PHASE_AFTER_PAINT;
     }
 
-  prev_timings = gdk_frame_clock_get_current_timings (clock);
-
-  if (prev_timings && prev_timings->refresh_interval)
-    frame_interval = prev_timings->refresh_interval;
-
+  frame_interval = gdk_frame_clock_get_refresh_interval (clock) / 1000;
   frame_time = priv->stage_start_time / 1000;
 
   /*
