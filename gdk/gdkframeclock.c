@@ -107,7 +107,7 @@ struct _GdkFrameClockPrivate
   uint64_t latest_presentation_time;
   uint64_t latest_refresh_interval;
 
-  int n_started;
+  gsize n_started;
   gsize n_updating;
 };
 
