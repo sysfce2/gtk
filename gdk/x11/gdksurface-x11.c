@@ -707,7 +707,7 @@ gdk_x11_surface_end_frame (GdkSurface *surface)
         {
           impl->toplevel->frame_pending = TRUE;
           gdk_surface_freeze_updates (surface);
-          timings->cookie = impl->toplevel->current_counter_value;
+          gdk_frame_timings_set_serial (timings, impl->toplevel->current_counter_value);
         }
     }
 
