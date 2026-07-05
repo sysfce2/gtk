@@ -96,6 +96,7 @@ struct _GdkFrameClockClass
 void gdk_frame_clock_start               (GdkFrameClock *clock);
 void gdk_frame_clock_stop                (GdkFrameClock *clock);
 gboolean gdk_frame_clock_is_stopped      (GdkFrameClock *clock);
+gboolean gdk_frame_clock_is_updating     (GdkFrameClock *self);
 
 void gdk_frame_clock_begin_frame          (GdkFrameClock   *self,
                                            gint64           frame_time,

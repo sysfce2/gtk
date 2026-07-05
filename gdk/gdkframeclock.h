@@ -71,9 +71,9 @@ void               gdk_frame_clock_request_phase (GdkFrameClock      *frame_cloc
                                                   GdkFrameClockPhase  phase);
 
 GDK_AVAILABLE_IN_ALL
-void               gdk_frame_clock_begin_updating (GdkFrameClock      *frame_clock);
+void               gdk_frame_clock_begin_updating (GdkFrameClock      *self);
 GDK_AVAILABLE_IN_ALL
-void               gdk_frame_clock_end_updating   (GdkFrameClock      *frame_clock);
+void               gdk_frame_clock_end_updating   (GdkFrameClock      *self);
 
 /* Frame history */
 GDK_AVAILABLE_IN_ALL

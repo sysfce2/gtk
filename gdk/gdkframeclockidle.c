@@ -32,10 +32,6 @@
 #include "gdkprivate.h"
 #include "gdkprofilerprivate.h"
 
-#ifdef G_OS_WIN32
-#include <windows.h>
-#endif
-
 #define FRAME_INTERVAL 16667 /* microseconds */
 
 typedef enum {
@@ -60,7 +56,6 @@ struct _GdkFrameClockIdlePrivate
   gint64 freeze_time; /* in nanoseconds */
 
   GSource *source;
-  guint updating_count;
 
   GdkFrameClockPhase requested;
   GdkFrameStage stage;
@@ -68,9 +63,6 @@ struct _GdkFrameClockIdlePrivate
 
   guint work_performed : 1;
   guint paint_is_thaw : 1;
-#ifdef G_OS_WIN32
-  guint begin_period : 1;
-#endif
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (GdkFrameClockIdle, gdk_frame_clock_idle, GDK_TYPE_FRAME_CLOCK)
@@ -125,14 +117,6 @@ gdk_frame_clock_idle_dispose (GObject *object)
   GdkFrameClockIdlePrivate *priv = gdk_frame_clock_idle_get_instance_private (self);
 
   g_clear_pointer (&priv->source, g_source_destroy);
-
-#ifdef G_OS_WIN32
-  if (priv->begin_period) 
-    {
-      timeEndPeriod(1);
-      priv->begin_period = FALSE;
-    }
-#endif
 
   G_OBJECT_CLASS (gdk_frame_clock_idle_parent_class)->dispose (object);
 }
@@ -248,11 +232,12 @@ gdk_frame_clock_idle_get_frame_time (GdkFrameClock *clock)
 static inline gboolean
 should_run_source (GdkFrameClockIdle *self)
 {
+  GdkFrameClock *clock = GDK_FRAME_CLOCK (self);
   GdkFrameClockIdlePrivate *priv = gdk_frame_clock_idle_get_instance_private (self);
 
   return !gdk_frame_clock_is_stopped (GDK_FRAME_CLOCK (self)) &&
          priv->stage == GDK_FRAME_STAGE_NONE &&
-         (priv->requested != 0 || priv->updating_count > 0);
+         (priv->requested != 0 || gdk_frame_clock_is_updating (clock));
 }
 
 static inline gint
@@ -508,7 +493,7 @@ gdk_frame_clock_idle_run_update (GdkFrameClockIdle *self)
   GdkFrameClockIdlePrivate *priv = gdk_frame_clock_idle_get_instance_private (self);
 
   if ((priv->requested & GDK_FRAME_CLOCK_PHASE_UPDATE) != 0 ||
-      priv->updating_count > 0)
+      gdk_frame_clock_is_updating (clock))
     {
       priv->requested &= ~GDK_FRAME_CLOCK_PHASE_UPDATE;
       gdk_frame_clock_idle_doing_work (self);
@@ -721,21 +706,7 @@ gdk_frame_clock_idle_begin_updating (GdkFrameClock *clock)
   GdkFrameClockIdle *self = GDK_FRAME_CLOCK_IDLE (clock);
   GdkFrameClockIdlePrivate *priv = gdk_frame_clock_idle_get_instance_private (self);
 
-#ifdef G_OS_WIN32
-  /* We need a higher resolution timer while doing animations */
-  if (priv->updating_count == 0 && !priv->begin_period)
-    {
-      timeBeginPeriod(1);
-      priv->begin_period = TRUE;
-    }
-#endif
-
-  if (priv->updating_count == 0)
-    {
-      priv->smooth_phase_state = SMOOTH_PHASE_STATE_AWAIT_FIRST;
-    }
-
-  priv->updating_count++;
+  priv->smooth_phase_state = SMOOTH_PHASE_STATE_AWAIT_FIRST;
   maybe_start_idle (self, FALSE);
 }
 
@@ -745,23 +716,8 @@ gdk_frame_clock_idle_end_updating (GdkFrameClock *clock)
   GdkFrameClockIdle *self = GDK_FRAME_CLOCK_IDLE (clock);
   GdkFrameClockIdlePrivate *priv = gdk_frame_clock_idle_get_instance_private (self);
 
-  g_return_if_fail (priv->updating_count > 0);
-
-  priv->updating_count--;
   maybe_stop_idle (self);
-
-  if (priv->updating_count == 0)
-    {
-      priv->smooth_phase_state = SMOOTH_PHASE_STATE_VALID;
-    }
-
-#ifdef G_OS_WIN32
-  if (priv->updating_count == 0 && priv->begin_period)
-    {
-      timeEndPeriod(1);
-      priv->begin_period = FALSE;
-    }
-#endif
+  priv->smooth_phase_state = SMOOTH_PHASE_STATE_VALID;
 }
 
 static void

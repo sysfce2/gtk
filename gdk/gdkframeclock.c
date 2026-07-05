@@ -30,6 +30,10 @@
 #include "gdkframetimingsprivate.h"
 #include "gdkprofilerprivate.h"
 
+#ifdef G_OS_WIN32
+#include <windows.h>
+#endif
+
 /**
  * GdkFrameClock:
  *
@@ -104,6 +108,7 @@ struct _GdkFrameClockPrivate
   uint64_t latest_refresh_interval;
 
   int n_started;
+  gsize n_updating;
 };
 
 G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (GdkFrameClock, gdk_frame_clock, G_TYPE_OBJECT)
@@ -113,6 +118,9 @@ gdk_frame_clock_finalize (GObject *object)
 {
   GdkFrameClock *self = GDK_FRAME_CLOCK (object);
   GdkFrameClockPrivate *priv = gdk_frame_clock_get_instance_private (self);
+
+  g_warn_if_fail (priv->n_started == 0);
+  g_warn_if_fail (priv->n_updating == 0);
 
   timings_clear (&priv->timings);
 
@@ -316,7 +324,7 @@ gdk_frame_clock_request_phase (GdkFrameClock      *frame_clock,
 
 /**
  * gdk_frame_clock_begin_updating:
- * @frame_clock: a `GdkFrameClock`
+ * @self: a `GdkFrameClock`
  *
  * Starts updates for an animation.
  *
@@ -327,27 +335,49 @@ gdk_frame_clock_request_phase (GdkFrameClock      *frame_clock,
  * is called the same number of times.
  */
 void
-gdk_frame_clock_begin_updating (GdkFrameClock *frame_clock)
+gdk_frame_clock_begin_updating (GdkFrameClock *self)
 {
-  g_return_if_fail (GDK_IS_FRAME_CLOCK (frame_clock));
+  GdkFrameClockPrivate *priv = gdk_frame_clock_get_instance_private (self);
 
-  GDK_FRAME_CLOCK_GET_CLASS (frame_clock)->begin_updating (frame_clock);
+  g_return_if_fail (GDK_IS_FRAME_CLOCK (self));
+
+  priv->n_updating++;
+  if (priv->n_updating == 1)
+    {
+#ifdef G_OS_WIN32
+      /* We need a higher resolution timer while doing animations */
+      timeBeginPeriod(1);
+#endif
+
+      GDK_FRAME_CLOCK_GET_CLASS (self)->begin_updating (self);
+    }
 }
 
 /**
  * gdk_frame_clock_end_updating:
- * @frame_clock: a `GdkFrameClock`
+ * @self: a `GdkFrameClock`
  *
  * Stops updates for an animation.
  *
  * See the documentation for [method@Gdk.FrameClock.begin_updating].
  */
 void
-gdk_frame_clock_end_updating (GdkFrameClock *frame_clock)
+gdk_frame_clock_end_updating (GdkFrameClock *self)
 {
-  g_return_if_fail (GDK_IS_FRAME_CLOCK (frame_clock));
+  GdkFrameClockPrivate *priv = gdk_frame_clock_get_instance_private (self);
 
-  GDK_FRAME_CLOCK_GET_CLASS (frame_clock)->end_updating (frame_clock);
+  g_return_if_fail (GDK_IS_FRAME_CLOCK (self));
+  g_return_if_fail (priv->n_updating > 0);
+
+  priv->n_updating--;
+  if (priv->n_updating == 0)
+    {
+      GDK_FRAME_CLOCK_GET_CLASS (self)->end_updating (self);
+
+#ifdef G_OS_WIN32
+      timeEndPeriod(1);
+#endif
+    }
 }
 
 void
@@ -384,6 +414,14 @@ gdk_frame_clock_is_stopped (GdkFrameClock *clock)
   GdkFrameClockPrivate *priv = gdk_frame_clock_get_instance_private (clock);
 
   return priv->n_started == 0;
+}
+
+gboolean
+gdk_frame_clock_is_updating (GdkFrameClock *clock)
+{
+  GdkFrameClockPrivate *priv = gdk_frame_clock_get_instance_private (clock);
+
+  return priv->n_updating > 0;
 }
 
 static inline gint64
