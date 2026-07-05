@@ -1978,6 +1978,10 @@ gtk_popover_class_init (GtkPopoverClass *klass)
    * GtkPopover:autohide:
    *
    * Whether to dismiss the popover on outside clicks.
+   *
+   * If false, the popover won't automatically grab the focus when shown.
+   * This is useful for usecases like entry completion, where the focus is
+   * expected to stay on the entry.
    */
   properties[PROP_AUTOHIDE] =
       g_param_spec_boolean ("autohide", NULL, NULL,
