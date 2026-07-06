@@ -3646,6 +3646,104 @@ text_create_layout (SvgElement       *self,
   return layout;
 }
 
+typedef struct TextOffset TextOffset;
+struct TextOffset
+{
+  SvgElement *elt;
+  unsigned int idx;
+  TextOffset *next;
+};
+
+static void
+advance_text_offset (TextOffset   *offsets,
+                     unsigned int  inc)
+{
+  while (offsets)
+    {
+      offsets->idx += inc;
+      offsets = offsets->next;
+    }
+}
+
+typedef struct
+{
+  gboolean has_x, has_y, has_dx, has_dy;
+  double x, y, dx, dy;
+} TextPosition;
+
+static void
+get_text_position (TextOffset            *offsets,
+                   TextPosition          *pos,
+                   const graphene_rect_t *viewport)
+{
+  memset (pos, 0, sizeof (TextPosition));
+
+  while (offsets)
+    {
+      if (!pos->has_x)
+        {
+          SvgValue *v = svg_element_get_current_value (offsets->elt, SVG_PROPERTY_TEXT_X);
+          if (offsets->idx < svg_numbers_get_length (v))
+            {
+              pos->x = svg_numbers_get (v, offsets->idx, viewport->size.width);
+              pos->has_x = TRUE;
+            }
+        }
+      if (!pos->has_y)
+        {
+          SvgValue *v = svg_element_get_current_value (offsets->elt, SVG_PROPERTY_TEXT_Y);
+          if (offsets->idx < svg_numbers_get_length (v))
+            {
+              pos->y = svg_numbers_get (v, offsets->idx, viewport->size.height);
+              pos->has_y = TRUE;
+            }
+        }
+      if (!pos->has_dx)
+        {
+          SvgValue *v = svg_element_get_current_value (offsets->elt, SVG_PROPERTY_TEXT_DX);
+          if (offsets->idx < svg_numbers_get_length (v))
+            {
+              pos->dx = svg_numbers_get (v, offsets->idx, viewport->size.width);
+              pos->has_dx = TRUE;
+            }
+        }
+      if (!pos->has_dy)
+        {
+          SvgValue *v = svg_element_get_current_value (offsets->elt, SVG_PROPERTY_TEXT_DY);
+          if (offsets->idx < svg_numbers_get_length (v))
+            {
+              pos->dy = svg_numbers_get (v, offsets->idx, viewport->size.height);
+              pos->has_dy = TRUE;
+            }
+        }
+
+      if (pos->has_x && pos->has_y && pos->has_dx && pos->has_dy)
+        break;
+
+      offsets = offsets->next;
+    }
+}
+
+static gboolean
+has_text_position (TextOffset *offsets)
+{
+  while (offsets)
+    {
+      if (offsets->idx < svg_numbers_get_length (svg_element_get_current_value (offsets->elt, SVG_PROPERTY_TEXT_X)))
+        return TRUE;
+      if (offsets->idx < svg_numbers_get_length (svg_element_get_current_value (offsets->elt, SVG_PROPERTY_TEXT_Y)))
+        return TRUE;
+      if (offsets->idx < svg_numbers_get_length (svg_element_get_current_value (offsets->elt, SVG_PROPERTY_TEXT_DX)))
+        return TRUE;
+      if (offsets->idx < svg_numbers_get_length (svg_element_get_current_value (offsets->elt, SVG_PROPERTY_TEXT_DY)))
+        return TRUE;
+
+      offsets = offsets->next;
+    }
+
+  return FALSE;
+}
+
 static gboolean
 do_generate_layouts (SvgElement             *self,
                      PangoFontMap           *fontmap,
@@ -3654,6 +3752,7 @@ do_generate_layouts (SvgElement             *self,
                      double                 *x,
                      double                 *y,
                      TextChunk             **lastwithspace,
+                     TextOffset             *offsets,
                      const graphene_rect_t  *viewport,
                      graphene_rect_t        *bounds)
 {
@@ -3662,11 +3761,16 @@ do_generate_layouts (SvgElement             *self,
   gboolean set_bounds = FALSE;
   SvgValue *v;
   double baseline_shift = 0;
+  TextOffset offset;
 
   g_assert (svg_element_type_is_text (self->type));
 
   if (svg_enum_get (svg_element_get_current_value (self, SVG_PROPERTY_DISPLAY)) == DISPLAY_NONE)
     return FALSE;
+
+  offset.elt = self;
+  offset.idx = 0;
+  offset.next = offsets;
 
   v = svg_element_get_current_value (self, SVG_PROPERTY_TEXT_X);
   if (svg_numbers_get_length (v) > 0)
@@ -3712,7 +3816,7 @@ do_generate_layouts (SvgElement             *self,
             double y2 = *y + baseline_shift;
 
             space2 = svg_enum_get (svg_element_get_current_value (node->shape.shape, SVG_PROPERTY_SPACE));
-            node->shape.has_bounds = do_generate_layouts (node->shape.shape, fontmap, space2, wmode, x, &y2, lastwithspace, viewport, &node->shape.bounds);
+            node->shape.has_bounds = do_generate_layouts (node->shape.shape, fontmap, space2, wmode, x, &y2, lastwithspace, &offset, viewport, &node->shape.bounds);
             if (node->shape.has_bounds)
               {
                 graphene_rect_init_from_rect (&node->shape.shape->bounds, &node->shape.bounds);
@@ -3729,8 +3833,9 @@ do_generate_layouts (SvgElement             *self,
             gboolean is_vertical;
             gboolean lastwasspace;
             char *text;
-            TextChunk ch = { NULL, };
-            TextChunk *chunk;
+            const char *ch;
+            TextChunk chunk0 = { NULL, };
+            TextChunk *chunk = NULL;
 
             lastwasspace = *lastwithspace != NULL;
             text = text_chomp (node->characters.text, space, &lastwasspace);
@@ -3738,74 +3843,107 @@ do_generate_layouts (SvgElement             *self,
             g_assert (node->characters.chunks == NULL);
             node->characters.chunks = array_new_with_clear_func (sizeof (TextChunk), (GDestroyNotify) text_chunk_clear);
 
-            g_array_append_val (node->characters.chunks, ch);
-            chunk = &g_array_index (node->characters.chunks, TextChunk, node->characters.chunks->len - 1);
+            /* FIXME: addressable chars */
+            ch = text;
+            while (*ch)
+              {
+                TextPosition pos = { 0, };
+                const char *the_text;
+                size_t len;
+
+                the_text = ch;
+                get_text_position (&offset, &pos, viewport);
+                advance_text_offset (&offset, 1);
+                if (has_text_position (&offset))
+                  {
+                    ch = g_utf8_next_char (ch);
+                    len = ch - the_text;
+                  }
+                else
+                  {
+                    advance_text_offset (&offset, g_utf8_strlen (ch, -1) - 1);
+                    len = strlen (the_text);
+                    ch = &the_text[len];
+                  }
+
+                g_array_append_val (node->characters.chunks, chunk0);
+                chunk = &g_array_index (node->characters.chunks, TextChunk, node->characters.chunks->len - 1);
+                chunk->layout = text_create_layout (self, fontmap, the_text, len, wmode, &origin, &cbounds, &is_vertical, &chunk->r);
+
+                if (svg_element_get_type (self) == SVG_ELEMENT_TSPAN)
+                  {
+                    const PangoFontDescription *font_desc = pango_layout_get_font_description (chunk->layout);
+                    PangoContext *context = pango_layout_get_context (chunk->layout);
+                    PangoFontMetrics *metrics = pango_context_get_metrics (context, font_desc, pango_context_get_language (context));
+
+                    SvgValue *bshift = svg_element_get_current_value (self, SVG_PROPERTY_BASELINE_SHIFT);
+                    if (svg_value_is_number (bshift))
+                      {
+                        baseline_shift = - svg_number_get (bshift, pango_font_metrics_get_height (metrics) / 1024.0);
+                      }
+                    else
+                      {
+                        PangoFont *font = pango_context_load_font (context, font_desc);
+                        hb_font_t *hb_font = pango_font_get_hb_font (font);
+                        int ofs = 0;
+
+                        switch (svg_enum_get (bshift))
+                          {
+                          case BASELINE_SHIFT_SUB:
+                            hb_ot_metrics_get_position (hb_font, HB_OT_METRICS_TAG_SUBSCRIPT_EM_Y_OFFSET, &ofs);
+                            baseline_shift = ofs / 1024.0;
+                            break;
+                          case BASELINE_SHIFT_SUPER:
+                            hb_ot_metrics_get_position (hb_font, HB_OT_METRICS_TAG_SUPERSCRIPT_EM_Y_OFFSET, &ofs);
+                            baseline_shift = - ofs / 1024.0;
+                            break;
+                          case BASELINE_SHIFT_TOP:
+                            baseline_shift = pango_font_metrics_get_height (metrics) / 1024.0;
+                            break;
+                          case BASELINE_SHIFT_CENTER:
+                            baseline_shift = 0.5 * pango_font_metrics_get_height (metrics) / 1024.0;
+                            break;
+                          case BASELINE_SHIFT_BOTTOM:
+                            baseline_shift = 0;
+                            break;
+                          default:
+                            g_assert_not_reached ();
+                          }
+
+                        g_object_unref (font);
+                      }
+
+                    pango_font_metrics_unref (metrics);
+                  }
+
+                if (pos.has_x)
+                  *x = pos.x;
+                if (pos.has_dx)
+                  *x += pos.dx;
+                if (pos.has_y)
+                  *y = pos.y;
+                if (pos.has_dy)
+                  *y += pos.dy;
+
+                chunk->x = *x + origin.x;
+                chunk->y = *y + origin.y + baseline_shift;
+
+                graphene_rect_offset (&cbounds, *x, *y);
+
+                ADD_BBOX (&cbounds)
+
+                if (is_vertical)
+                  *y += cbounds.size.height;
+                else
+                  *x += cbounds.size.width;
+              }
 
             if (!lastwasspace)
               *lastwithspace = NULL;
             else if (*text != '\0')
               *lastwithspace = chunk;
 
-            chunk->layout = text_create_layout (self, fontmap, text, -1, wmode, &origin, &cbounds, &is_vertical, &chunk->r);
             g_free (text);
-
-            if (svg_element_get_type (self) == SVG_ELEMENT_TSPAN)
-              {
-                const PangoFontDescription *font_desc = pango_layout_get_font_description (chunk->layout);
-                PangoContext *context = pango_layout_get_context (chunk->layout);
-                PangoFontMetrics *metrics = pango_context_get_metrics (context, font_desc, pango_context_get_language (context));
-
-                SvgValue *bshift = svg_element_get_current_value (self, SVG_PROPERTY_BASELINE_SHIFT);
-                if (svg_value_is_number (bshift))
-                  {
-                    baseline_shift = - svg_number_get (bshift, pango_font_metrics_get_height (metrics) / 1024.0);
-                  }
-                else
-                  {
-                    PangoFont *font = pango_context_load_font (context, font_desc);
-                    hb_font_t *hb_font = pango_font_get_hb_font (font);
-                    int offset = 0;
-
-                    switch (svg_enum_get (bshift))
-                      {
-                      case BASELINE_SHIFT_SUB:
-                        hb_ot_metrics_get_position (hb_font, HB_OT_METRICS_TAG_SUBSCRIPT_EM_Y_OFFSET, &offset);
-                        baseline_shift = offset / 1024.0;
-                        break;
-                      case BASELINE_SHIFT_SUPER:
-                        hb_ot_metrics_get_position (hb_font, HB_OT_METRICS_TAG_SUPERSCRIPT_EM_Y_OFFSET, &offset);
-                        baseline_shift = - offset / 1024.0;
-                        break;
-                      case BASELINE_SHIFT_TOP:
-                        baseline_shift = pango_font_metrics_get_height (metrics) / 1024.0;
-                        break;
-                      case BASELINE_SHIFT_CENTER:
-                        baseline_shift = 0.5 * pango_font_metrics_get_height (metrics) / 1024.0;
-                        break;
-                      case BASELINE_SHIFT_BOTTOM:
-                        baseline_shift = 0;
-                        break;
-                      default:
-                        g_assert_not_reached ();
-                      }
-
-                    g_object_unref (font);
-                  }
-
-                pango_font_metrics_unref (metrics);
-              }
-
-            chunk->x = *x + origin.x;
-            chunk->y = *y + origin.y + baseline_shift;
-
-            graphene_rect_offset (&cbounds, *x, *y);
-
-            ADD_BBOX (&cbounds)
-
-            if (is_vertical)
-              *y += cbounds.size.height;
-            else
-              *x += cbounds.size.width;
           }
           break;
         default:
@@ -3872,7 +4010,7 @@ generate_layouts (SvgElement            *self,
   space = svg_enum_get (svg_element_get_current_value (self, SVG_PROPERTY_SPACE));
   wmode = svg_enum_get (svg_element_get_current_value (self, SVG_PROPERTY_WRITING_MODE));
 
-  retval = do_generate_layouts (self, fontmap, space, wmode, &x, &y, &chunk, viewport, bounds);
+  retval = do_generate_layouts (self, fontmap, space, wmode, &x, &y, &chunk, NULL, viewport, bounds);
 
   if (chunk && chunk != &dummy)
     {
