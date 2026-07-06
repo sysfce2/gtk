@@ -41,6 +41,14 @@ typedef enum
 
 typedef struct
 {
+  PangoLayout *layout;
+  double x, y, r;
+} TextChunk;
+
+void text_chunk_clear (TextChunk *self);
+
+typedef struct
+{
   TextNodeType type;
   union {
     struct {
@@ -50,8 +58,7 @@ typedef struct
     } shape;
     struct {
       char *text;
-      PangoLayout *layout;
-      double x, y, r;
+      GArray *chunks;
     } characters;
   };
 } TextNode;
