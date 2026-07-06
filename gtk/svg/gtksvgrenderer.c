@@ -3837,6 +3837,10 @@ do_generate_layouts (SvgElement             *self,
             const char *ch;
             TextChunk chunk0 = { NULL, };
             TextChunk *chunk = NULL;
+            int attrs_len;
+            PangoLogAttr *attrs;
+            unsigned int text_idx;
+            PangoLanguage *lang;
 
             lastwasspace = *lastwithspace != NULL;
             text = text_chomp (node->characters.text, space, &lastwasspace);
@@ -3844,8 +3848,13 @@ do_generate_layouts (SvgElement             *self,
             g_assert (node->characters.chunks == NULL);
             node->characters.chunks = array_new_with_clear_func (sizeof (TextChunk), (GDestroyNotify) text_chunk_clear);
 
-            /* FIXME: addressable chars */
+            lang = svg_language_get (svg_element_get_current_value (self, SVG_PROPERTY_LANG), 0);
+            attrs_len = g_utf8_strlen (text, -1) + 1;
+            attrs = g_newa (PangoLogAttr, attrs_len);
+            pango_get_log_attrs (text, strlen (text), -1, lang, attrs, attrs_len);
+
             ch = text;
+            text_idx = 0;
             while (*ch)
               {
                 TextPosition pos = { 0, };
@@ -3857,7 +3866,11 @@ do_generate_layouts (SvgElement             *self,
                 advance_text_offset (&offset, 1);
                 if (has_text_position (&offset))
                   {
-                    ch = g_utf8_next_char (ch);
+                    do {
+                      ch = g_utf8_next_char (ch);
+                      text_idx++;
+                    } while (!attrs[text_idx].is_cursor_position);
+
                     len = ch - the_text;
                   }
                 else
