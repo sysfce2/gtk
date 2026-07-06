@@ -705,15 +705,19 @@ gdk_frame_clock_find_timings (GdkFrameClock *self,
   return NULL;
 }
 
-void
-_gdk_frame_clock_debug_print_timings (GdkFrameClock   *clock,
-                                      GdkFrameTimings *timings)
+static void
+gdk_frame_clock_debug_print_timings (GdkFrameClock   *clock,
+                                     GdkFrameTimings *timings)
 {
   GString *str;
   gint64 previous_frame_time;
-  GdkFrameTimings *previous_timings = _gdk_frame_clock_get_timings (clock,
-                                                                    gdk_frame_timings_get_frame_counter (timings) - 1);
+  GdkFrameTimings *previous_timings;
 
+  if (!GDK_DEBUG_CHECK (FRAMES))
+    return;
+
+  previous_timings = _gdk_frame_clock_get_timings (clock,
+                                                   gdk_frame_timings_get_frame_counter (timings) - 1);
   if (previous_timings != NULL)
     previous_frame_time = gdk_frame_timings_get_frame_time (previous_timings);
   else
@@ -864,10 +868,13 @@ gdk_frame_clock_get_fps (GdkFrameClock *frame_clock)
   return ((double) end_counter - start_counter) * G_USEC_PER_SEC / (end_timestamp - start_timestamp);
 }
 
-void
-_gdk_frame_clock_add_timings_to_profiler (GdkFrameClock   *clock,
-                                          GdkFrameTimings *timings)
+static void
+gdk_frame_clock_add_timings_to_profiler (GdkFrameClock   *clock,
+                                         GdkFrameTimings *timings)
 {
+  if (!GDK_PROFILER_IS_RUNNING)
+    return;
+
   if (gdk_frame_timings_get_presentation_time (timings) != 0)
     {
       gdk_profiler_add_mark (1000 * gdk_frame_timings_get_presentation_time (timings), 0, "Presented window", NULL);
@@ -927,10 +934,8 @@ gdk_frame_clock_submitted (GdkFrameClock *self,
 
   gdk_frame_timings_submitted (timings, refresh);
 
-  if (GDK_DEBUG_CHECK (FRAMES))
-    _gdk_frame_clock_debug_print_timings (self, timings);
-  if (GDK_PROFILER_IS_RUNNING)
-    _gdk_frame_clock_add_timings_to_profiler (self, timings);
+  gdk_frame_clock_debug_print_timings (self, timings);
+  gdk_frame_clock_add_timings_to_profiler (self, timings);
 }
 
 /**
@@ -954,10 +959,8 @@ gdk_frame_clock_discarded (GdkFrameClock *self,
 
   gdk_frame_timings_discarded (timings);
 
-  if (GDK_DEBUG_CHECK (FRAMES))
-    _gdk_frame_clock_debug_print_timings (self, timings);
-  if (GDK_PROFILER_IS_RUNNING)
-    _gdk_frame_clock_add_timings_to_profiler (self, timings);
+  gdk_frame_clock_debug_print_timings (self, timings);
+  gdk_frame_clock_add_timings_to_profiler (self, timings);
 }
 
 /**
@@ -999,10 +1002,8 @@ gdk_frame_clock_presented (GdkFrameClock *self,
 
   gdk_frame_timings_presented (timings, presentation_time, refresh);
 
-  if (GDK_DEBUG_CHECK (FRAMES))
-    _gdk_frame_clock_debug_print_timings (self, timings);
-  if (GDK_PROFILER_IS_RUNNING)
-    _gdk_frame_clock_add_timings_to_profiler (self, timings);
+  gdk_frame_clock_debug_print_timings (self, timings);
+  gdk_frame_clock_add_timings_to_profiler (self, timings);
 }
 
 /*<private>
@@ -1236,10 +1237,8 @@ gdk_frame_clock_run_after_paint (GdkFrameClock *self)
            */
           gdk_frame_timings_discarded (timings);
 
-          if (GDK_DEBUG_CHECK (FRAMES))
-            _gdk_frame_clock_debug_print_timings (self, timings);
-          if (GDK_PROFILER_IS_RUNNING)
-            _gdk_frame_clock_add_timings_to_profiler (self, timings);
+          gdk_frame_clock_debug_print_timings (self, timings);
+          gdk_frame_clock_add_timings_to_profiler (self, timings);
         }
 
       if (!gdk_frame_clock_is_stopped (clock))

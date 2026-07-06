@@ -104,13 +104,7 @@ GdkFrameClockPhase      gdk_frame_clock_get_requested           (GdkFrameClock  
 
 void                    gdk_frame_clock_frame                   (GdkFrameClock          *self);
 
-void _gdk_frame_clock_debug_print_timings (GdkFrameClock   *clock,
-                                           GdkFrameTimings *timings);
-void _gdk_frame_clock_add_timings_to_profiler (GdkFrameClock *frame_clock,
-                                               GdkFrameTimings *timings);
-
-GdkFrameTimings *
-                gdk_frame_clock_find_timings                    (GdkFrameClock          *self,
+GdkFrameTimings *       gdk_frame_clock_find_timings            (GdkFrameClock          *self,
                                                                  guint64                 serial);
 
 uint64_t        gdk_frame_clock_get_refresh_interval            (GdkFrameClock          *self);
