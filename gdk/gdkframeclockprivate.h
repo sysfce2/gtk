@@ -73,7 +73,9 @@ struct _GdkFrameClockClass
 
   /*< public >*/
 
-  gint64   (* get_frame_time) (GdkFrameClock *clock);
+  uint64_t (* compute_frame_time) (GdkFrameClock *clock,
+                                   uint64_t       now,
+                                   gboolean       for_frame_start);
 
   void     (* request_phase)  (GdkFrameClock      *clock,
                                GdkFrameClockPhase  phase);
@@ -93,15 +95,15 @@ struct _GdkFrameClockClass
   /* void (* resume_events)      (GdkFrameClock *clock); */
 };
 
-void gdk_frame_clock_start               (GdkFrameClock *clock);
-void gdk_frame_clock_stop                (GdkFrameClock *clock);
-gboolean gdk_frame_clock_is_stopped      (GdkFrameClock *clock);
-gboolean gdk_frame_clock_is_updating     (GdkFrameClock *self);
+void                    gdk_frame_clock_start                   (GdkFrameClock          *clock);
+void                    gdk_frame_clock_stop                    (GdkFrameClock          *clock);
+gboolean                gdk_frame_clock_is_stopped              (GdkFrameClock          *clock);
+gboolean                gdk_frame_clock_is_updating             (GdkFrameClock          *self);
+gboolean                gdk_frame_clock_is_in_frame             (GdkFrameClock          *self);
+GdkFrameClockPhase      gdk_frame_clock_get_requested           (GdkFrameClock          *self);
 
-void gdk_frame_clock_begin_frame          (GdkFrameClock   *self,
-                                           gint64           frame_time,
-                                           uint64_t         frame_start_time,
-                                           uint64_t         stage_start_time);
+void                    gdk_frame_clock_frame                   (GdkFrameClock          *self);
+
 void _gdk_frame_clock_debug_print_timings (GdkFrameClock   *clock,
                                            GdkFrameTimings *timings);
 void _gdk_frame_clock_add_timings_to_profiler (GdkFrameClock *frame_clock,
