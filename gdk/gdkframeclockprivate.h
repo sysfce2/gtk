@@ -109,14 +109,6 @@ void _gdk_frame_clock_debug_print_timings (GdkFrameClock   *clock,
 void _gdk_frame_clock_add_timings_to_profiler (GdkFrameClock *frame_clock,
                                                GdkFrameTimings *timings);
 
-void _gdk_frame_clock_emit_flush_events  (GdkFrameClock *frame_clock);
-void _gdk_frame_clock_emit_before_paint  (GdkFrameClock *frame_clock);
-void _gdk_frame_clock_emit_update        (GdkFrameClock *frame_clock);
-void _gdk_frame_clock_emit_layout        (GdkFrameClock *frame_clock);
-void _gdk_frame_clock_emit_paint         (GdkFrameClock *frame_clock);
-void _gdk_frame_clock_emit_after_paint   (GdkFrameClock *self);
-void _gdk_frame_clock_emit_resume_events (GdkFrameClock *frame_clock);
-
 GdkFrameTimings *
                 gdk_frame_clock_find_timings                    (GdkFrameClock          *self,
                                                                  guint64                 serial);

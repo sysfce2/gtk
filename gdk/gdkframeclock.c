@@ -782,83 +782,6 @@ gdk_frame_clock_get_refresh_info (GdkFrameClock *frame_clock,
     }
 }
 
-void
-_gdk_frame_clock_emit_flush_events (GdkFrameClock *frame_clock)
-{
-  g_signal_emit (frame_clock, signals[FLUSH_EVENTS], 0);
-}
-
-void
-_gdk_frame_clock_emit_before_paint (GdkFrameClock *frame_clock)
-{
-  g_signal_emit (frame_clock, signals[BEFORE_PAINT], 0);
-}
-
-void
-_gdk_frame_clock_emit_update (GdkFrameClock *frame_clock)
-{
-  gint64 before G_GNUC_UNUSED;
-
-  before = GDK_PROFILER_CURRENT_TIME;
-
-  g_signal_emit (frame_clock, signals[UPDATE], 0);
-
-  gdk_profiler_end_mark (before, "Frameclock update", NULL);
-}
-
-void
-_gdk_frame_clock_emit_layout (GdkFrameClock *frame_clock)
-{
-  gint64 before G_GNUC_UNUSED;
-
-  before = GDK_PROFILER_CURRENT_TIME;
-
-  g_signal_emit (frame_clock, signals[LAYOUT], 0);
-
-  gdk_profiler_end_mark (before, "Frameclock layout", NULL);
-}
-
-void
-_gdk_frame_clock_emit_paint (GdkFrameClock *frame_clock)
-{
-  gint64 before G_GNUC_UNUSED;
-
-  before = GDK_PROFILER_CURRENT_TIME;
-
-  g_signal_emit (frame_clock, signals[PAINT], 0);
-
-  gdk_profiler_end_mark (before, "Frameclock paint", NULL);
-}
-
-void
-_gdk_frame_clock_emit_after_paint (GdkFrameClock *self)
-{
-  GdkFrameTimings *timings;
-
-  g_signal_emit (self, signals[AFTER_PAINT], 0);
-
-  timings = gdk_frame_clock_get_current_timings (self);
-  if (gdk_frame_timings_get_result (timings) == GDK_FRAME_PREPARING)
-    {
-      /* Painting was done and if no surfaces transitioned the frame,
-       * either to OUTSTANDING when painting or a backend in
-       * after_paint(), then we mark this frame as SKIPPED.
-       */
-      gdk_frame_timings_discarded (timings);
-
-      if (GDK_DEBUG_CHECK (FRAMES))
-        _gdk_frame_clock_debug_print_timings (self, timings);
-      if (GDK_PROFILER_IS_RUNNING)
-        _gdk_frame_clock_add_timings_to_profiler (self, timings);
-    }
-}
-
-void
-_gdk_frame_clock_emit_resume_events (GdkFrameClock *frame_clock)
-{
-  g_signal_emit (frame_clock, signals[RESUME_EVENTS], 0);
-}
-
 static gint64
 guess_refresh_interval (GdkFrameClock *frame_clock)
 {
@@ -1167,7 +1090,7 @@ gdk_frame_clock_run_flush_events (GdkFrameClock *self)
 
       gdk_frame_clock_doing_work (self);
 
-      _gdk_frame_clock_emit_flush_events (self);
+      g_signal_emit (self, signals[FLUSH_EVENTS], 0);
     }
 
   gdk_frame_clock_set_stage (self, GDK_FRAME_STAGE_BEFORE_PAINT);
@@ -1205,7 +1128,7 @@ gdk_frame_clock_run_before_paint (GdkFrameClock *self,
 
       gdk_frame_clock_doing_work (self);
 
-      _gdk_frame_clock_emit_before_paint (self);
+      g_signal_emit (self, signals[BEFORE_PAINT], 0);
     }
 
   gdk_frame_clock_set_stage (self, GDK_FRAME_STAGE_UPDATE);
@@ -1219,9 +1142,16 @@ gdk_frame_clock_run_update (GdkFrameClock *self)
   if ((priv->requested & GDK_FRAME_CLOCK_PHASE_UPDATE) != 0 ||
       gdk_frame_clock_is_updating (self))
     {
+      gint64 before G_GNUC_UNUSED;
+
       priv->requested &= ~GDK_FRAME_CLOCK_PHASE_UPDATE;
       gdk_frame_clock_doing_work (self);
-      _gdk_frame_clock_emit_update (self);
+
+      before = GDK_PROFILER_CURRENT_TIME;
+
+      g_signal_emit (self, signals[UPDATE], 0);
+
+      gdk_profiler_end_mark (before, "Frameclock update", NULL);
     }
 
   gdk_frame_clock_set_stage (self, GDK_FRAME_STAGE_LAYOUT);
@@ -1242,9 +1172,16 @@ gdk_frame_clock_run_layout (GdkFrameClock *self)
   while ((priv->requested & GDK_FRAME_CLOCK_PHASE_LAYOUT) &&
          iter++ < 4)
     {
+      gint64 before G_GNUC_UNUSED;
+
       priv->requested &= ~GDK_FRAME_CLOCK_PHASE_LAYOUT;
       gdk_frame_clock_doing_work (self);
-      _gdk_frame_clock_emit_layout (self);
+
+      before = GDK_PROFILER_CURRENT_TIME;
+
+      g_signal_emit (self, signals[LAYOUT], 0);
+
+      gdk_profiler_end_mark (before, "Frameclock layout", NULL);
     }
   if (iter == 5)
     g_warning ("gdk-frame-clock: layout continuously requested, giving up after 4 tries");
@@ -1259,9 +1196,16 @@ gdk_frame_clock_run_paint (GdkFrameClock *self)
 
   if (priv->requested & GDK_FRAME_CLOCK_PHASE_PAINT)
     {
+      gint64 before G_GNUC_UNUSED;
+
       priv->requested &= ~GDK_FRAME_CLOCK_PHASE_PAINT;
       gdk_frame_clock_doing_work (self);
-      _gdk_frame_clock_emit_paint (self);
+
+      before = GDK_PROFILER_CURRENT_TIME;
+
+      g_signal_emit (self, signals[PAINT], 0);
+
+      gdk_profiler_end_mark (before, "Frameclock paint", NULL);
     }
 
   gdk_frame_clock_set_stage (self, GDK_FRAME_STAGE_AFTER_PAINT);
@@ -1275,15 +1219,31 @@ gdk_frame_clock_run_after_paint (GdkFrameClock *self)
 
   if (priv->requested & GDK_FRAME_CLOCK_PHASE_AFTER_PAINT)
     {
+      GdkFrameTimings *timings;
+
       priv->requested &= ~GDK_FRAME_CLOCK_PHASE_AFTER_PAINT;
 
       gdk_frame_clock_doing_work (self);
 
-      _gdk_frame_clock_emit_after_paint (clock);
+      g_signal_emit (self, signals[AFTER_PAINT], 0);
+
+      timings = gdk_frame_clock_get_current_timings (self);
+      if (gdk_frame_timings_get_result (timings) == GDK_FRAME_PREPARING)
+        {
+          /* Painting was done and if no surfaces transitioned the frame,
+           * either to OUTSTANDING when painting or a backend in
+           * after_paint(), then we mark this frame as SKIPPED.
+           */
+          gdk_frame_timings_discarded (timings);
+
+          if (GDK_DEBUG_CHECK (FRAMES))
+            _gdk_frame_clock_debug_print_timings (self, timings);
+          if (GDK_PROFILER_IS_RUNNING)
+            _gdk_frame_clock_add_timings_to_profiler (self, timings);
+        }
 
       if (!gdk_frame_clock_is_stopped (clock))
         {
-          GdkFrameTimings *timings = gdk_frame_clock_get_current_timings (clock);
           gdk_frame_timings_throttling_hint (timings, priv->stage_start_time);
         }
     }
@@ -1300,7 +1260,8 @@ gdk_frame_clock_run_resume_events (GdkFrameClock *self)
     {
       priv->requested &= ~GDK_FRAME_CLOCK_PHASE_RESUME_EVENTS;
       gdk_frame_clock_doing_work (self);
-      _gdk_frame_clock_emit_resume_events (self);
+
+      g_signal_emit (self, signals[RESUME_EVENTS], 0);
     }
 
   gdk_frame_clock_set_stage (self, GDK_FRAME_STAGE_NONE);
