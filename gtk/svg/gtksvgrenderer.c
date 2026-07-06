@@ -3817,6 +3817,7 @@ do_generate_layouts (SvgElement             *self,
 
             space2 = svg_enum_get (svg_element_get_current_value (node->shape.shape, SVG_PROPERTY_SPACE));
             node->shape.has_bounds = do_generate_layouts (node->shape.shape, fontmap, space2, wmode, x, &y2, lastwithspace, &offset, viewport, &node->shape.bounds);
+            *y = y2 - baseline_shift;
             if (node->shape.has_bounds)
               {
                 graphene_rect_init_from_rect (&node->shape.shape->bounds, &node->shape.bounds);
