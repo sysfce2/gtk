@@ -3370,6 +3370,7 @@ static PangoLayout *
 text_create_layout (SvgElement       *self,
                     PangoFontMap     *fontmap,
                     const char       *text,
+                    int               len,
                     WritingMode       wmode,
                     graphene_point_t *origin,
                     graphene_rect_t  *bounds,
@@ -3443,34 +3444,39 @@ text_create_layout (SvgElement       *self,
         {
         case UNICODE_BIDI_EMBED:
           g_string_append_unichar (s, dir == PANGO_DIRECTION_LTR ? LRE : RLE);
-          g_string_append (s, text);
+          g_string_append_len (s, text, len);
           g_string_append_unichar (s, PDF);
+          len = s->len;
           text_with_bidi = g_string_free_and_steal (s);
           break;
         case UNICODE_BIDI_ISOLATE:
           g_string_append_unichar (s, dir == PANGO_DIRECTION_LTR ? LRI : RLI);
-          g_string_append (s, text);
+          g_string_append_len (s, text, len);
           g_string_append_unichar (s, PDI);
+          len = s->len;
           text_with_bidi = g_string_free_and_steal (s);
           break;
         case UNICODE_BIDI_OVERRIDE:
           g_string_append_unichar (s, dir == PANGO_DIRECTION_LTR ? LRO : RLO);
-          g_string_append (s, text);
+          g_string_append_len (s, text, len);
           g_string_append_unichar (s, PDF);
+          len = s->len;
           text_with_bidi = g_string_free_and_steal (s);
           break;
         case UNICODE_BIDI_ISOLATE_OVERRIDE:
           g_string_append_unichar (s, FSI);
           g_string_append_unichar (s, dir == PANGO_DIRECTION_LTR ? LRO : RLO);
-          g_string_append (s, text);
+          g_string_append_len (s, text, len);
           g_string_append_unichar (s, PDF);
           g_string_append_unichar (s, PDI);
+          len = s->len;
           text_with_bidi = g_string_free_and_steal (s);
           break;
         case UNICODE_BIDI_PLAINTEXT:
           g_string_append_unichar (s, FSI);
-          g_string_append (s, text);
+          g_string_append_len (s, text, len);
           g_string_append_unichar (s, PDI);
+          len = s->len;
           text_with_bidi = g_string_free_and_steal (s);
           break;
         case UNICODE_BIDI_NORMAL:
@@ -3550,7 +3556,7 @@ text_create_layout (SvgElement       *self,
   pango_layout_set_attributes (layout, attr_list);
   pango_attr_list_unref (attr_list);
 
-  pango_layout_set_text (layout, text_with_bidi ? text_with_bidi : text, -1);
+  pango_layout_set_text (layout, text_with_bidi ? text_with_bidi : text, len);
 
   pango_layout_set_auto_dir (layout, FALSE);
 
@@ -3740,7 +3746,7 @@ do_generate_layouts (SvgElement             *self,
             else if (*text != '\0')
               *lastwithspace = chunk;
 
-            chunk->layout = text_create_layout (self, fontmap, text, wmode, &origin, &cbounds, &is_vertical, &chunk->r);
+            chunk->layout = text_create_layout (self, fontmap, text, -1, wmode, &origin, &cbounds, &is_vertical, &chunk->r);
             g_free (text);
 
             if (svg_element_get_type (self) == SVG_ELEMENT_TSPAN)
