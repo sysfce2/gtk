@@ -89,8 +89,8 @@ gdk_frame_timings_setup (GdkFrameTimings *self,
                          uint64_t         frame_start_time,
                          uint64_t         stage_start_time)
 {
-  self->frame_time = frame_time / 1000;
-  self->predicted_presentation_time = predicted_presentation_time / 1000;
+  self->frame_time = frame_time;
+  self->predicted_presentation_time = predicted_presentation_time;
   self->stage_end_time[GDK_FRAME_STAGE_NONE] = frame_start_time;
   self->stage_end_time[GDK_FRAME_STAGE_FLUSH_EVENTS] = stage_start_time;
 }
@@ -238,7 +238,7 @@ gdk_frame_timings_get_frame_time (GdkFrameTimings *timings)
 {
   g_return_val_if_fail (timings != NULL, 0);
 
-  return timings->frame_time;
+  return timings->frame_time / 1000;
 }
 
 /**
@@ -258,7 +258,7 @@ gdk_frame_timings_get_presentation_time (GdkFrameTimings *timings)
 {
   g_return_val_if_fail (timings != NULL, 0);
 
-  return timings->presentation_time;
+  return timings->presentation_time / 1000;
 }
 
 /**
@@ -287,7 +287,7 @@ gdk_frame_timings_get_predicted_presentation_time (GdkFrameTimings *timings)
 {
   g_return_val_if_fail (timings != NULL, 0);
 
-  return timings->predicted_presentation_time;
+  return timings->predicted_presentation_time / 1000;
 }
 
 /**
@@ -309,7 +309,7 @@ gdk_frame_timings_get_refresh_interval (GdkFrameTimings *timings)
 {
   g_return_val_if_fail (timings != NULL, 0);
 
-  return timings->refresh_interval;
+  return (timings->refresh_interval + 500) / 1000;
 }
 
 /*<private>
@@ -431,7 +431,7 @@ gdk_frame_timings_submitted (GdkFrameTimings *self,
       case GDK_FRAME_SKIPPED:
       case GDK_FRAME_PRESENTED:
         /* duplicate calls are allowed, but must have the same values */
-        if (self->refresh_interval / 1000 != refresh)
+        if (self->refresh_interval != refresh)
           {
             g_warning_once ("Duplicate call with different values.");
           }
@@ -449,7 +449,7 @@ gdk_frame_timings_submitted (GdkFrameTimings *self,
     }
 
   if (refresh != 0)
-    self->refresh_interval = refresh / 1000;
+    self->refresh_interval = refresh;
 }
 
 void
@@ -501,8 +501,8 @@ gdk_frame_timings_presented (GdkFrameTimings *self,
       case GDK_FRAME_EMPTY:
       case GDK_FRAME_PRESENTED:
         /* duplicate calls are allowed, but must have the same values */
-        if (self->presentation_time != presentation_time / 1000 ||
-            self->refresh_interval != refresh / 1000)
+        if (self->presentation_time != presentation_time ||
+            self->refresh_interval != refresh)
           {
             g_warning_once ("Duplicate call with different values.");
           }
@@ -519,9 +519,9 @@ gdk_frame_timings_presented (GdkFrameTimings *self,
         g_assert_not_reached ();
     }
 
-  self->presentation_time = presentation_time / 1000;
+  self->presentation_time = presentation_time;
   if (refresh != 0)
-    self->refresh_interval = refresh / 1000;
+    self->refresh_interval = refresh;
 }
 
 guint64

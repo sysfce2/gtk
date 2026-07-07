@@ -49,11 +49,12 @@ struct _GdkFrameTimings
   gint64 frame_counter;
   guint64 serial;
 
-  gint64 frame_time;
   gint64 drawn_time;
-  gint64 presentation_time;
-  gint64 refresh_interval;
-  gint64 predicted_presentation_time;
+
+  uint64_t frame_time;
+  uint64_t presentation_time;
+  uint64_t refresh_interval;
+  uint64_t predicted_presentation_time;
 
   uint64_t stage_end_time[GDK_FRAME_N_STAGES];
   uint64_t throttling_hint;
