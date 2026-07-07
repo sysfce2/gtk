@@ -980,11 +980,23 @@ apply_filter_tree (SvgElement    *shape,
             in = get_input_for_ref (svg_filter_get_current_value (f, SVG_PROPERTY_FE_IN), &subregion, shape, context, source, results);
 
             num = svg_filter_get_current_value (f, SVG_PROPERTY_FE_STD_DEV);
-            if (svg_numbers_get_length (num) == 2 &&
-                svg_numbers_get (num, 0, 1) != svg_numbers_get (num, 1, 1))
-              gtk_svg_rendering_error (context->svg,
-                                       "Separate x/y values for stdDeviation not supported");
-            std_dev = svg_numbers_get (num, 0, 1);
+            switch (svg_numbers_get_length (num))
+              {
+              case 2:
+                if (svg_numbers_get (num, 0, 1) != svg_numbers_get (num, 1, 1))
+                  gtk_svg_rendering_error (context->svg,
+                                           "Separate x/y values for stdDeviation not supported");
+                G_GNUC_FALLTHROUGH;
+              case 1:
+                std_dev = svg_numbers_get (num, 0, 1);
+                break;
+              default:
+                std_dev = 0;
+                break;
+              }
+
+            if (svg_enum_get (filter->current[SVG_PROPERTY_CONTENT_UNITS]) == COORD_UNITS_OBJECT_BOUNDING_BOX)
+              std_dev *= normalized_diagonal (&bounds);
 
             edge_mode = svg_enum_get (svg_filter_get_current_value (f, SVG_PROPERTY_FE_BLUR_EDGE_MODE));
 
