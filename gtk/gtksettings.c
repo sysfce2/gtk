@@ -961,7 +961,7 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * value means "toolkit default timeout".
    */
   pspecs[PROP_KEYBOARD_FOCUS_VISIBLE_TIMEOUT] = g_param_spec_int ("gtk-keyboard-focus-visible-timeout", NULL, NULL,
-                                                                  G_MININT, G_MAXINT, -1,
+                                                                  -1, G_MAXINT, -1,
                                                                   G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
