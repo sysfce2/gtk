@@ -64,16 +64,16 @@ typedef enum {
 } GdkFrameClockPhase;
 
 GDK_AVAILABLE_IN_ALL
-gint64   gdk_frame_clock_get_frame_time            (GdkFrameClock *frame_clock);
+gint64             gdk_frame_clock_get_frame_time               (GdkFrameClock          *self);
 
 GDK_AVAILABLE_IN_ALL
-void               gdk_frame_clock_request_phase (GdkFrameClock      *frame_clock,
-                                                  GdkFrameClockPhase  phase);
+void               gdk_frame_clock_request_phase                (GdkFrameClock          *self,
+                                                                 GdkFrameClockPhase      phase);
 
 GDK_AVAILABLE_IN_ALL
-void               gdk_frame_clock_begin_updating (GdkFrameClock      *frame_clock);
+void               gdk_frame_clock_begin_updating (GdkFrameClock      *self);
 GDK_AVAILABLE_IN_ALL
-void               gdk_frame_clock_end_updating   (GdkFrameClock      *frame_clock);
+void               gdk_frame_clock_end_updating   (GdkFrameClock      *self);
 
 /* Frame history */
 GDK_AVAILABLE_IN_ALL

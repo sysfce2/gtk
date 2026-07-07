@@ -1054,11 +1054,7 @@ _gdk_surface_destroy_hierarchy (GdkSurface *surface,
     }
 
   if (surface->frame_clock)
-    {
-      if (surface->parent == NULL)
-        g_object_run_dispose (G_OBJECT (surface->frame_clock));
-      gdk_surface_set_frame_clock (surface, NULL);
-    }
+    gdk_surface_set_frame_clock (surface, NULL);
 
   _gdk_surface_clear_update_area (surface);
 
