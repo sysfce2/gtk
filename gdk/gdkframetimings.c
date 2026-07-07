@@ -241,6 +241,14 @@ gdk_frame_timings_get_frame_time (GdkFrameTimings *timings)
   return timings->frame_time / 1000;
 }
 
+uint64_t
+gdk_frame_timings_get_frame_time_ns (GdkFrameTimings *timings)
+{
+  g_return_val_if_fail (timings != NULL, 0);
+
+  return timings->frame_time;
+}
+
 /**
  * gdk_frame_timings_get_presentation_time:
  * @timings: a `GdkFrameTimings`
@@ -259,6 +267,14 @@ gdk_frame_timings_get_presentation_time (GdkFrameTimings *timings)
   g_return_val_if_fail (timings != NULL, 0);
 
   return timings->presentation_time / 1000;
+}
+
+uint64_t
+gdk_frame_timings_get_presentation_time_ns (GdkFrameTimings *timings)
+{
+  g_return_val_if_fail (timings != NULL, 0);
+
+  return timings->presentation_time;
 }
 
 /**
@@ -290,6 +306,14 @@ gdk_frame_timings_get_predicted_presentation_time (GdkFrameTimings *timings)
   return timings->predicted_presentation_time / 1000;
 }
 
+uint64_t
+gdk_frame_timings_get_predicted_presentation_time_ns (GdkFrameTimings *timings)
+{
+  g_return_val_if_fail (timings != NULL, 0);
+
+  return timings->predicted_presentation_time;
+}
+
 /**
  * gdk_frame_timings_get_refresh_interval:
  * @timings: a `GdkFrameTimings`
@@ -310,6 +334,14 @@ gdk_frame_timings_get_refresh_interval (GdkFrameTimings *timings)
   g_return_val_if_fail (timings != NULL, 0);
 
   return (timings->refresh_interval + 500) / 1000;
+}
+
+uint64_t
+gdk_frame_timings_get_refresh_interval_ns (GdkFrameTimings *timings)
+{
+  g_return_val_if_fail (timings != NULL, 0);
+
+  return timings->refresh_interval;
 }
 
 /*<private>

@@ -75,6 +75,11 @@ guint64          gdk_frame_timings_get_serial                   (GdkFrameTimings
 void             gdk_frame_timings_set_serial                   (GdkFrameTimings        *self,
                                                                  guint64                 serial);
 
+uint64_t         gdk_frame_timings_get_frame_time_ns            (GdkFrameTimings        *self);
+uint64_t         gdk_frame_timings_get_presentation_time_ns     (GdkFrameTimings        *self);
+uint64_t         gdk_frame_timings_get_refresh_interval_ns      (GdkFrameTimings        *self);
+uint64_t         gdk_frame_timings_get_predicted_presentation_time_ns
+                                                                (GdkFrameTimings        *self);
 uint64_t         gdk_frame_timings_get_start_time               (GdkFrameTimings        *self,
                                                                  GdkFrameStage           stage);
 uint64_t         gdk_frame_timings_get_end_time                 (GdkFrameTimings        *self,
