@@ -192,7 +192,7 @@
 #define RESIZE_HANDLE_CORNER_SIZE 24 /* How resize corners extend */
 #define MNEMONICS_DELAY 300 /* ms */
 #define NO_CONTENT_CHILD_NAT 200 /* ms */
-#define VISIBLE_FOCUS_DURATION 3 /* s */
+#define DEFAULT_VISIBLE_FOCUS_DURATION 3 /* s */
 
 
 /* In case the content (excluding header bar and shadows) of the window
@@ -6350,8 +6350,17 @@ gtk_window_set_focus_visible (GtkWindow *window,
 
   if (priv->focus_visible)
     {
-      priv->focus_visible_timeout = g_timeout_add_seconds (VISIBLE_FOCUS_DURATION, unset_focus_visible, window);
-      gdk_source_set_static_name_by_id (priv->focus_visible_timeout, "[gtk] unset_focus_visible");
+      GtkSettings *settings = gtk_widget_get_settings (GTK_WIDGET (window));
+      int keyboard_focus_visible_timeout;
+
+      g_object_get (settings, "gtk-keyboard-focus-visible-timeout", &keyboard_focus_visible_timeout, NULL);
+      if (keyboard_focus_visible_timeout != 0)
+        {
+          if (keyboard_focus_visible_timeout < 0)
+            keyboard_focus_visible_timeout = DEFAULT_VISIBLE_FOCUS_DURATION;
+          priv->focus_visible_timeout = g_timeout_add_seconds (keyboard_focus_visible_timeout, unset_focus_visible, window);
+          gdk_source_set_static_name_by_id (priv->focus_visible_timeout, "[gtk] unset_focus_visible");
+        }
     }
 
   if (changed)

@@ -207,6 +207,7 @@ enum {
   PROP_INTERFACE_COLOR_SCHEME,
   PROP_INTERFACE_CONTRAST,
   PROP_INTERFACE_REDUCED_MOTION,
+  PROP_KEYBOARD_FOCUS_VISIBLE_TIMEOUT,
 
   NUM_PROPERTIES
 };
@@ -952,6 +953,16 @@ gtk_settings_class_init (GtkSettingsClass *class)
   pspecs[PROP_KEYNAV_USE_CARET] = g_param_spec_boolean ("gtk-keynav-use-caret", NULL, NULL,
                                                         FALSE,
                                                         G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
+
+  /**
+   * GtkSettings:gtk-keyboard-focus-visible-timeout:
+   *
+   * Time in seconds that the focus is visible when using keyboard navigation. A zero value means "forever", and a negative
+   * value means "toolkit default timeout".
+   */
+  pspecs[PROP_KEYBOARD_FOCUS_VISIBLE_TIMEOUT] = g_param_spec_int ("gtk-keyboard-focus-visible-timeout", NULL, NULL,
+                                                                  -1, G_MAXINT, -1,
+                                                                  G_PARAM_READWRITE | G_PARAM_STATIC_NAME);
 
   /**
    * GtkSettings:gtk-overlay-scrolling:

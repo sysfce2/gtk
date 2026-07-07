@@ -523,6 +523,12 @@ gdk_win32_display_get_setting (GdkDisplay  *display,
       GDK_NOTE (MISC, g_print ("gdk_win32_display_get_setting(\"%s\") : %s\n", name, val ? "no-preference" : "reduce"));
       return TRUE;
     }
+  else if (strcmp ("gtk-keyboard-focus-visible-timeout", name) == 0)
+    {
+      GDK_NOTE (MISC, g_print ("gdk_display_get_setting(\"%s\") : -1\n", name));
+      // On Windows, the focus ring is always visible when using keyboard navigation.
+      g_value_set_int (value, 0);
+    }
 
   return FALSE;
 }
