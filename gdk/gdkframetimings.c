@@ -473,7 +473,7 @@ gdk_frame_timings_submitted (GdkFrameTimings *self,
       case GDK_FRAME_SUBMITTED:
       case GDK_FRAME_DISCARDED:
         g_warning_once ("Called on already %s frame.",
-                        g_enum_get_value (g_type_class_ref (GDK_TYPE_FRAME_RESULT), self->result)->value_nick);
+                        g_enum_get_value (g_type_class_get (GDK_TYPE_FRAME_RESULT), self->result)->value_nick);
         return;
 
       default:
@@ -506,7 +506,7 @@ gdk_frame_timings_discarded (GdkFrameTimings *self)
       case GDK_FRAME_SUBMITTED:
       case GDK_FRAME_PRESENTED:
         g_warning_once ("Called on already %s frame.",
-                        g_enum_get_value (g_type_class_ref (GDK_TYPE_FRAME_RESULT), self->result)->value_nick);
+                        g_enum_get_value (g_type_class_get (GDK_TYPE_FRAME_RESULT), self->result)->value_nick);
         return;
 
       default:
@@ -544,7 +544,7 @@ gdk_frame_timings_presented (GdkFrameTimings *self,
       case GDK_FRAME_SUBMITTED:
       case GDK_FRAME_DISCARDED:
         g_warning_once ("Called on already %s frame.",
-                        g_enum_get_value (g_type_class_ref (GDK_TYPE_FRAME_RESULT), self->result)->value_nick);
+                        g_enum_get_value (g_type_class_get (GDK_TYPE_FRAME_RESULT), self->result)->value_nick);
         return;
 
       default:
