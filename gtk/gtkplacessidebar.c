@@ -1083,8 +1083,7 @@ update_places (GtkPlacesSidebar *sidebar)
     {
         g_signal_handlers_disconnect_by_data (l->data, sidebar);
     }
-  g_list_free_full (sidebar->unready_accounts, g_object_unref);
-  sidebar->unready_accounts = NULL;
+  g_clear_list (&sidebar->unready_accounts, g_object_unref);
   for (l = cloud_providers; l != NULL; l = l->next)
     {
       cloud_provider = CLOUD_PROVIDERS_PROVIDER (l->data);
@@ -4037,8 +4036,7 @@ gtk_places_sidebar_dispose (GObject *object)
     {
         g_signal_handlers_disconnect_by_data (l->data, sidebar);
     }
-  g_list_free_full (sidebar->unready_accounts, g_object_unref);
-  sidebar->unready_accounts = NULL;
+  g_clear_list (&sidebar->unready_accounts, g_object_unref);
   if (sidebar->cloud_manager)
     {
       g_signal_handlers_disconnect_by_data (sidebar->cloud_manager, sidebar);

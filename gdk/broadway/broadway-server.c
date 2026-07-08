@@ -1207,8 +1207,7 @@ send_outstanding_roundtrips (BroadwayServer *server)
       broadway_server_fake_roundtrip_reply (server, rt->id, rt->tag);
     }
 
-  g_list_free_full (server->outstanding_roundtrips, g_free);
-  server->outstanding_roundtrips = NULL;
+  g_clear_list (&server->outstanding_roundtrips, g_free);
 }
 
 static void

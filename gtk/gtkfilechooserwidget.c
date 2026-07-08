@@ -567,8 +567,7 @@ gtk_file_chooser_widget_iface_init (GtkFileChooserIface *iface)
 static void
 pending_select_files_free (GtkFileChooserWidget *impl)
 {
-  g_slist_free_full (impl->pending_select_files, g_object_unref);
-  impl->pending_select_files = NULL;
+  g_clear_slist (&impl->pending_select_files, g_object_unref);
 }
 
 static void

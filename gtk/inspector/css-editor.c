@@ -335,8 +335,7 @@ update_style (GtkInspectorCssEditor *ce)
 {
   char *text;
 
-  g_list_free_full (ce->priv->errors, css_error_free);
-  ce->priv->errors = NULL;
+  g_clear_list (&ce->priv->errors, css_error_free);
 
   text = get_current_text (ce->priv->text);
   gtk_css_provider_load_from_string (ce->priv->provider, text);
@@ -365,8 +364,7 @@ text_changed (GtkTextBuffer         *buffer,
 
   ce->priv->timeout = g_timeout_add (100, update_timeout, ce);
 
-  g_list_free_full (ce->priv->errors, css_error_free);
-  ce->priv->errors = NULL;
+  g_clear_list (&ce->priv->errors, css_error_free);
 }
 
 static void

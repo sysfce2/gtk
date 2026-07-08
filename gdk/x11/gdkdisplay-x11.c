@@ -1216,7 +1216,7 @@ _gdk_wm_protocols_filter (const XEvent  *xevent,
           GdkFrameClock *clock = gdk_surface_get_frame_clock (win);
           GdkFrameTimings *timings = gdk_frame_clock_find_timings (clock, serial);
 
-          if (timings)
+          if (timings && !gdk_frame_timings_get_complete (timings))
             {
               gint64 frame_counter = gdk_frame_timings_get_frame_counter (timings);
               gint32 presentation_time_offset = (gint32)d2;

@@ -946,11 +946,9 @@ gtk_print_backend_cups_finalize (GObject *object)
       g_bus_unwatch_name (backend_cups->secrets_service_watch_id);
     }
 
-  g_list_free_full (backend_cups->temporary_queues_in_construction, g_free);
-  backend_cups->temporary_queues_in_construction = NULL;
+  g_clear_list (&backend_cups->temporary_queues_in_construction, g_free);
 
-  g_list_free_full (backend_cups->temporary_queues_removed, g_free);
-  backend_cups->temporary_queues_removed = NULL;
+  g_clear_list (&backend_cups->temporary_queues_removed, g_free);
 
   backend_parent_class->finalize (object);
 }

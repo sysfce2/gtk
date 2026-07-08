@@ -976,8 +976,7 @@ gtk_print_unix_dialog_finalize (GObject *object)
 
   for (iter = dialog->print_backends; iter != NULL; iter = iter->next)
     gtk_print_backend_destroy (GTK_PRINT_BACKEND (iter->data));
-  g_list_free_full (dialog->print_backends, g_object_unref);
-  dialog->print_backends = NULL;
+  g_clear_list (&dialog->print_backends, g_object_unref);
 
   g_clear_object (&dialog->page_setup_list);
   g_clear_object (&dialog->custom_paper_list);

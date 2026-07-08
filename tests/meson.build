@@ -48,7 +48,6 @@ gtk_tests = [
   ['testframe'],
   ['testfullscreen'],
   ['testglarea'],
-  ['testglblending', ['gtkgears.c']],
   ['testgrid'],
   ['testgtk'],
   ['testheaderbar'],

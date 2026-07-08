@@ -1640,8 +1640,7 @@ gtk_cups_connection_test_get_state (GtkCupsConnectionTest *test)
 
           if (code == 0 || error_code == EISCONN)
             {
-              close (test->socket);
-              test->socket = -1;
+              g_clear_fd (&test->socket, NULL);
               test->current_addr = NULL;
               result = GTK_CUPS_CONNECTION_AVAILABLE;
             }
@@ -1651,8 +1650,7 @@ gtk_cups_connection_test_get_state (GtkCupsConnectionTest *test)
                 result = GTK_CUPS_CONNECTION_IN_PROGRESS;
               else
                 {
-                  close (test->socket);
-                  test->socket = -1;
+                  g_clear_fd (&test->socket, NULL);
                   test->last_wrong_addr = test->current_addr;
                   result = GTK_CUPS_CONNECTION_NOT_AVAILABLE;
                 }
@@ -1674,10 +1672,6 @@ gtk_cups_connection_test_free (GtkCupsConnectionTest *test)
   test->current_addr = NULL;
   test->last_wrong_addr = NULL;
   httpAddrFreeList (test->addrlist);
-  if (test->socket != -1)
-    {
-      close (test->socket);
-      test->socket = -1;
-    }
+  g_clear_fd (&test->socket, NULL);
   g_free (test);
 }

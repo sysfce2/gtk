@@ -465,14 +465,14 @@ gdk_frame_timings_submitted (GdkFrameTimings *self,
         /* duplicate calls are allowed, but must have the same values */
         if (self->refresh_interval != refresh)
           {
-            g_warning_once ("Duplicate call with different values.");
+            g_warning_once ("Duplicate call to gdk_frame_timings_submitted() with different values.");
           }
         return;
 
       case GDK_FRAME_EMPTY:
       case GDK_FRAME_SUBMITTED:
       case GDK_FRAME_DISCARDED:
-        g_warning_once ("Called on already %s frame.",
+        g_warning_once ("gdk_frame_timings_submitted() called on %s frame.",
                         g_enum_get_value (g_type_class_get (GDK_TYPE_FRAME_RESULT), self->result)->value_nick);
         return;
 
@@ -505,7 +505,7 @@ gdk_frame_timings_discarded (GdkFrameTimings *self)
       case GDK_FRAME_EMPTY:
       case GDK_FRAME_SUBMITTED:
       case GDK_FRAME_PRESENTED:
-        g_warning_once ("Called on already %s frame.",
+        g_warning_once ("gdk_frame_timings_discarded() called on already %s frame.",
                         g_enum_get_value (g_type_class_get (GDK_TYPE_FRAME_RESULT), self->result)->value_nick);
         return;
 
@@ -536,14 +536,14 @@ gdk_frame_timings_presented (GdkFrameTimings *self,
         if (self->presentation_time != presentation_time ||
             self->refresh_interval != refresh)
           {
-            g_warning_once ("Duplicate call with different values.");
+            g_warning_once ("Duplicate call to gdk_frame_timings_presented() with different values.");
           }
         return;
 
       case GDK_FRAME_SKIPPED:
       case GDK_FRAME_SUBMITTED:
       case GDK_FRAME_DISCARDED:
-        g_warning_once ("Called on already %s frame.",
+        g_warning_once ("gdk_frame_timings_presented() called on %s frame.",
                         g_enum_get_value (g_type_class_get (GDK_TYPE_FRAME_RESULT), self->result)->value_nick);
         return;
 

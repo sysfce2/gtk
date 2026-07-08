@@ -4626,8 +4626,7 @@ gtk_icon_view_set_model (GtkIconView *icon_view,
 
       g_object_unref (icon_view->priv->model);
 
-      g_list_free_full (icon_view->priv->items, (GDestroyNotify) gtk_icon_view_item_free);
-      icon_view->priv->items = NULL;
+      g_clear_list (&icon_view->priv->items, (GDestroyNotify) gtk_icon_view_item_free);
       icon_view->priv->anchor_item = NULL;
       icon_view->priv->cursor_item = NULL;
       icon_view->priv->last_single_clicked = NULL;
