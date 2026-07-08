@@ -237,6 +237,8 @@ struct _GdkWaylandPopup
   GdkSeat *grab_input_seat;
 };
 
+typedef struct _GdkWaylandPopupClass GdkWaylandPopupClass;
+
 struct _GdkWaylandPopupClass
 {
   GdkWaylandSurfaceClass parent_class;
