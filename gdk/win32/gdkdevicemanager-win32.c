@@ -140,11 +140,7 @@ gdk_device_manager_win32_finalize (GObject *object)
 
   if (device_manager_win32->wintab_items)
     {
-      if (device_manager_win32->wintab_items->wintab_contexts)
-        {
-          g_list_free_full (device_manager_win32->wintab_items->wintab_contexts, g_free);
-          device_manager_win32->wintab_items->wintab_contexts = NULL;
-	    }
+      g_clear_list (&device_manager_win32->wintab_items->wintab_contexts, g_free);
 
       g_clear_pointer (&device_manager_win32->wintab_items->wintab_surface, g_object_unref);
       if (device_manager_win32->wintab_items->wintab32 != NULL)

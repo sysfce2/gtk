@@ -657,8 +657,7 @@ gtk_gl_area_delete_textures (GtkGLArea *area)
    * textures here, otherwise release_texture will get called
    * later and access freed memory.
    */
-  g_list_free_full (priv->textures, delete_one_texture);
-  priv->textures = NULL;
+  g_clear_list (&priv->textures, delete_one_texture);
 }
 
 static void

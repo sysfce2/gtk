@@ -2546,8 +2546,7 @@ gtk_svg_clear_content (GtkSvg *self)
   g_array_set_size (self->user_styles, 0);
   g_array_set_size (self->author_styles, 0);
 
-  g_list_free_full (self->media, (GDestroyNotify) svg_css_media_block_free);
-  self->media = NULL;
+  g_clear_list (&self->media, (GDestroyNotify) svg_css_media_block_free);
 
   /* Note: we intentionally keep the stylesheet */
 

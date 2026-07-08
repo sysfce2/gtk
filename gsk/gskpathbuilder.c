@@ -249,8 +249,7 @@ gsk_path_builder_clear (GskPathBuilder *self)
 {
   gsk_path_builder_end_current (self);
 
-  g_slist_free_full (self->contours, g_free);
-  self->contours = NULL;
+  g_clear_slist (&self->contours, g_free);
 }
 
 /**

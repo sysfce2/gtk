@@ -1409,8 +1409,7 @@ gdk_wayland_toplevel_set_icon_list (GdkWaylandToplevel *self,
     return;
 
   g_clear_pointer (&self->display_server.toplevel_icon, xdg_toplevel_icon_v1_destroy);
-  g_list_free_full (self->icons, (GDestroyNotify) wl_buffer_destroy);
-  self->icons = NULL;
+  g_clear_list (&self->icons, (GDestroyNotify) wl_buffer_destroy);
 
   self->display_server.toplevel_icon = xdg_toplevel_icon_manager_v1_create_icon (display_wayland->toplevel_icon);
 

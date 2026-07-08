@@ -1518,8 +1518,7 @@ gtk_cell_area_clear_attributes (GtkCellLayout         *cell_layout,
 
   if (info)
     {
-      g_slist_free_full (info->attributes, (GDestroyNotify)cell_attribute_free);
-      info->attributes = NULL;
+      g_clear_slist (&info->attributes, (GDestroyNotify)cell_attribute_free);
     }
 }
 

@@ -2709,8 +2709,7 @@ gtk_window_dispose (GObject *object)
 
   unset_fullscreen_monitor (window);
 
-  g_list_free_full (priv->foci, (GDestroyNotify) gtk_pointer_focus_unref);
-  priv->foci = NULL;
+  g_clear_list (&priv->foci, (GDestroyNotify) gtk_pointer_focus_unref);
 
   g_clear_object (&priv->move_focus_widget);
   gtk_window_set_focus (window, NULL);

@@ -398,8 +398,7 @@ update_timeout (gpointer data)
 
   svg = gtk_svg_new ();
 
-  g_list_free_full (self->errors, svg_error_free);
-  self->errors = NULL;
+  g_clear_list (&self->errors, svg_error_free);
 
   d.self = self;
   d.text = text;
@@ -695,8 +694,7 @@ paintable_editor_dispose (GObject *object)
 
   g_clear_signal_handler (&self->style_handler, self->stylesheet);
 
-  g_list_free_full (self->errors, svg_error_free);
-  self->errors = NULL;
+  g_clear_list (&self->errors, svg_error_free);
 
   g_clear_handle_id (&self->timeout, g_source_remove);
 
