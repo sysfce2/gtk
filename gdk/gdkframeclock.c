@@ -1276,45 +1276,18 @@ gdk_frame_clock_frame (GdkFrameClock *self)
 
   before = GDK_PROFILER_CURRENT_TIME;
 
-  if (priv->stage == GDK_FRAME_STAGE_NONE)
-    gdk_frame_clock_set_stage (self, GDK_FRAME_STAGE_FLUSH_EVENTS);
+  g_assert (priv->stage == GDK_FRAME_STAGE_NONE);
+  gdk_frame_clock_set_stage (self, GDK_FRAME_STAGE_FLUSH_EVENTS);
+
   start_time = priv->stage_start_time;
 
-  switch (priv->stage)
-    {
-    case GDK_FRAME_STAGE_FLUSH_EVENTS:
-      gdk_frame_clock_run_flush_events (self);
-      G_GNUC_FALLTHROUGH;
-
-    case GDK_FRAME_STAGE_BEFORE_PAINT:
-      gdk_frame_clock_run_before_paint (self, start_time);
-      G_GNUC_FALLTHROUGH;
-
-    case GDK_FRAME_STAGE_UPDATE:
-      gdk_frame_clock_run_update (self);
-      G_GNUC_FALLTHROUGH;
-
-    case GDK_FRAME_STAGE_LAYOUT:
-      gdk_frame_clock_run_layout (self);
-      G_GNUC_FALLTHROUGH;
-
-    case GDK_FRAME_STAGE_PAINT:
-      gdk_frame_clock_run_paint (self);
-      G_GNUC_FALLTHROUGH;
-
-    case GDK_FRAME_STAGE_AFTER_PAINT:
-      gdk_frame_clock_run_after_paint (self);
-      G_GNUC_FALLTHROUGH;
-
-    case GDK_FRAME_STAGE_RESUME_EVENTS:
-      gdk_frame_clock_run_resume_events (self);
-      break;
-
-    case GDK_FRAME_STAGE_NONE:
-    case GDK_FRAME_N_STAGES:
-    default:
-      g_assert_not_reached ();
-    }
+  gdk_frame_clock_run_flush_events (self);
+  gdk_frame_clock_run_before_paint (self, start_time);
+  gdk_frame_clock_run_update (self);
+  gdk_frame_clock_run_layout (self);
+  gdk_frame_clock_run_paint (self);
+  gdk_frame_clock_run_after_paint (self);
+  gdk_frame_clock_run_resume_events (self);
 
   gdk_profiler_end_mark (before, "Frameclock cycle", NULL);
 }
