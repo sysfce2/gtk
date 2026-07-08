@@ -1516,6 +1516,7 @@ gtk_cell_area_clear_attributes (GtkCellLayout         *cell_layout,
 
   info = g_hash_table_lookup (priv->cell_info, renderer);
 
+  /* gobject-linter-ignore-next-line: unnecessary_null_check */
   if (info)
     {
       g_clear_slist (&info->attributes, (GDestroyNotify)cell_attribute_free);
