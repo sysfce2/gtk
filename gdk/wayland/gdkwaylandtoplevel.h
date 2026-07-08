@@ -28,20 +28,29 @@
 
 G_BEGIN_DECLS
 
+#ifdef GTK_COMPILATION
+typedef struct _GdkWaylandToplevel GdkWaylandToplevel;
+#else
+typedef GdkToplevel GdkWaylandToplevel;
+#endif
+
 #define GDK_TYPE_WAYLAND_TOPLEVEL             (gdk_wayland_toplevel_get_type())
+#define GDK_WAYLAND_TOPLEVEL(object)          (G_TYPE_CHECK_INSTANCE_CAST ((object), GDK_TYPE_WAYLAND_TOPLEVEL, GdkWaylandToplevel))
+#define GDK_IS_WAYLAND_TOPLEVEL(object)       (G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_WAYLAND_TOPLEVEL))
 
 GDK_AVAILABLE_IN_ALL
-GDK_DECLARE_INTERNAL_TYPE (GdkWaylandToplevel, gdk_wayland_toplevel, GDK, WAYLAND_TOPLEVEL, GdkToplevel)
+GType                    gdk_wayland_toplevel_get_type            (void);
+
 
 typedef void (*GdkWaylandToplevelExported) (GdkToplevel *toplevel,
                                             const char  *handle,
                                             gpointer     user_data);
 
 GDK_AVAILABLE_IN_ALL
-gboolean                 gdk_wayland_toplevel_export_handle (GdkToplevel              *toplevel,
-                                                             GdkWaylandToplevelExported callback,
-                                                             gpointer                 user_data,
-                                                             GDestroyNotify           destroy_func);
+gboolean                 gdk_wayland_toplevel_export_handle (GdkToplevel                *toplevel,
+                                                             GdkWaylandToplevelExported  callback,
+                                                             gpointer                    user_data,
+                                                             GDestroyNotify              destroy_func);
 
 GDK_DEPRECATED_IN_4_12_FOR(gdk_wayland_toplevel_drop_exported_handle)
 void                     gdk_wayland_toplevel_unexport_handle (GdkToplevel *toplevel);
@@ -52,10 +61,12 @@ void                     gdk_wayland_toplevel_drop_exported_handle (GdkToplevel 
 
 GDK_AVAILABLE_IN_ALL
 gboolean                 gdk_wayland_toplevel_set_transient_for_exported (GdkToplevel *toplevel,
-                                                                         const char   *parent_handle_str);
+                                                                          const char  *parent_handle_str);
 
 GDK_AVAILABLE_IN_ALL
 void                     gdk_wayland_toplevel_set_application_id (GdkToplevel *toplevel,
                                                                   const char  *application_id);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GdkWaylandToplevel, g_object_unref)
 
 G_END_DECLS

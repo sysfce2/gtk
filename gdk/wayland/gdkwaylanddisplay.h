@@ -27,10 +27,22 @@
 
 G_BEGIN_DECLS
 
+#ifdef GTK_COMPILATION
+typedef struct _GdkWaylandDisplay GdkWaylandDisplay;
+#else
+typedef GdkDisplay GdkWaylandDisplay;
+#endif
+typedef struct _GdkWaylandDisplayClass GdkWaylandDisplayClass;
+
 #define GDK_TYPE_WAYLAND_DISPLAY              (gdk_wayland_display_get_type())
+#define GDK_WAYLAND_DISPLAY(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), GDK_TYPE_WAYLAND_DISPLAY, GdkWaylandDisplay))
+#define GDK_WAYLAND_DISPLAY_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GDK_TYPE_WAYLAND_DISPLAY, GdkWaylandDisplayClass))
+#define GDK_IS_WAYLAND_DISPLAY(object)        (G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_WAYLAND_DISPLAY))
+#define GDK_IS_WAYLAND_DISPLAY_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_WAYLAND_DISPLAY))
+#define GDK_WAYLAND_DISPLAY_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_WAYLAND_DISPLAY, GdkWaylandDisplayClass))
 
 GDK_AVAILABLE_IN_ALL
-GDK_DECLARE_INTERNAL_TYPE (GdkWaylandDisplay, gdk_wayland_display, GDK, WAYLAND_DISPLAY, GdkDisplay)
+GType                   gdk_wayland_display_get_type            (void);
 
 GDK_AVAILABLE_IN_ALL
 struct wl_display      *gdk_wayland_display_get_wl_display      (GdkDisplay *display);
@@ -53,4 +65,7 @@ gboolean                gdk_wayland_display_query_registry      (GdkDisplay  *di
 GDK_AVAILABLE_IN_4_4
 gpointer                gdk_wayland_display_get_egl_display     (GdkDisplay  *display);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GdkWaylandDisplay, g_object_unref)
+
 G_END_DECLS
+
