@@ -1112,7 +1112,8 @@ gdk_frame_clock_run_before_paint (GdkFrameClock *self,
                          GDK_FRAME_CLOCK_PHASE_UPDATE |
                          GDK_FRAME_CLOCK_PHASE_LAYOUT |
                          GDK_FRAME_CLOCK_PHASE_PAINT |
-                         GDK_FRAME_CLOCK_PHASE_AFTER_PAINT))
+                         GDK_FRAME_CLOCK_PHASE_AFTER_PAINT) ||
+      gdk_frame_clock_is_updating (self))
     {
       priv->requested |= GDK_FRAME_CLOCK_PHASE_BEFORE_PAINT |
                          GDK_FRAME_CLOCK_PHASE_AFTER_PAINT;
