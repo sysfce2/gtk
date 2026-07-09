@@ -368,7 +368,7 @@ svg_animation_clone (SvgAnimation *a,
   SvgAnimation *clone = g_new0 (SvgAnimation, 1);
 
   clone->type = a->type;
-  clone->status = ANIMATION_STATUS_INACTIVE;
+  clone->status = a->status;
 
   clone->id = NULL;
   clone->href = NULL;
@@ -437,8 +437,8 @@ svg_animation_clone (SvgAnimation *a,
       svg_animation_add_end (clone, p);
     }
 
-  clone->current.begin = INDEFINITE;
-  clone->current.end = INDEFINITE;
+  clone->current.begin = a->current.begin;
+  clone->current.end = a->current.end;
   clone->previous.begin = 0;
   clone->previous.end = 0;
 
