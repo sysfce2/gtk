@@ -456,7 +456,10 @@ svg_animation_clone (SvgAnimation *a,
   clone->frames = g_new (Frame, a->n_frames);
   memcpy (clone->frames, a->frames, sizeof (Frame) * a->n_frames);
   for (unsigned int i = 0; i < a->n_frames; i++)
-    svg_value_ref (clone->frames[i].value);
+    {
+      if (clone->frames[i].value)
+        svg_value_ref (clone->frames[i].value);
+    }
   clone->n_frames = a->n_frames;
 
   if (a->type == ANIMATION_TYPE_MOTION)
