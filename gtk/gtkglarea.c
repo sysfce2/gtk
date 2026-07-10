@@ -429,7 +429,8 @@ delete_one_texture (gpointer data)
   if (texture->gl_texture)
     {
       gdk_gl_texture_release (GDK_GL_TEXTURE (texture->gl_texture));
-      texture->gl_texture = NULL;
+      if (texture->dmabuf_texture == NULL)
+        texture->gl_texture = NULL;
     }
 
   id = gdk_gl_texture_builder_get_id (texture->builder);
@@ -733,7 +734,8 @@ release_gl_texture (gpointer data)
       gdk_gl_texture_builder_set_sync (texture->builder, NULL);
     }
 
-  texture->gl_texture = NULL;
+  if (texture->dmabuf_texture == NULL)
+    texture->gl_texture = NULL;
 }
 
 static void
@@ -749,6 +751,9 @@ release_dmabuf_texture (gpointer data)
   gdk_dmabuf_close_fds ((GdkDmabuf *) gdk_dmabuf_texture_get_dmabuf (GDK_DMABUF_TEXTURE (texture->dmabuf_texture)));
 
   texture->dmabuf_texture = NULL;
+
+  if (texture->builder == NULL)
+    g_free (texture);
 }
 
 static void
