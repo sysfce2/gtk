@@ -3851,14 +3851,37 @@ parse_path (GtkCssParser *parser,
             Context      *context,
             gpointer      out_path)
 {
-  GskPath *path;
-  char *str = NULL;
+  const GtkCssToken *token;
+  GskPath *path = NULL;
 
-  if (!parse_string (parser, context, &str))
-    return FALSE;
+  token = gtk_css_parser_get_token (parser);
+  if (gtk_css_token_is (token, GTK_CSS_TOKEN_STRING))
+    {
+      char *str = NULL;
 
-  path = gsk_path_parse (str);
-  g_free (str);
+      if (!parse_string (parser, context, &str))
+        return FALSE;
+
+      path = gsk_path_parse (str);
+      g_free (str);
+    }
+  else if (gtk_css_parser_has_number (parser))
+    {
+      GskRoundedRect rect = GSK_ROUNDED_RECT_INIT (0, 0, 50, 50);
+      GskPathBuilder *builder;
+
+      if (!parse_rounded_rect (parser, context, &rect))
+        return FALSE;
+
+      builder = gsk_path_builder_new ();
+
+      if (gsk_rounded_rect_is_rectilinear (&rect))
+        gsk_path_builder_add_rect (builder, &rect.bounds);
+      else
+        gsk_path_builder_add_rounded_rect (builder, &rect);
+
+      path = gsk_path_builder_free_to_path (builder);
+    }
 
   if (path == NULL)
     {

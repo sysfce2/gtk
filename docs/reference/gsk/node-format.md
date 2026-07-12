@@ -150,6 +150,16 @@ Rounded rectangles use a CSS-like syntax:
 
     rounded-rect: <rect> [ "/" <number>{1,4} [ "/" <number>{1,4} ] ]
 
+# Paths
+
+The syntax for paths is as follows:
+
+    path: <contour>
+    contour: <string> | <rect>
+
+The string uses SVG path syntax. The rect specifies the path for a (possibly
+rounded) rectangle.
+
 # Snapping
 
 Various nodes have snapping properties. They are specified as up to four values
@@ -405,7 +415,7 @@ Possible values for the channels property are:
 | property  | syntax          | default                | printed     |
 | --------- | --------------- | ---------------------- | ----------- |
 | child     | `<node>`        | *see below*            | always      |
-| path      | `<string>`      | ""                     | always      |
+| path      | `<path>`        | ""                     | always      |
 | fill-rule | `<fill-rule>`   | winding                | always      |
 
 Creates a node like `gsk_fill_node_new()` with the given properties.
@@ -647,7 +657,7 @@ Creates a node like `gsk_shadow_node_new()` with the given properties.
 | property    | syntax             | default           | printed     |
 | ----------- | ------------------ | ----------------- | ----------- |
 | child       | `<node>`           | *see below*       | always      |
-| path        | `<string>`         | ""                | always      |
+| path        | `<path>`           | ""                | always      |
 | line-width  | `<number>`         | 0                 | non-default |
 | line-cap    | `<line-cap>`       | butt              | always      |
 | line-join   | `<line-join>`      | miter             | always      |
