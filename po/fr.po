@@ -26,8 +26,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gtk master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gtk/-/issues/\n"
-"POT-Creation-Date: 2026-03-09 12:34+0000\n"
-"PO-Revision-Date: 2026-03-11 08:24+0100\n"
+"POT-Creation-Date: 2026-06-25 16:39+0000\n"
+"PO-Revision-Date: 2026-07-13 13:46+0200\n"
 "Last-Translator: Guillaume Bernard <associations@guillaume-bernard.fr>\n"
 "Language-Team: French <gnomefr@traduc.org>\n"
 "Language: fr\n"
@@ -35,7 +35,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.8\n"
+"X-Generator: Poedit 3.9\n"
 
 #: gdk/android/gdkandroidclipboard.c:174
 msgid "No compatible formats to transfer contents of content provider."
@@ -199,7 +199,7 @@ msgstr "Tentative d’utilisation de %s, mais %s est déjà utilisé"
 msgid "Trying to use %s, but it is disabled via GDK_DISABLE"
 msgstr "Tentative d’utilisation de %s, mais il est désactivé via GDK_DISABLE"
 
-#: gdk/gdktexture.c:646
+#: gdk/gdktexture.c:679
 msgid "Unknown image format."
 msgstr "Format d’image inconnu."
 
@@ -282,12 +282,12 @@ msgstr "Bas"
 #: gdk/keynamesprivate.h:6874 gtk/deprecated/gtkshortcutlabel.c:229
 msgctxt "keyboard label"
 msgid "Page_Up"
-msgstr "Page haut"
+msgstr "Page_précédente"
 
 #: gdk/keynamesprivate.h:6875 gtk/deprecated/gtkshortcutlabel.c:232
 msgctxt "keyboard label"
 msgid "Page_Down"
-msgstr "Page bas"
+msgstr "Page_suivante"
 
 #: gdk/keynamesprivate.h:6876
 msgctxt "keyboard label"
@@ -358,7 +358,7 @@ msgstr "Bas (pavé num.)"
 #: gdk/keynamesprivate.h:6890
 msgctxt "keyboard label"
 msgid "KP_Page_Up"
-msgstr "Page haut (pavé num.)"
+msgstr "Page précédente (pavé num.)"
 
 #: gdk/keynamesprivate.h:6891
 msgctxt "keyboard label"
@@ -368,7 +368,7 @@ msgstr "Précédent (pavé num.)"
 #: gdk/keynamesprivate.h:6892
 msgctxt "keyboard label"
 msgid "KP_Page_Down"
-msgstr "Page bas (pavé num.)"
+msgstr "Page suivante (pavé num.)"
 
 #: gdk/keynamesprivate.h:6893
 msgctxt "keyboard label"
@@ -2402,7 +2402,7 @@ msgstr "Sélectionne les types de fichiers à afficher"
 #. * is a hostname. Nautilus and the panel contain the same string
 #. * to translate.
 #.
-#: gtk/gtkfilechooserutils.c:365
+#: gtk/gtkfilechooserutils.c:364
 #, c-format
 msgid "%1$s on %2$s"
 msgstr "%1$s sur %2$s"
@@ -4163,9 +4163,9 @@ msgstr ""
 "La raison la plus probable est qu’un fichier temporaire n’a pas pu être créé."
 
 #. window
-#: gtk/print/gtkprintoperation-portal.c:273
-#: gtk/print/gtkprintoperation-portal.c:617
-#: gtk/print/gtkprintoperation-portal.c:686 gtk/print/gtkprintunixdialog.c:2992
+#: gtk/print/gtkprintoperation-portal.c:287
+#: gtk/print/gtkprintoperation-portal.c:634
+#: gtk/print/gtkprintoperation-portal.c:703 gtk/print/gtkprintunixdialog.c:2992
 msgid "Print"
 msgstr "Imprimer"
 
@@ -5018,17 +5018,20 @@ msgstr "De premier niveau"
 msgid "Child Visible"
 msgstr "Enfant visible"
 
-#: gtk/inspector/misc-info.ui:685
-msgid "Intrinsic Size"
-msgstr "Taille intrinsèque"
+#. Paintable is a colloquial way to refer to the GdkPaintable interface
+#: gtk/inspector/misc-info.ui:686
+msgid "Paintable Size"
+msgstr "Taille de l’objet à dessiner"
 
-#: gtk/inspector/misc-info.ui:710
-msgid "Intrinsic Aspect Ratio"
-msgstr "Rapport d’affichage intrinsèque"
+#. Paintable is a colloquial way to refer to the GdkPaintable interface
+#: gtk/inspector/misc-info.ui:712
+msgid "Paintable Aspect Ratio"
+msgstr "Rapport d’affichage de l’objet à dessiner"
 
-#: gtk/inspector/misc-info.ui:735
-msgid "GdkPaintable Flags"
-msgstr "Indicateurs GdkPaintable"
+#. Paintable is a colloquial way to refer to the GdkPaintable interface
+#: gtk/inspector/misc-info.ui:738
+msgid "Paintable Flags"
+msgstr "Indicateurs de l’élément dessinable"
 
 #: gtk/inspector/prop-editor.c:749
 #, c-format
@@ -7655,6 +7658,29 @@ msgstr "Certains paramètres dans la boîte de dialogue sont en conflit"
 msgid "Play"
 msgstr "Lecture"
 
+#: tools/encodesymbolic.c:42
+msgid "Output to this directory instead of cwd"
+msgstr "Produit le contenu dans ce répertoire à la place du répertoire courant"
+
+#: tools/encodesymbolic.c:43
+msgid "Generate debug output"
+msgstr "Générer la sortie de débogage"
+
+#: tools/encodesymbolic.c:93
+#, c-format
+msgid "Invalid size %s\n"
+msgstr "Taille %s non valide\n"
+
+#: tools/encodesymbolic.c:107
+#, c-format
+msgid "Can’t load file: %s\n"
+msgstr "Impossible de charge le fichier : %s\n"
+
+#: tools/encodesymbolic.c:144
+#, c-format
+msgid "Can’t save file %s: %s\n"
+msgstr "Impossible d’enregistrer le fichier « %s » : %s\n"
+
 #: tools/gtk-builder-tool.c:36
 #, c-format
 msgid ""
@@ -8748,32 +8774,22 @@ msgstr "Afficher le nœud de rendu."
 msgid "Can only preview a single .node file\n"
 msgstr "Ne peut afficher l’aperçu que d’un seul fichier .node\n"
 
-#. translators: invalid UTF8 in filename
-#: tools/gtk-tool-utils.c:47
-msgid "<invalid>"
-msgstr "<invalid>"
-
-#: tools/gtk-tool-utils.c:60
-#, c-format
-msgid "Warning at %s: %s\n"
-msgstr "Avertissement à %s : %s\n"
-
-#: tools/gtk-tool-utils.c:62
+#: tools/gtk-tool-utils.c:48
 #, c-format
 msgid "Error at %s: %s\n"
 msgstr "Erreur à %s : %s\n"
 
-#: tools/gtk-tool-utils.c:80
+#: tools/gtk-tool-utils.c:66
 #, c-format
 msgid "Failed to load node file: %s\n"
 msgstr "Impossible de charger le fichier de nœud : %s\n"
 
-#: tools/gtk-tool-utils.c:106
+#: tools/gtk-tool-utils.c:87
 #, c-format
 msgid "%s is not a texture node\n"
 msgstr "%s n’est pas un nœud de texture\n"
 
-#: tools/gtk-tool-utils.c:332
+#: tools/gtk-tool-utils.c:313
 #, c-format
 msgid "cicp must be 4 numbers, separated by /\n"
 msgstr "cicp doit être 4 nombres, séparés par /\n"
@@ -8886,27 +8902,18 @@ msgstr ""
 "Si vous souhaitez vraiment créer un cache d’icônes ici, utilisez --ignore-"
 "theme-index.\n"
 
-#~ msgid "Paintable Size"
-#~ msgstr "Taille de l’objet à dessiner"
+#, fuzzy
+#~| msgctxt "Font variation axis"
+#~| msgid "Optical Size"
+#~ msgid "Intrinsic Size"
+#~ msgstr "Taille optique"
 
-#~ msgid "Output to this directory instead of cwd"
-#~ msgstr ""
-#~ "Produit le contenu dans ce répertoire à la place du répertoire courant"
-
-#~ msgid "Generate debug output"
-#~ msgstr "Générer la sortie de débogage"
-
-#, c-format
-#~ msgid "Invalid size %s\n"
-#~ msgstr "Taille %s non valide\n"
+#~ msgid "<invalid>"
+#~ msgstr "<invalid>"
 
 #, c-format
-#~ msgid "Can’t load file: %s\n"
-#~ msgstr "Impossible de charge le fichier : %s\n"
-
-#, c-format
-#~ msgid "Can’t save file %s: %s\n"
-#~ msgstr "Impossible d’enregistrer le fichier « %s » : %s\n"
+#~ msgid "Warning at %s: %s\n"
+#~ msgstr "Avertissement à %s : %s\n"
 
 #, c-format
 #~ msgid "cicp: Narrow range or YUV not supported"
