@@ -154,11 +154,32 @@ Rounded rectangles use a CSS-like syntax:
 
 The syntax for paths is as follows:
 
-    path: <contour>
-    contour: <string> | <rect>
+    path: <contour> | "{" <contour>+ "}"
+    contour: <string> | <rounded-rect> | rect { … } | rounded-rect { … } | circle { … }
 
-The string uses SVG path syntax. The rect specifies the path for a (possibly
-rounded) rectangle.
+The string uses SVG path syntax.
+The rounded-rect can be used as a shortcut for specifying a rounded rectangle
+(if the corners are non-empty) or a rectangle.
+
+
+The following properties can be set for rect contours:
+
+| property    | syntax           | default                | printed     |
+| ----------- | ---------------- | ---------------------- | ----------- |
+| outline     | `<rect>`         | 0 0 50 50              | always      |
+
+The following properties can be set for rounded-rect contours:
+
+| property    | syntax           | default                | printed     |
+| ----------- | ---------------- | ---------------------- | ----------- |
+| outline     | `<rounded-rect>` | 0 0 50 50              | always      |
+
+The following properties can be set for circle contours:
+
+| property    | syntax           | default                | printed     |
+| ----------- | ---------------- | ---------------------- | ----------- |
+| center      | `<point>`        | 10 10                  | always      |
+| radius      | `<boolean>`      | 10                     | always      |
 
 # Snapping
 

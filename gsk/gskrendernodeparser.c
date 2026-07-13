@@ -3846,24 +3846,78 @@ parse_rounded_clip_node (GtkCssParser *parser,
   return result;
 }
 
-static gboolean
-parse_path (GtkCssParser *parser,
-            Context      *context,
-            gpointer      out_path)
+static GskPath *
+parse_rect_path (GtkCssParser *parser,
+                 Context      *context)
 {
-  const GtkCssToken *token;
-  GskPath *path = NULL;
+  graphene_rect_t rect = GRAPHENE_RECT_INIT (0, 0, 50, 50);
+  const Declaration declarations[] = {
+    { "outline", parse_rect, NULL, &rect },
+  };
+  GskPathBuilder *builder;
 
-  token = gtk_css_parser_get_token (parser);
-  if (gtk_css_token_is (token, GTK_CSS_TOKEN_STRING))
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+
+  builder = gsk_path_builder_new ();
+  gsk_path_builder_add_rect (builder, &rect);
+  return gsk_path_builder_free_to_path (builder);
+}
+
+static GskPath *
+parse_rounded_rect_path (GtkCssParser *parser,
+                         Context      *context)
+{
+  GskRoundedRect rect = GSK_ROUNDED_RECT_INIT (0, 0, 50, 50);
+  const Declaration declarations[] = {
+    { "outline", parse_rounded_rect, NULL, &rect },
+  };
+  GskPathBuilder *builder;
+
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+
+  builder = gsk_path_builder_new ();
+  if (gsk_rounded_rect_is_rectilinear (&rect))
+    gsk_path_builder_add_rect (builder, &rect.bounds);
+  else
+    gsk_path_builder_add_rounded_rect (builder, &rect);
+  return gsk_path_builder_free_to_path (builder);
+}
+
+static GskPath *
+parse_circle_path (GtkCssParser *parser,
+                   Context      *context)
+{
+  graphene_point_t center = GRAPHENE_POINT_INIT (10, 10);
+  double radius = 10;
+  const Declaration declarations[] = {
+    { "center", parse_point, NULL, &center },
+    { "radius", parse_double, NULL, &radius },
+  };
+  GskPathBuilder *builder;
+
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+
+  builder = gsk_path_builder_new ();
+  gsk_path_builder_add_circle (builder, &center, radius);
+  return gsk_path_builder_free_to_path (builder);
+}
+
+static GskPath *
+parse_contour (GtkCssParser *parser,
+               Context      *context)
+{
+  if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_STRING))
     {
       char *str = NULL;
+      GskPath *path;
 
       if (!parse_string (parser, context, &str))
         return FALSE;
 
       path = gsk_path_parse (str);
       g_free (str);
+
+      return path;
     }
   else if (gtk_css_parser_has_number (parser))
     {
@@ -3880,13 +3934,81 @@ parse_path (GtkCssParser *parser,
       else
         gsk_path_builder_add_rounded_rect (builder, &rect);
 
-      path = gsk_path_builder_free_to_path (builder);
+      return gsk_path_builder_free_to_path (builder);
     }
-
-  if (path == NULL)
+  else
     {
-      gtk_css_parser_error_value (parser, "Invalid path");
-      return FALSE;
+      static const struct {
+        const char *name;
+        GskPath * (* func) (GtkCssParser *, Context *);
+      } path_parsers[] = {
+        { "rect", parse_rect_path },
+        { "rounded-rect", parse_rounded_rect_path },
+        { "circle", parse_circle_path },
+      };
+
+      for (unsigned int i = 0; i < G_N_ELEMENTS (path_parsers); i++)
+        {
+          if (gtk_css_parser_try_ident (parser, path_parsers[i].name))
+            {
+              if (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
+                {
+                  gtk_css_parser_error_syntax (parser, "Expected '{' after contour name");
+                  return FALSE;
+                }
+
+              gtk_css_parser_end_block_prelude (parser);
+
+              return path_parsers[i].func (parser, context);
+            }
+        }
+
+      if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_IDENT))
+        gtk_css_parser_error_syntax (parser, "No contour named \"%s\"",
+                                     gtk_css_token_get_string (gtk_css_parser_get_token (parser)));
+      else
+        gtk_css_parser_error_syntax (parser, "Expected a contour name");
+
+      return NULL;
+    }
+}
+
+static gboolean
+parse_path (GtkCssParser *parser,
+            Context      *context,
+            gpointer      out_path)
+{
+  GskPath *path = NULL;
+
+  if (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
+    {
+      path = parse_contour (parser, context);
+    }
+  else
+    {
+      GskPathBuilder *builder = gsk_path_builder_new ();
+
+      gtk_css_parser_end_block_prelude (parser);
+
+      while (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
+        {
+          GskPath *subpath;
+
+          gtk_css_parser_start_semicolon_block (parser, GTK_CSS_TOKEN_OPEN_CURLY);
+          subpath = parse_contour (parser, context);
+          gtk_css_parser_end_block (parser);
+
+          if (subpath)
+            gsk_path_builder_add_path (builder, subpath);
+          else
+            {
+              g_clear_pointer (&builder, gsk_path_builder_unref);
+              break;
+            }
+        }
+
+      if (builder)
+        path = gsk_path_builder_free_to_path (builder);
     }
 
   *((GskPath **) out_path) = path;
