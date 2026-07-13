@@ -34,7 +34,7 @@ G_BEGIN_DECLS
 typedef struct _GtkListListModel GtkListListModel;
 typedef struct _GtkListListModelClass GtkListListModelClass;
 
-GType                   gtk_list_list_model_get_type            (void) G_GNUC_CONST;
+GType                   gtk_list_list_model_get_type            (void);
 
 GtkListListModel *      gtk_list_list_model_new                 (gpointer                (* get_first) (gpointer),
                                                                  gpointer                (* get_next) (gpointer, gpointer),

@@ -35,7 +35,7 @@ G_BEGIN_DECLS
 typedef struct _GskRendererClass        GskRendererClass;
 
 GDK_AVAILABLE_IN_ALL
-GType gsk_renderer_get_type (void) G_GNUC_CONST;
+GType gsk_renderer_get_type (void);
 
 GDK_AVAILABLE_IN_ALL
 GskRenderer *           gsk_renderer_new_for_surface            (GdkSurface               *surface);

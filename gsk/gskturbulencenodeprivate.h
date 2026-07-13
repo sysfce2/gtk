@@ -43,7 +43,7 @@ typedef struct _GskTurbulenceNode                GskTurbulenceNode;
 
 #define GSK_TYPE_TURBULENCE_NODE (gsk_turbulence_node_get_type())
 
-GType                   gsk_turbulence_node_get_type             (void) G_GNUC_CONST;
+GType                   gsk_turbulence_node_get_type             (void);
 GskRenderNode *         gsk_turbulence_node_new                  (const graphene_rect_t *bounds,
                                                                   GskRectSnap            snap,
                                                                   GdkColorState         *color_state,

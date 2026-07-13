@@ -41,7 +41,7 @@ typedef struct _GskVulkanRenderer                GskVulkanRenderer;
 typedef struct _GskVulkanRendererClass           GskVulkanRendererClass;
 
 GDK_AVAILABLE_IN_ALL
-GType                   gsk_vulkan_renderer_get_type            (void) G_GNUC_CONST;
+GType                   gsk_vulkan_renderer_get_type            (void);
 
 GDK_AVAILABLE_IN_ALL
 GskRenderer *           gsk_vulkan_renderer_new                 (void);

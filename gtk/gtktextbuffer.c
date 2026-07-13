@@ -229,7 +229,7 @@ struct _GtkTextBufferContentClass
   GdkContentProviderClass parent_class;
 };
 
-GType gtk_text_buffer_content_get_type (void) G_GNUC_CONST;
+GType gtk_text_buffer_content_get_type (void);
 
 G_DEFINE_TYPE (GtkTextBufferContent, gtk_text_buffer_content, GDK_TYPE_CONTENT_PROVIDER)
 

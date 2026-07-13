@@ -542,13 +542,13 @@ _gtk_css_change_for_child (GtkCssChange match)
 #undef KEEP_STATES
 }
 
-GtkCssDimension         gtk_css_unit_get_dimension               (GtkCssUnit         unit) G_GNUC_CONST;
+GtkCssDimension         gtk_css_unit_get_dimension               (GtkCssUnit         unit);
 
 char *                  gtk_css_change_to_string                 (GtkCssChange       change) G_GNUC_MALLOC;
 void                    gtk_css_change_print                     (GtkCssChange       change,
                                                                   GString           *string);
 
-const char *            gtk_css_pseudoclass_name                 (GtkStateFlags      flags) G_GNUC_CONST;
+const char *            gtk_css_pseudoclass_name                 (GtkStateFlags      flags);
 
 /* These hash functions are selected so they achieve 2 things:
  * 1. collision free among each other

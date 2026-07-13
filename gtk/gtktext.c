@@ -718,7 +718,7 @@ struct _GtkTextContentClass
   GdkContentProviderClass parent_class;
 };
 
-GType gtk_text_content_get_type (void) G_GNUC_CONST;
+GType gtk_text_content_get_type (void);
 
 G_DEFINE_TYPE (GtkTextContent, gtk_text_content, GDK_TYPE_CONTENT_PROVIDER)
 

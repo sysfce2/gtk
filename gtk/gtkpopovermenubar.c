@@ -80,7 +80,7 @@
 #define GTK_POPOVER_MENU_BAR_ITEM(obj)    (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_POPOVER_MENU_BAR_ITEM, GtkPopoverMenuBarItem))
 #define GTK_IS_POPOVER_MENU_BAR_ITEM(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_POPOVER_MENU_BAR_ITEM))
 
-GType gtk_popover_menu_bar_item_get_type (void) G_GNUC_CONST;
+GType gtk_popover_menu_bar_item_get_type (void);
 
 typedef struct _GtkPopoverMenuBarItem GtkPopoverMenuBarItem;
 
