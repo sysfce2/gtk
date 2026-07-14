@@ -130,7 +130,7 @@ _g_string_append_float (GString    *string,
   char buf[G_ASCII_DTOSTR_BUF_SIZE];
 
   g_string_append (string, prefix);
-  g_ascii_formatd (buf, G_ASCII_DTOSTR_BUF_SIZE, "%.9g", f);
+  g_ascii_dtostr (buf, sizeof (buf), f);
   g_string_append (string, buf);
 }
 

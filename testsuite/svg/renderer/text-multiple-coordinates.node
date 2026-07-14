@@ -3,11 +3,10 @@ fill {
     bounds: 20 20 160 160;
     color: rgb(0,0,0);
   }
-  path: "\
-M 20 100\
-L 180 100\
-M 100 20\
-L 100 180";
+  path: {
+    "M 20 100 L 180 100";
+    "M 100 20 L 100 180";
+  }
   fill-rule: winding;
 }
 stroke {
@@ -15,11 +14,10 @@ stroke {
     bounds: 18 18 164 164;
     color: rgb(128,128,128);
   }
-  path: "\
-M 20 100\
-L 180 100\
-M 100 20\
-L 100 180";
+  path: {
+    "M 20 100 L 180 100";
+    "M 100 20 L 100 180";
+  }
   line-width: 0.5;
   line-cap: butt;
   line-join: miter;
@@ -137,8 +135,7 @@ stroke {
     bounds: 0.5 0.5 199 199;
     color: rgb(0,0,0);
   }
-  path: "\
-M 1 1 h 198 v 198 h -198 z";
+  path: 1 1 198 198;
   line-width: 1;
   line-cap: butt;
   line-join: miter;

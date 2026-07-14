@@ -12,8 +12,10 @@ transform {
       bounds: -12.5 -12.5 25 25;
       color: rgb(0,0,255);
     }
-    path: "\
-M 10 0 o 0 10, -10 10, 0.707106769 o -10 0, -10 -10, 0.707106769 o 0 -10, 10 -10, 0.707106769 o 10 0, 10 10, 0.707106769 z";
+    path: circle {
+      center: 0 0;
+      radius: 10;
+    }
     line-width: 5;
     line-cap: butt;
     line-join: miter;
@@ -33,8 +35,10 @@ transform {
       bounds: -12.5 -12.5 25 25;
       color: rgb(255,0,0);
     }
-    path: "\
-M 10 0 o 0 10, -10 10, 0.707106769 o -10 0, -10 -10, 0.707106769 o 0 -10, 10 -10, 0.707106769 o 10 0, 10 10, 0.707106769 z";
+    path: circle {
+      center: 0 0;
+      radius: 10;
+    }
     line-width: 5;
     line-cap: butt;
     line-join: miter;
@@ -54,8 +58,10 @@ transform {
       bounds: -12.5 -12.5 25 25;
       color: rgb(255,0,0);
     }
-    path: "\
-M 10 0 o 0 10, -10 10, 0.707106769 o -10 0, -10 -10, 0.707106769 o 0 -10, 10 -10, 0.707106769 o 10 0, 10 10, 0.707106769 z";
+    path: circle {
+      center: 0 0;
+      radius: 10;
+    }
     line-width: 5;
     line-cap: butt;
     line-join: miter;
@@ -75,8 +81,10 @@ transform {
       bounds: -12.5 -12.5 25 25;
       color: rgb(0,0,255);
     }
-    path: "\
-M 10 0 o 0 10, -10 10, 0.707106769 o -10 0, -10 -10, 0.707106769 o 0 -10, 10 -10, 0.707106769 o 10 0, 10 10, 0.707106769 z";
+    path: circle {
+      center: 0 0;
+      radius: 10;
+    }
     line-width: 5;
     line-cap: butt;
     line-join: miter;
@@ -96,8 +104,10 @@ transform {
       bounds: -12.5 -12.5 25 25;
       color: rgb(255,0,255);
     }
-    path: "\
-M 10 0 o 0 10, -10 10, 0.707106769 o -10 0, -10 -10, 0.707106769 o 0 -10, 10 -10, 0.707106769 o 10 0, 10 10, 0.707106769 z";
+    path: circle {
+      center: 0 0;
+      radius: 10;
+    }
     line-width: 5;
     line-cap: butt;
     line-join: miter;
