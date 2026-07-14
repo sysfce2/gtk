@@ -278,8 +278,6 @@ gdk_wayland_surface_frame_callback (GdkSurface *surface,
 
   gdk_wayland_surface_clear_frame_callback (impl);
 
-  GDK_WAYLAND_SURFACE_GET_CLASS (impl)->handle_frame (impl);
-
   if (impl->awaiting_frame_frozen)
     {
       impl->awaiting_frame_frozen = FALSE;
@@ -1307,11 +1305,6 @@ gdk_wayland_surface_default_handle_configure (GdkWaylandSurface *surface)
 }
 
 static void
-gdk_wayland_surface_default_handle_frame (GdkWaylandSurface *surface)
-{
-}
-
-static void
 gdk_wayland_surface_default_hide_surface (GdkWaylandSurface *surface)
 {
 }
@@ -1343,7 +1336,6 @@ gdk_wayland_surface_class_init (GdkWaylandSurfaceClass *klass)
   surface_class->create_subsurface = gdk_wayland_surface_create_subsurface;
 
   klass->handle_configure = gdk_wayland_surface_default_handle_configure;
-  klass->handle_frame = gdk_wayland_surface_default_handle_frame;
   klass->hide_surface = gdk_wayland_surface_default_hide_surface;
 }
 

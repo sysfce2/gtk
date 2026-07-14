@@ -103,8 +103,6 @@ struct _GdkWaylandSurfaceClass
 
   void (* handle_configure) (GdkWaylandSurface *surface);
 
-  void (* handle_frame) (GdkWaylandSurface *surface);
-
   void (* hide_surface) (GdkWaylandSurface *surface);
 };
 
