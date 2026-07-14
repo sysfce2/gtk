@@ -24,13 +24,6 @@
 #include "gdkseat-wayland.h"
 
 
-typedef enum _PopupState
-{
-  POPUP_STATE_IDLE,
-  POPUP_STATE_WAITING_FOR_REPOSITIONED,
-  POPUP_STATE_WAITING_FOR_CONFIGURE,
-} PopupState;
-
 struct _GdkWaylandSurface
 {
   GdkSurface parent_instance;

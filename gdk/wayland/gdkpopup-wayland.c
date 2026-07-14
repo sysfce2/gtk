@@ -46,6 +46,13 @@
 
 #include "gdksurface-wayland-private.h"
 
+typedef enum _PopupState
+{
+  POPUP_STATE_IDLE,
+  POPUP_STATE_WAITING_FOR_REPOSITIONED,
+  POPUP_STATE_WAITING_FOR_CONFIGURE,
+} PopupState;
+
 static void update_popup_layout_state (GdkWaylandPopup *wayland_popup,
                                        int              x,
                                        int              y,
