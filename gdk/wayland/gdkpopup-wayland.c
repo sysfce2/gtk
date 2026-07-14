@@ -310,7 +310,6 @@ gdk_wayland_popup_hide_surface (GdkWaylandSurface *wayland_surface)
       gdk_surface_thaw_updates (surface);
       G_GNUC_FALLTHROUGH;
     case POPUP_STATE_WAITING_FOR_CONFIGURE:
-    case POPUP_STATE_WAITING_FOR_FRAME:
       thaw_popup_toplevel_state (popup);
       break;
     case POPUP_STATE_IDLE:
@@ -348,10 +347,6 @@ gdk_wayland_popup_handle_frame (GdkWaylandSurface *surface)
     case POPUP_STATE_IDLE:
     case POPUP_STATE_WAITING_FOR_REPOSITIONED:
     case POPUP_STATE_WAITING_FOR_CONFIGURE:
-      break;
-    case POPUP_STATE_WAITING_FOR_FRAME:
-      wayland_popup->state = POPUP_STATE_IDLE;
-      thaw_popup_toplevel_state (wayland_popup);
       break;
     default:
       g_assert_not_reached ();
@@ -420,10 +415,10 @@ gdk_wayland_popup_handle_configure (GdkWaylandSurface *wayland_surface)
         gdk_surface_thaw_updates (surface);
       G_GNUC_FALLTHROUGH;
     case POPUP_STATE_WAITING_FOR_CONFIGURE:
-      wayland_popup->state = POPUP_STATE_WAITING_FOR_FRAME;
+      wayland_popup->state = POPUP_STATE_IDLE;
+      thaw_popup_toplevel_state (wayland_popup);
       break;
     case POPUP_STATE_IDLE:
-    case POPUP_STATE_WAITING_FOR_FRAME:
       break;
     default:
       g_assert_not_reached ();
@@ -1170,8 +1165,7 @@ do_queue_relayout (GdkWaylandPopup *wayland_popup,
   struct xdg_positioner *positioner;
 
   g_assert (is_realized_popup (GDK_WAYLAND_SURFACE (wayland_popup)));
-  g_assert (wayland_popup->state == POPUP_STATE_IDLE ||
-            wayland_popup->state == POPUP_STATE_WAITING_FOR_FRAME);
+  g_assert (wayland_popup->state == POPUP_STATE_IDLE);
 
   g_clear_pointer (&wayland_popup->layout, gdk_popup_layout_unref);
   wayland_popup->layout = gdk_popup_layout_copy (layout);
@@ -1203,8 +1197,6 @@ do_queue_relayout (GdkWaylandPopup *wayland_popup,
     {
     case POPUP_STATE_IDLE:
       freeze_popup_toplevel_state (wayland_popup);
-      break;
-    case POPUP_STATE_WAITING_FOR_FRAME:
       break;
     case POPUP_STATE_WAITING_FOR_CONFIGURE:
     case POPUP_STATE_WAITING_FOR_REPOSITIONED:
@@ -1324,7 +1316,6 @@ reposition_popup (GdkWaylandPopup *wayland_popup,
   switch (wayland_popup->state)
     {
     case POPUP_STATE_IDLE:
-    case POPUP_STATE_WAITING_FOR_FRAME:
       do_queue_relayout (wayland_popup, width, height, layout);
       break;
     case POPUP_STATE_WAITING_FOR_REPOSITIONED:
