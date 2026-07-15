@@ -1201,8 +1201,7 @@ _post_read_response (GtkCupsRequest *request)
                                  "%s",
                                  ippErrorString (ipp_error));
       
-      ippDelete (request->result->ipp_response);
-      request->result->ipp_response = NULL;
+      g_clear_pointer (&request->result->ipp_response, ippDelete);
 
       request->state = GTK_CUPS_POST_DONE;
       request->poll_state = GTK_CUPS_HTTP_IDLE;

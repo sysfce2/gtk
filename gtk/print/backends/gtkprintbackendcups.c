@@ -925,8 +925,7 @@ gtk_print_backend_cups_finalize (GObject *object)
 
   g_clear_pointer (&backend_cups->default_printer, g_free);
 
-  gtk_cups_connection_test_free (backend_cups->cups_connection_test);
-  backend_cups->cups_connection_test = NULL;
+  g_clear_pointer (&backend_cups->cups_connection_test, gtk_cups_connection_test_free);
 
   g_hash_table_destroy (backend_cups->auth);
 
@@ -4138,8 +4137,7 @@ cups_request_ppd (GtkPrinter *printer)
           return G_SOURCE_CONTINUE;
         }
 
-      gtk_cups_connection_test_free (cups_printer->remote_cups_connection_test);
-      cups_printer->remote_cups_connection_test = NULL;
+      g_clear_pointer (&cups_printer->remote_cups_connection_test, gtk_cups_connection_test_free);
       cups_printer->get_remote_ppd_poll = 0;
       cups_printer->get_remote_ppd_attempts = 0;
 

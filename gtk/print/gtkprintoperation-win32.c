@@ -563,8 +563,7 @@ win32_end_run (GtkPrintOperation *op,
   GlobalFree (op_win32->devmode);
   GlobalFree (op_win32->devnames);
 
-  cairo_surface_destroy (op_win32->surface);
-  op_win32->surface = NULL;
+  g_clear_pointer (&op_win32->surface, cairo_surface_destroy);
 
   DeleteDC (op_win32->hdc);
   
@@ -1652,8 +1651,7 @@ gtk_print_operation_run_without_dialog (GtkPrintOperation *op,
 			   GTK_PRINT_ERROR_GENERAL,
 			   _("Error from StartDoc"));
       *do_print = FALSE;
-      cairo_surface_destroy (op_win32->surface);
-      op_win32->surface = NULL;
+      g_clear_pointer (&op_win32->surface, cairo_surface_destroy);
       goto out; 
     }
 
@@ -1898,8 +1896,7 @@ gtk_print_operation_run_with_dialog (GtkPrintOperation *op,
                                GTK_PRINT_ERROR_GENERAL,
                                _("Error from StartDoc"));
 	  *do_print = FALSE;
-	  cairo_surface_destroy (op_win32->surface);
-	  op_win32->surface = NULL;
+	  g_clear_pointer (&op_win32->surface, cairo_surface_destroy);
 	  goto out; 
 	} 
       

@@ -2923,8 +2923,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
       g_object_ref (op);
 
       g_main_loop_run (priv->rloop);
-      g_main_loop_unref (priv->rloop);
-      priv->rloop = NULL;
+      g_clear_pointer (&priv->rloop, g_main_loop_unref);
 
       g_object_unref (op);
     }
