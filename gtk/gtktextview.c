@@ -2835,11 +2835,7 @@ free_pending_scroll (GtkTextPendingScroll *scroll)
 static void
 cancel_pending_scroll (GtkTextView *text_view)
 {
-  if (text_view->priv->pending_scroll)
-    {
-      free_pending_scroll (text_view->priv->pending_scroll);
-      text_view->priv->pending_scroll = NULL;
-    }
+  g_clear_pointer (&text_view->priv->pending_scroll, free_pending_scroll);
 }
 
 static void
