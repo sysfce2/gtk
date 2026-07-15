@@ -1106,7 +1106,7 @@ static const struct wl_pointer_listener pointer_listener = {
 /* }}} */
 /* {{{ Key event utilities */
 
-static gboolean keyboard_repeat (gpointer data);
+static void     keyboard_repeat (gpointer data);
 
 static gboolean
 get_key_repeat (GdkWaylandSeat *seat,
@@ -1276,7 +1276,7 @@ deliver_key_event (GdkWaylandSeat *seat,
 
   timeout = (seat->repeat_deadline - now) / 1000L;
 
-  seat->repeat_timer = g_timeout_add (timeout, keyboard_repeat, seat);
+  seat->repeat_timer = g_timeout_add_once (timeout, keyboard_repeat, seat);
   gdk_source_set_static_name_by_id (seat->repeat_timer, "[gtk] keyboard_repeat");
 }
 
@@ -1295,7 +1295,7 @@ static const struct wl_callback_listener sync_after_repeat_callback_listener = {
   sync_after_repeat_callback
 };
 
-static gboolean
+static void
 keyboard_repeat (gpointer data)
 {
   GdkWaylandSeat *seat = data;
@@ -1314,7 +1314,6 @@ keyboard_repeat (gpointer data)
                             seat);
 
   seat->repeat_timer = 0;
-  return G_SOURCE_REMOVE;
 }
 
 /* }}} */
