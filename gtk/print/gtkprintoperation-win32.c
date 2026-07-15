@@ -516,7 +516,7 @@ win32_end_page (GtkPrintOperation *op,
   EndPage (op_win32->hdc);
 }
 
-static gboolean
+static void
 win32_poll_status_timeout (GtkPrintOperation *op)
 {
   GtkPrintOperationWin32 *op_win32 = op->priv->platform_data;
@@ -528,13 +528,10 @@ win32_poll_status_timeout (GtkPrintOperation *op)
   win32_poll_status (op);
 
   if (!gtk_print_operation_is_finished (op)) {
-    op_win32->timeout_id = g_timeout_add (STATUS_POLLING_TIME,
-					  (GSourceFunc)win32_poll_status_timeout,
-					  op);
+    op_win32->timeout_id = g_timeout_add_once (STATUS_POLLING_TIME, (GSourceOnceFunc) win32_poll_status_timeout, op);
     gdk_source_set_static_name_by_id (op_win32->timeout_id, "[gtk] win32_poll_status_timeout");
   }
   g_object_unref (op);
-  return G_SOURCE_REMOVE;
 }
 
 
@@ -571,9 +568,7 @@ win32_end_run (GtkPrintOperation *op,
     {
       op_win32->printerHandle = printerHandle;
       win32_poll_status (op);
-      op_win32->timeout_id = g_timeout_add (STATUS_POLLING_TIME,
-					    (GSourceFunc)win32_poll_status_timeout,
-					    op);
+      op_win32->timeout_id = g_timeout_add_once (STATUS_POLLING_TIME, (GSourceOnceFunc) win32_poll_status_timeout, op);
       gdk_source_set_static_name_by_id (op_win32->timeout_id, "[gtk] win32_poll_status_timeout");
     }
   else

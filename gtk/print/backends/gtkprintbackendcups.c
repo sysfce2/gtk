@@ -245,7 +245,7 @@ static void                 set_option_from_settings               (GtkPrinterOp
 static void                 cups_begin_polling_info                (GtkPrintBackendCups               *print_backend,
 								    GtkPrintJob                       *job,
 								    int                                job_id);
-static gboolean             cups_job_info_poll_timeout             (gpointer                           user_data);
+static void                 cups_job_info_poll_timeout             (gpointer                           user_data);
 static void                 gtk_print_backend_cups_print_stream    (GtkPrintBackend                   *backend,
 								    GtkPrintJob                       *job,
 								    GIOChannel                        *data_io,
@@ -1783,7 +1783,7 @@ cups_request_job_info_cb (GtkPrintBackendCups *print_backend,
       else
         timeout = 1000;
 
-      id = g_timeout_add (timeout, cups_job_info_poll_timeout, data);
+      id = g_timeout_add_once (timeout, cups_job_info_poll_timeout, data);
       g_source_set_name_by_id (id, "[gtk] cups_job_info_poll_timeout");
     }
   else
@@ -1816,7 +1816,7 @@ cups_request_job_info (CupsJobPollData *data)
                         NULL);
 }
 
-static gboolean
+static void
 cups_job_info_poll_timeout (gpointer user_data)
 {
   CupsJobPollData *data = user_data;
@@ -1825,8 +1825,6 @@ cups_job_info_poll_timeout (gpointer user_data)
     cups_job_poll_data_free (data);
   else
     cups_request_job_info (data);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -3481,7 +3479,7 @@ avahi_service_browser_signal_handler (GDBusConnection *connection,
     }
 }
 
-static gboolean
+static void
 unsubscribe_general_subscription_cb (gpointer user_data)
 {
   GtkPrintBackendCups *cups_backend = user_data;
@@ -3490,8 +3488,6 @@ unsubscribe_general_subscription_cb (gpointer user_data)
                                         cups_backend->avahi_service_browser_subscription_id);
   cups_backend->avahi_service_browser_subscription_id = 0;
   cups_backend->unsubscribe_general_subscription_id = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -3538,7 +3534,7 @@ avahi_service_browser_new_cb (GObject      *source_object,
           /* We need to unsubscribe in idle since signals in queue destined for emit
            * are emitted in idle and check whether the subscriber is still subscribed.
            */
-          cups_backend->unsubscribe_general_subscription_id = g_idle_add (unsubscribe_general_subscription_cb, cups_backend);
+          cups_backend->unsubscribe_general_subscription_id = g_idle_add_once (unsubscribe_general_subscription_cb, cups_backend);
         }
 
       g_variant_unref (output);
