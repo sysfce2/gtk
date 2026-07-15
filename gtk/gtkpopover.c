@@ -859,7 +859,7 @@ gtk_popover_has_mnemonic_modifier_pressed (GtkPopover *popover)
   return retval;
 }
 
-static gboolean
+static void
 schedule_mnemonics_visible_cb (gpointer data)
 {
   GtkPopover *popover = data;
@@ -868,8 +868,6 @@ schedule_mnemonics_visible_cb (gpointer data)
   priv->mnemonics_display_timeout_id = 0;
 
   gtk_popover_set_mnemonics_visible (popover, TRUE);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -881,7 +879,7 @@ gtk_popover_schedule_mnemonics_visible (GtkPopover *popover)
     return;
 
   priv->mnemonics_display_timeout_id =
-    g_timeout_add (MNEMONICS_DELAY, schedule_mnemonics_visible_cb, popover);
+    g_timeout_add_once (MNEMONICS_DELAY, schedule_mnemonics_visible_cb, popover);
   gdk_source_set_static_name_by_id (priv->mnemonics_display_timeout_id, "[gtk] popover_schedule_mnemonics_visible_cb");
 }
 

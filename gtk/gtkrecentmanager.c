@@ -1362,7 +1362,7 @@ gtk_recent_manager_purge_items (GtkRecentManager  *manager,
   return purged;
 }
 
-static gboolean
+static void
 emit_manager_changed (gpointer data)
 {
   GtkRecentManager *manager = data;
@@ -1371,8 +1371,6 @@ emit_manager_changed (gpointer data)
   manager->priv->changed_timeout = 0;
 
   g_signal_emit (manager, signal_changed, 0);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -1386,7 +1384,7 @@ gtk_recent_manager_changed (GtkRecentManager *manager)
    */
   if (manager->priv->changed_timeout == 0)
     {
-      manager->priv->changed_timeout = g_timeout_add (250, emit_manager_changed, manager);
+      manager->priv->changed_timeout = g_timeout_add_once (250, emit_manager_changed, manager);
       gdk_source_set_static_name_by_id (manager->priv->changed_timeout, "[gtk] emit_manager_changed");
     }
   else

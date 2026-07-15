@@ -3331,7 +3331,7 @@ gtk_notebook_drag_cancel_cb (GdkDrag             *drag,
     }
 }
 
-static gboolean
+static void
 gtk_notebook_switch_page_timeout (gpointer data)
 {
   GtkNotebook *notebook = GTK_NOTEBOOK (data);
@@ -3352,8 +3352,6 @@ gtk_notebook_switch_page_timeout (gpointer data)
                                      g_list_find (notebook->children,
                                                   switch_page));
     }
-
-  return G_SOURCE_REMOVE;
 }
 
 static gboolean
@@ -4024,7 +4022,7 @@ gtk_notebook_tab_drop_enter (GtkEventController *controller,
 
   notebook->switch_page = page;
 
-  notebook->switch_page_timer = g_timeout_add (TIMEOUT_EXPAND, gtk_notebook_switch_page_timeout, notebook);
+  notebook->switch_page_timer = g_timeout_add_once (TIMEOUT_EXPAND, gtk_notebook_switch_page_timeout, notebook);
   gdk_source_set_static_name_by_id (notebook->switch_page_timer, "[gtk] gtk_notebook_switch_page_timeout");
 }
 

@@ -9480,7 +9480,7 @@ append_bubble_item (GtkTextView *text_view,
   gtk_box_append (GTK_BOX (toolbar), item);
 }
 
-static gboolean
+static void
 gtk_text_view_selection_bubble_popup_show (gpointer user_data)
 {
   GtkTextView *text_view = user_data;
@@ -9535,8 +9535,6 @@ gtk_text_view_selection_bubble_popup_show (gpointer user_data)
 
   gtk_popover_set_pointing_to (GTK_POPOVER (priv->selection_bubble), &rect);
   gtk_widget_set_visible (priv->selection_bubble, TRUE);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -9562,7 +9560,7 @@ gtk_text_view_selection_bubble_popup_set (GtkTextView *text_view)
   if (priv->selection_bubble_timeout_id)
     g_source_remove (priv->selection_bubble_timeout_id);
 
-  priv->selection_bubble_timeout_id = g_timeout_add (50, gtk_text_view_selection_bubble_popup_show, text_view);
+  priv->selection_bubble_timeout_id = g_timeout_add_once (50, gtk_text_view_selection_bubble_popup_show, text_view);
   gdk_source_set_static_name_by_id (priv->selection_bubble_timeout_id, "[gtk] gtk_text_view_selection_bubble_popup_cb");
 }
 
