@@ -1075,7 +1075,7 @@ load_print_backends (GtkPrintUnixDialog *dialog)
       GtkPrintBackend *backend = node->data;
 
       g_signal_connect_object (backend, "printer-status-changed",
-                               G_CALLBACK (printer_status_cb), G_OBJECT (dialog), 0);
+                               G_CALLBACK (printer_status_cb), G_OBJECT (dialog), G_CONNECT_DEFAULT);
       g_list_store_append (lists, gtk_print_backend_get_printers (backend));
     }
 

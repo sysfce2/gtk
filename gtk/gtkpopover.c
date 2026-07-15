@@ -1063,7 +1063,7 @@ gtk_popover_init (GtkPopover *popover)
   gtk_css_node_set_state (priv->arrow_node,
                           gtk_css_node_get_state (gtk_widget_get_css_node (widget)));
   g_signal_connect_object (priv->arrow_node, "style-changed",
-                           G_CALLBACK (node_style_changed_cb), popover, 0);
+                           G_CALLBACK (node_style_changed_cb), popover, G_CONNECT_DEFAULT);
   g_object_unref (priv->arrow_node);
 
   priv->contents_widget = gtk_popover_content_new ();

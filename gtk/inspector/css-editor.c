@@ -433,11 +433,11 @@ add_provider (GtkInspectorCssEditor *ce,
   GtkSettings *settings = gtk_settings_get_for_display (display);
 
   g_signal_connect_object (settings, "notify::gtk-interface-color-scheme",
-                           G_CALLBACK (system_settings_changed), ce, 0);
+                           G_CALLBACK (system_settings_changed), ce, G_CONNECT_DEFAULT);
   g_signal_connect_object (settings, "notify::gtk-interface-contrast",
-                           G_CALLBACK (system_settings_changed), ce, 0);
+                           G_CALLBACK (system_settings_changed), ce, G_CONNECT_DEFAULT);
   g_signal_connect_object (settings, "notify::gtk-interface-reduced-motion",
-                           G_CALLBACK (system_settings_changed), ce, 0);
+                           G_CALLBACK (system_settings_changed), ce, G_CONNECT_DEFAULT);
 
   system_settings_changed (settings, NULL, ce);
 

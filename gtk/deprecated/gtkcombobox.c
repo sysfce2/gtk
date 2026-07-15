@@ -2499,7 +2499,7 @@ gtk_combo_box_start_editing (GtkCellEditable *cell_editable,
   controller = gtk_event_controller_key_new ();
   g_signal_connect_object (controller, "key-pressed",
                            G_CALLBACK (gtk_cell_editable_key_pressed),
-                           cell_editable, 0);
+                           cell_editable, G_CONNECT_DEFAULT);
 
   if (priv->cell_view)
     {

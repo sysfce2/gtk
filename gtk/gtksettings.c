@@ -1216,7 +1216,7 @@ gtk_settings_create_for_display (GdkDisplay *display)
 
   settings->display = display;
 
-  g_signal_connect_object (display, "setting-changed", G_CALLBACK (setting_changed), settings, 0);
+  g_signal_connect_object (display, "setting-changed", G_CALLBACK (setting_changed), settings, G_CONNECT_DEFAULT);
 
   g_ptr_array_add (display_settings, settings);
 

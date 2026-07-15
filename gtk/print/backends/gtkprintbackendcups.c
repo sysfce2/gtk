@@ -6068,7 +6068,7 @@ cups_printer_get_options (GtkPrinter           *printer,
                          G_CALLBACK (colord_printer_option_set_changed_cb),
                          helper,
                          (GClosureNotify) g_free,
-                         0);
+                         G_CONNECT_DEFAULT);
 
   /* initial coldplug */
   gtk_printer_cups_update_settings (GTK_PRINTER_CUPS (printer),

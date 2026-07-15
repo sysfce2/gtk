@@ -493,7 +493,7 @@ init_im_module (GtkInspectorGeneral *gen)
   g_signal_connect_object (settings,
                            "notify::gtk-im-module",
                            G_CALLBACK (im_module_changed),
-                           gen, 0);
+                           gen, G_CONNECT_DEFAULT);
 }
 
 static void
