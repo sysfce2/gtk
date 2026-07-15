@@ -3312,7 +3312,7 @@ coords_are_over_arrow (GtkTreeView   *tree_view,
 	  y < (arrow.y + arrow.height));
 }
 
-static gboolean
+static void
 auto_expand_timeout (gpointer data)
 {
   GtkTreeView *tree_view = GTK_TREE_VIEW (data);
@@ -3333,8 +3333,6 @@ auto_expand_timeout (gpointer data)
     }
 
   priv->auto_expand_timeout = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -3427,7 +3425,7 @@ do_prelight (GtkTreeView   *tree_view,
   if (priv->hover_expand)
     {
       priv->auto_expand_timeout =
-        g_timeout_add (AUTO_EXPAND_TIMEOUT, auto_expand_timeout, tree_view);
+        g_timeout_add_once (AUTO_EXPAND_TIMEOUT, auto_expand_timeout, tree_view);
       gdk_source_set_static_name_by_id (priv->auto_expand_timeout, "[gtk] auto_expand_timeout");
     }
 }
@@ -9941,15 +9939,13 @@ gtk_tree_view_real_select_cursor_parent (GtkTreeView *tree_view)
   return FALSE;
 }
 
-static gboolean
+static void
 gtk_tree_view_search_entry_flush_timeout (GtkTreeView *tree_view)
 {
   GtkTreeViewPrivate *priv = gtk_tree_view_get_instance_private (tree_view);
 
   gtk_tree_view_search_popover_hide (priv->search_popover, tree_view);
   priv->typeselect_flush_timeout = 0;
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -10075,9 +10071,7 @@ gtk_tree_view_real_start_interactive_search (GtkTreeView *tree_view,
     }
 
   priv->typeselect_flush_timeout =
-    g_timeout_add (GTK_TREE_VIEW_SEARCH_DIALOG_TIMEOUT,
-                   (GSourceFunc) gtk_tree_view_search_entry_flush_timeout,
-                   tree_view);
+    g_timeout_add_once (GTK_TREE_VIEW_SEARCH_DIALOG_TIMEOUT, (GSourceOnceFunc) gtk_tree_view_search_entry_flush_timeout, tree_view);
   gdk_source_set_static_name_by_id (priv->typeselect_flush_timeout, "[gtk] gtk_tree_view_search_entry_flush_timeout");
 
   /* search first matching iter */
@@ -13677,9 +13671,7 @@ gtk_tree_view_search_preedit_changed (GtkText      *text,
     {
       g_source_remove (priv->typeselect_flush_timeout);
       priv->typeselect_flush_timeout =
-	g_timeout_add (GTK_TREE_VIEW_SEARCH_DIALOG_TIMEOUT,
-                       (GSourceFunc) gtk_tree_view_search_entry_flush_timeout,
-		       tree_view);
+	g_timeout_add_once (GTK_TREE_VIEW_SEARCH_DIALOG_TIMEOUT, (GSourceOnceFunc) gtk_tree_view_search_entry_flush_timeout, tree_view);
       gdk_source_set_static_name_by_id (priv->typeselect_flush_timeout, "[gtk] gtk_tree_view_search_entry_flush_timeout");
     }
 
@@ -13751,9 +13743,7 @@ gtk_tree_view_search_scroll_event (GtkWidget   *widget,
     {
       g_source_remove (priv->typeselect_flush_timeout);
       priv->typeselect_flush_timeout =
-	g_timeout_add (GTK_TREE_VIEW_SEARCH_DIALOG_TIMEOUT,
-		       (GSourceFunc) gtk_tree_view_search_entry_flush_timeout,
-		       tree_view);
+	g_timeout_add_once (GTK_TREE_VIEW_SEARCH_DIALOG_TIMEOUT, (GSourceOnceFunc) gtk_tree_view_search_entry_flush_timeout, tree_view);
       gdk_source_set_static_name_by_id (priv->typeselect_flush_timeout, "[gtk] gtk_tree_view_search_entry_flush_timeout");
     }
 
@@ -13829,9 +13819,7 @@ gtk_tree_view_search_key_pressed (GtkEventControllerKey *key,
     {
       g_source_remove (priv->typeselect_flush_timeout);
       priv->typeselect_flush_timeout =
-	g_timeout_add (GTK_TREE_VIEW_SEARCH_DIALOG_TIMEOUT,
-		       (GSourceFunc) gtk_tree_view_search_entry_flush_timeout,
-		       tree_view);
+	g_timeout_add_once (GTK_TREE_VIEW_SEARCH_DIALOG_TIMEOUT, (GSourceOnceFunc) gtk_tree_view_search_entry_flush_timeout, tree_view);
       gdk_source_set_static_name_by_id (priv->typeselect_flush_timeout, "[gtk] gtk_tree_view_search_entry_flush_timeout");
     }
 
@@ -14087,9 +14075,7 @@ gtk_tree_view_search_init (GtkWidget   *entry,
     {
       g_source_remove (priv->typeselect_flush_timeout);
       priv->typeselect_flush_timeout =
-	g_timeout_add (GTK_TREE_VIEW_SEARCH_DIALOG_TIMEOUT,
-		       (GSourceFunc) gtk_tree_view_search_entry_flush_timeout,
-		       tree_view);
+	g_timeout_add_once (GTK_TREE_VIEW_SEARCH_DIALOG_TIMEOUT, (GSourceOnceFunc) gtk_tree_view_search_entry_flush_timeout, tree_view);
       gdk_source_set_static_name_by_id (priv->typeselect_flush_timeout, "[gtk] gtk_tree_view_search_entry_flush_timeout");
     }
 
