@@ -94,8 +94,7 @@ gdk_android_display_finalize (GObject *object)
   if (self->choreographer_source)
     {
       g_source_destroy (self->choreographer_source);
-      g_source_unref (self->choreographer_source);
-      self->choreographer_source = NULL;
+      g_clear_pointer (&self->choreographer_source, g_source_unref);
     }
 
   g_clear_list (&self->visible_surfaces, NULL);
