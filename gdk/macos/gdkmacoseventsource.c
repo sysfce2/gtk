@@ -980,8 +980,7 @@ run_loop_after_waiting (void)
   if (run_loop_timer)
     {
       CFRunLoopRemoveTimer (main_thread_run_loop, run_loop_timer, kCFRunLoopCommonModes);
-      CFRelease (run_loop_timer);
-      run_loop_timer = NULL;
+      g_clear_pointer (&run_loop_timer, CFRelease);
     }
 
   if (run_loop_polling_async)
