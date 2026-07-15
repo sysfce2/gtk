@@ -84,8 +84,7 @@ gtk_css_tokenizer_data_clear (gpointer data)
   GtkCssTokenizerData *td = data;
 
   gtk_css_tokenizer_unref (td->tokenizer);
-  if (td->var_name)
-    g_free (td->var_name);
+  g_free (td->var_name);
   if (td->variable)
     gtk_css_variable_value_unref (td->variable);
 }

@@ -3908,10 +3908,7 @@ gtk_window_finalize (GObject *object)
   g_free (priv->title);
   gtk_window_release_application (window);
 
-  if (priv->geometry_info)
-    {
-      g_free (priv->geometry_info);
-    }
+  g_free (priv->geometry_info);
 
   g_clear_handle_id (&priv->keys_changed_handler, g_source_remove);
 

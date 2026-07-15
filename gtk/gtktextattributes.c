@@ -142,8 +142,7 @@ gtk_text_attributes_copy_values (GtkTextAttributes *src,
   if (dest->appearance.strikethrough_rgba)
     gdk_rgba_free (dest->appearance.strikethrough_rgba);
 
-  if (dest->font_features)
-    g_free (dest->font_features);
+  g_free (dest->font_features);
 
   /* Copy */
   orig_refcount = dest->refcount;
@@ -241,8 +240,7 @@ gtk_text_attributes_unref (GtkTextAttributes *values)
       if (values->appearance.strikethrough_rgba)
 	gdk_rgba_free (values->appearance.strikethrough_rgba);
 
-      if (values->font_features)
-        g_free (values->font_features);
+      g_free (values->font_features);
 
       g_free (values);
     }

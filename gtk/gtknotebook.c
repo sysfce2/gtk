@@ -4236,8 +4236,7 @@ gtk_notebook_remove_tab_label (GtkNotebook     *notebook,
 {
   if (page->tab_label)
     {
-      if (page->mnemonic_activate_signal)
-        g_clear_signal_handler (&page->mnemonic_activate_signal, page->tab_label);
+      g_clear_signal_handler (&page->mnemonic_activate_signal, page->tab_label);
       page->mnemonic_activate_signal = 0;
 
       if (gtk_widget_get_native (page->tab_label) != gtk_widget_get_native (GTK_WIDGET (notebook)) ||
@@ -4333,10 +4332,7 @@ gtk_notebook_real_remove (GtkNotebook *notebook,
 
   g_list_free (list);
 
-  if (page->last_focus_child)
-    {
-      g_clear_weak_pointer (&page->last_focus_child);
-    }
+  g_clear_weak_pointer (&page->last_focus_child);
 
   gtk_widget_unparent (page->tab_widget);
 

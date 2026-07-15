@@ -2405,8 +2405,7 @@ show_rename_popover (GtkSidebarRow *row)
 
   create_rename_popover (sidebar);
 
-  if (sidebar->rename_uri)
-    g_free (sidebar->rename_uri);
+  g_free (sidebar->rename_uri);
   sidebar->rename_uri = g_strdup (uri);
 
   gtk_editable_set_text (GTK_EDITABLE (sidebar->rename_entry), name);
@@ -4000,10 +3999,7 @@ gtk_places_sidebar_dispose (GObject *object)
       g_clear_object (&sidebar->trash_monitor);
     }
 
-  if (sidebar->trash_row)
-    {
-      g_clear_weak_pointer (&sidebar->trash_row);
-    }
+  g_clear_weak_pointer (&sidebar->trash_row);
 
   if (sidebar->volume_monitor != NULL)
     {
