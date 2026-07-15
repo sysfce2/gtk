@@ -1993,9 +1993,8 @@ gtk_tree_view_free_rbtree (GtkTreeView *tree_view)
 {
   GtkTreeViewPrivate *priv = gtk_tree_view_get_instance_private (tree_view);
 
-  gtk_tree_rbtree_free (priv->tree);
+  g_clear_pointer (&priv->tree, gtk_tree_rbtree_free);
 
-  priv->tree = NULL;
   priv->button_pressed_node = NULL;
   priv->button_pressed_tree = NULL;
   priv->prelight_tree = NULL;
@@ -2007,9 +2006,8 @@ gtk_tree_view_destroy_search_popover (GtkTreeView *tree_view)
 {
   GtkTreeViewPrivate *priv = gtk_tree_view_get_instance_private (tree_view);
 
-  gtk_widget_unparent (priv->search_popover);
+  g_clear_pointer (&priv->search_popover, gtk_widget_unparent);
 
-  priv->search_popover = NULL;
   priv->search_entry = NULL;
   priv->search_entry_changed_id = 0;
 }
@@ -2057,12 +2055,10 @@ gtk_tree_view_dispose (GObject *object)
   if (priv->column_drop_func_data &&
       priv->column_drop_func_data_destroy)
     {
-      priv->column_drop_func_data_destroy (priv->column_drop_func_data);
-      priv->column_drop_func_data = NULL;
+      g_clear_pointer (&priv->column_drop_func_data, priv->column_drop_func_data_destroy);
     }
 
-  gtk_tree_row_reference_free (priv->anchor);
-  priv->anchor = NULL;
+  g_clear_pointer (&priv->anchor, gtk_tree_row_reference_free);
 
   /* destroy interactive search dialog */
   if (priv->search_popover)
@@ -2094,20 +2090,17 @@ gtk_tree_view_dispose (GObject *object)
 
   if (priv->search_destroy && priv->search_user_data)
     {
-      priv->search_destroy (priv->search_user_data);
-      priv->search_user_data = NULL;
+      g_clear_pointer (&priv->search_user_data, priv->search_destroy);
     }
 
   if (priv->search_position_destroy && priv->search_position_user_data)
     {
-      priv->search_position_destroy (priv->search_position_user_data);
-      priv->search_position_user_data = NULL;
+      g_clear_pointer (&priv->search_position_user_data, priv->search_position_destroy);
     }
 
   if (priv->row_separator_destroy && priv->row_separator_data)
     {
-      priv->row_separator_destroy (priv->row_separator_data);
-      priv->row_separator_data = NULL;
+      g_clear_pointer (&priv->row_separator_data, priv->row_separator_destroy);
     }
 
   gtk_tree_view_set_model (tree_view, NULL);
@@ -5778,8 +5771,7 @@ validate_visible_area (GtkTreeView *tree_view)
 	{
 	  if (priv->scroll_to_path && !path)
 	    {
-	      gtk_tree_row_reference_free (priv->scroll_to_path);
-	      priv->scroll_to_path = NULL;
+	      g_clear_pointer (&priv->scroll_to_path, gtk_tree_row_reference_free);
 	    }
 	  if (path)
 	    gtk_tree_path_free (path);
@@ -6012,11 +6004,7 @@ validate_visible_area (GtkTreeView *tree_view)
       gtk_widget_queue_resize (GTK_WIDGET (tree_view));
     }
 
-  if (priv->scroll_to_path)
-    {
-      gtk_tree_row_reference_free (priv->scroll_to_path);
-      priv->scroll_to_path = NULL;
-    }
+  g_clear_pointer (&priv->scroll_to_path, gtk_tree_row_reference_free);
 
   if (above_path)
     gtk_tree_path_free (above_path);
@@ -6500,8 +6488,7 @@ gtk_tree_view_top_row_to_dy (GtkTreeView *tree_view)
   if (tree == NULL)
     {
       /* keep dy and set new toprow */
-      gtk_tree_row_reference_free (priv->top_row);
-      priv->top_row = NULL;
+      g_clear_pointer (&priv->top_row, gtk_tree_row_reference_free);
       priv->top_row_dy = 0;
       /* DO NOT install the idle handler */
       gtk_tree_view_dy_to_top_row (tree_view);
@@ -8365,8 +8352,7 @@ gtk_tree_view_row_deleted (GtkTreeModel *model,
 
   if (! gtk_tree_row_reference_valid (priv->top_row))
     {
-      gtk_tree_row_reference_free (priv->top_row);
-      priv->top_row = NULL;
+      g_clear_pointer (&priv->top_row, gtk_tree_row_reference_free);
     }
 
   install_scroll_sync_handler (tree_view);
@@ -9116,11 +9102,7 @@ _gtk_tree_view_set_anchor_path (GtkTreeView *tree_view,
 {
   GtkTreeViewPrivate *priv = gtk_tree_view_get_instance_private (tree_view);
 
-  if (priv->anchor)
-    {
-      gtk_tree_row_reference_free (priv->anchor);
-      priv->anchor = NULL;
-    }
+  g_clear_pointer (&priv->anchor, gtk_tree_row_reference_free);
 
   if (anchor_path && priv->model)
     priv->anchor =
@@ -10226,11 +10208,7 @@ gtk_tree_view_set_model (GtkTreeView  *tree_view,
   if (model == priv->model)
     return;
 
-  if (priv->scroll_to_path)
-    {
-      gtk_tree_row_reference_free (priv->scroll_to_path);
-      priv->scroll_to_path = NULL;
-    }
+  g_clear_pointer (&priv->scroll_to_path, gtk_tree_row_reference_free);
 
   if (priv->rubber_band_status)
     gtk_tree_view_stop_rubber_band (tree_view);
@@ -10265,14 +10243,10 @@ gtk_tree_view_set_model (GtkTreeView  *tree_view,
       if (priv->tree)
 	gtk_tree_view_free_rbtree (tree_view);
 
-      gtk_tree_row_reference_free (priv->drag_dest_row);
-      priv->drag_dest_row = NULL;
-      gtk_tree_row_reference_free (priv->anchor);
-      priv->anchor = NULL;
-      gtk_tree_row_reference_free (priv->top_row);
-      priv->top_row = NULL;
-      gtk_tree_row_reference_free (priv->scroll_to_path);
-      priv->scroll_to_path = NULL;
+      g_clear_pointer (&priv->drag_dest_row, gtk_tree_row_reference_free);
+      g_clear_pointer (&priv->anchor, gtk_tree_row_reference_free);
+      g_clear_pointer (&priv->top_row, gtk_tree_row_reference_free);
+      g_clear_pointer (&priv->scroll_to_path, gtk_tree_row_reference_free);
 
       priv->scroll_to_column = NULL;
 
@@ -11661,8 +11635,7 @@ gtk_tree_view_real_collapse_row (GtkTreeView   *tree_view,
       GtkTreePath *anchor_path = gtk_tree_row_reference_get_path (priv->anchor);
       if (gtk_tree_path_is_ancestor (path, anchor_path))
 	{
-	  gtk_tree_row_reference_free (priv->anchor);
-	  priv->anchor = NULL;
+	  g_clear_pointer (&priv->anchor, gtk_tree_row_reference_free);
 	}
       gtk_tree_path_free (anchor_path);
     }
