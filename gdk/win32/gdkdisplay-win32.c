@@ -379,11 +379,7 @@ gdk_win32_display_set_cursor_theme (GdkDisplay  *display,
       return;
     }
 
-  if (win32_display->cursor_theme)
-    {
-      win32_cursor_theme_destroy (win32_display->cursor_theme);
-      win32_display->cursor_theme = NULL;
-    }
+  g_clear_pointer (&win32_display->cursor_theme, win32_cursor_theme_destroy);
 
   win32_display->cursor_theme = theme;
   g_free (win32_display->cursor_theme_name);
@@ -902,11 +898,7 @@ gdk_win32_display_dispose (GObject *object)
 {
   GdkWin32Display *self = GDK_WIN32_DISPLAY (object);
 
-  if (self->hwnd != NULL)
-    {
-      DestroyWindow (self->hwnd);
-      self->hwnd = NULL;
-    }
+  g_clear_pointer (&self->hwnd, DestroyWindow);
 
   gdk_win32_com_clear (&self->d3d12_device);
   gdk_win32_com_clear (&self->dxgi_factory);
