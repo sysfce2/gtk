@@ -1407,7 +1407,7 @@ pageDlgProc (HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
       SetWindowLongPtrW (wnd, GWLP_USERDATA, (LONG_PTR)op);
 
       gtk_window_set_modal (GTK_WINDOW (plug), TRUE);
-      op_win32->embed_widget = plug;
+      op_win32->embed_widget = g_object_ref_sink (plug);
       gtk_box_append (GTK_BOX (plug), op->priv->custom_widget);
       gtk_widget_set_visible (op->priv->custom_widget, TRUE);
       gtk_widget_set_visible (plug, TRUE);
@@ -1422,8 +1422,7 @@ pageDlgProc (HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
       op_win32 = op->priv->platform_data;
       
       g_signal_emit_by_name (op, "custom-widget-apply", op->priv->custom_widget);
-      g_object_unref (g_object_ref_sink (op_win32->embed_widget));
-      op_win32->embed_widget = NULL;
+      g_clear_object (&op_win32->embed_widget);
       op->priv->custom_widget = NULL;
     }
   else 
