@@ -6194,8 +6194,7 @@ gtk_notebook_set_show_tabs (GtkNotebook *notebook,
           children = children->next;
           if (page->default_tab)
             {
-              gtk_widget_unparent (page->tab_label);
-              page->tab_label = NULL;
+              g_clear_pointer (&page->tab_label, gtk_widget_unparent);
             }
           else
             gtk_widget_set_visible (page->tab_label, FALSE);

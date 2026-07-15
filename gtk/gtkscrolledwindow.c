@@ -2727,8 +2727,7 @@ gtk_scrolled_window_dispose (GObject *object)
       g_signal_handlers_disconnect_by_data (hadjustment, self);
       g_signal_handlers_disconnect_by_data (hadjustment, &priv->hindicator);
 
-      gtk_widget_unparent (priv->hscrollbar);
-      priv->hscrollbar = NULL;
+      g_clear_pointer (&priv->hscrollbar, gtk_widget_unparent);
     }
 
   if (priv->vscrollbar)
@@ -2738,8 +2737,7 @@ gtk_scrolled_window_dispose (GObject *object)
       g_signal_handlers_disconnect_by_data (vadjustment, self);
       g_signal_handlers_disconnect_by_data (vadjustment, &priv->vindicator);
 
-      gtk_widget_unparent (priv->vscrollbar);
-      priv->vscrollbar = NULL;
+      g_clear_pointer (&priv->vscrollbar, gtk_widget_unparent);
     }
 
   if (priv->deceleration_id)

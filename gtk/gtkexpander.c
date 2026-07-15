@@ -564,8 +564,7 @@ gtk_expander_dispose (GObject *object)
 
   if (expander->box)
     {
-      gtk_widget_unparent (expander->box);
-      expander->box = NULL;
+      g_clear_pointer (&expander->box, gtk_widget_unparent);
       expander->child = NULL;
       expander->label_widget = NULL;
       expander->arrow_widget = NULL;

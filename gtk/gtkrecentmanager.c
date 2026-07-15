@@ -683,8 +683,7 @@ build_recent_items_list (GtkRecentManager *manager)
               g_free (utf8);
             }
 
-          g_bookmark_file_free (priv->recent_items);
-          priv->recent_items = NULL;
+          g_clear_pointer (&priv->recent_items, g_bookmark_file_free);
 
           g_error_free (read_error);
         }

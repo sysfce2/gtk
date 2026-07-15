@@ -3094,8 +3094,7 @@ unset_titlebar (GtkWindow *window)
 
   if (priv->title_box != NULL)
     {
-      gtk_widget_unparent (priv->title_box);
-      priv->title_box = NULL;
+      g_clear_pointer (&priv->title_box, gtk_widget_unparent);
       priv->titlebar = NULL;
     }
 }
