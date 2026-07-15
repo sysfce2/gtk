@@ -1439,7 +1439,7 @@ pageDlgProc (HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
       if (message == WM_SIZE)
         {
           gtk_widget_queue_resize (op_win32->embed_widget);
-    }
+        }
 
       return FALSE;
     }
