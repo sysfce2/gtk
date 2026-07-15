@@ -1056,8 +1056,6 @@ _gdk_surface_destroy_hierarchy (GdkSurface *surface,
   if (surface->frame_clock)
     gdk_surface_set_frame_clock (surface, NULL);
 
-  _gdk_surface_clear_update_area (surface);
-
   g_object_unref (surface);
 }
 
