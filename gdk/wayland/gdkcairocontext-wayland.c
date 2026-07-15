@@ -199,8 +199,7 @@ gdk_wayland_cairo_context_end_frame (GdkDrawContext *draw_context,
   gdk_wayland_surface_commit (surface);
   gdk_wayland_surface_notify_committed (surface);
 
-  gdk_wayland_cairo_context_surface_clear_region (self->paint_surface);
-  self->paint_surface = NULL;
+  g_clear_pointer (&self->paint_surface, gdk_wayland_cairo_context_surface_clear_region);
 }
 
 static void

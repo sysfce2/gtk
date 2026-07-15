@@ -2913,8 +2913,7 @@ gdk_wayland_toplevel_remove_from_session (GdkToplevel *toplevel)
   if (display_wayland->session && wayland_toplevel->toplevel_session)
     {
       xdg_session_v1_remove_toplevel (display_wayland->session, wayland_toplevel->session_id);
-      xdg_toplevel_session_v1_destroy (wayland_toplevel->toplevel_session);
-      wayland_toplevel->toplevel_session = NULL;
+      g_clear_pointer (&wayland_toplevel->toplevel_session, xdg_toplevel_session_v1_destroy);
     }
 }
 
