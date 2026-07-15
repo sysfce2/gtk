@@ -107,8 +107,7 @@ gdk_broadway_cairo_context_end_frame (GdkDrawContext *draw_context,
   g_array_unref (nodes);
   g_ptr_array_unref (node_textures);
 
-  cairo_surface_destroy (self->paint_surface);
-  self->paint_surface = NULL;
+  g_clear_pointer (&self->paint_surface, cairo_surface_destroy);
 }
 
 static void

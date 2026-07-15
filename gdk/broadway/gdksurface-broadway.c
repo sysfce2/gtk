@@ -992,8 +992,7 @@ update_pos (MoveResizeData *mv_resize,
 static void
 finish_drag (MoveResizeData *mv_resize)
 {
-  gdk_surface_destroy (mv_resize->moveresize_emulation_surface);
-  mv_resize->moveresize_emulation_surface = NULL;
+  g_clear_pointer (&mv_resize->moveresize_emulation_surface, gdk_surface_destroy);
   g_clear_object (&mv_resize->moveresize_surface);
   g_clear_pointer (&mv_resize->moveresize_pending_event, g_free);
 }

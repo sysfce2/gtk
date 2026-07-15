@@ -265,8 +265,7 @@ gdk_broadway_display_dispose (GObject *object)
   if (self->event_source)
     {
       g_source_destroy (self->event_source);
-      g_source_unref (self->event_source);
-      self->event_source = NULL;
+      g_clear_pointer (&self->event_source, g_source_unref);
     }
   if (self->monitors)
     {
