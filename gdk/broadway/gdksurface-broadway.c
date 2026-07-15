@@ -423,8 +423,6 @@ gdk_broadway_surface_hide (GdkSurface *surface)
 
   if (_gdk_broadway_server_surface_hide (broadway_display->server, impl->id))
     queue_flush (surface);
-
-  _gdk_surface_clear_update_area (surface);
 }
 
 static double

@@ -1486,25 +1486,6 @@ gdk_surface_invalidate_region (GdkSurface          *surface,
 }
 
 /*
- * _gdk_surface_clear_update_area:
- * @surface: a `GdkSurface`
- *
- * Internal function to clear the update area for a surface.
- * This is called when the surface is hidden or destroyed.
- */
-void
-_gdk_surface_clear_update_area (GdkSurface *surface)
-{
-  g_return_if_fail (GDK_IS_SURFACE (surface));
-
-  if (surface->update_area)
-    {
-      cairo_region_destroy (surface->update_area);
-      surface->update_area = NULL;
-    }
-}
-
-/*
  * gdk_surface_freeze_updates:
  * @surface: a `GdkSurface`
  *
@@ -1702,6 +1683,8 @@ gdk_surface_hide (GdkSurface *surface)
   gdk_surface_queue_set_is_mapped (surface, FALSE);
 
   GDK_SURFACE_GET_CLASS (surface)->hide (surface);
+
+  g_clear_pointer (&surface->update_area, cairo_region_destroy);
 
   surface->popup.rect_anchor = 0;
   surface->popup.surface_anchor = 0;

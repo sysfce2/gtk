@@ -262,7 +262,6 @@ void       gdk_surface_invalidate_rect    (GdkSurface            *surface,
                                            const GdkRectangle    *rect);
 void       gdk_surface_invalidate_region  (GdkSurface            *surface,
                                            const cairo_region_t  *region);
-void       _gdk_surface_clear_update_area (GdkSurface            *surface);
 void       _gdk_surface_update_size       (GdkSurface            *surface);
 void       gdk_surface_set_opaque_rect    (GdkSurface            *self,
                                            const graphene_rect_t *rect);
