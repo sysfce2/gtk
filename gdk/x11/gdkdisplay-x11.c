@@ -1903,8 +1903,7 @@ gdk_x11_display_dispose (GObject *object)
   if (display_x11->event_source)
     {
       g_source_destroy (display_x11->event_source);
-      g_source_unref (display_x11->event_source);
-      display_x11->event_source = NULL;
+      g_clear_pointer (&display_x11->event_source, g_source_unref);
     }
 
   G_OBJECT_CLASS (gdk_x11_display_parent_class)->dispose (object);

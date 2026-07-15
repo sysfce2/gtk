@@ -347,11 +347,7 @@ gdk_surface_cache_shape_filter (const XEvent *xevent,
         {
           GdkCacheChild *child = node->data;
           child->shape_valid = FALSE;
-          if (child->shape)
-            {
-              cairo_region_destroy (child->shape);
-              child->shape = NULL;
-            }
+          g_clear_pointer (&child->shape, cairo_region_destroy);
         }
 
       return GDK_FILTER_REMOVE;
