@@ -101,6 +101,23 @@ add_rect_test (int                    pos,
   gsk_path_unref (path);
 }
 
+static void
+add_circle_test (int                    pos,
+                 graphene_rect_t       *rect,
+                 SvgPathClassification  c)
+{
+  GskPathBuilder *builder;
+  GskPath *path;
+  graphene_point_t center;
+
+  builder = gsk_path_builder_new ();
+  graphene_rect_get_center (rect, &center);
+  gsk_path_builder_add_circle (builder, &center, rect->size.width / 2);
+  path = gsk_path_builder_free_to_path (builder);
+  add_path_test (pos, path, c);
+  gsk_path_unref (path);
+}
+
 #define RR(x,y,w,h,r) \
   (GskRoundedRect) { \
   .bounds = { \
@@ -247,7 +264,7 @@ main (int   argc,
       char *argv[])
 {
   GskRoundedRect r;
-  unsigned int i;
+  unsigned int i = 1;
 
   gtk_test_init (&argc, &argv, NULL);
 
@@ -257,6 +274,7 @@ main (int   argc,
   i++;
 
   add_rect_test (i++, &GRAPHENE_RECT_INIT (0, 0, 10, 10), PATH_RECT);
+  add_circle_test (i++, &GRAPHENE_RECT_INIT (0, 0, 10, 10), PATH_CIRCLE);
   add_rounded_rect_test (i++, &RR (0, 0, 10, 10, 1), PATH_ROUNDED_RECT);
   add_rounded_rect_test (i++, &RR (0, 0, 10, 10, 0), PATH_GENERAL);
 
