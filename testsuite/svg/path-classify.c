@@ -8,7 +8,7 @@
 typedef struct
 {
   const char *path_str;
-  SvgPathClassification expected;
+  GskPathClassification expected;
 } TestData;
 
 static void
@@ -24,7 +24,7 @@ test_path (gconstpointer data)
 {
   const TestData *d = data;
   GskPath *path;
-  SvgPathClassification result;
+  GskPathClassification result;
   GskRoundedRect rect;
   const char *kind[] = {
     "empty", "rect", "rounded", "circle", "general"
@@ -35,7 +35,7 @@ test_path (gconstpointer data)
 
   path = gsk_path_parse (d->path_str);
 
-  result = svg_path_classify (path, &rect);
+  result = gsk_path_classify (path, &rect);
   if (result != d->expected)
     g_test_fail_printf ("Expected '%s', got '%s'", kind[d->expected], kind[result]);
 
@@ -43,9 +43,9 @@ test_path (gconstpointer data)
 }
 
 static void
-add_test (int                 pos,
-          const char         *path_str,
-          SvgPathClassification  c)
+add_test (int                    pos,
+          const char            *path_str,
+          GskPathClassification  c)
 {
   TestData *data;
   char *test_name;
@@ -60,9 +60,9 @@ add_test (int                 pos,
 }
 
 static void
-add_path_test (int                 pos,
-               GskPath            *path,
-               SvgPathClassification  c)
+add_path_test (int                    pos,
+               GskPath               *path,
+               GskPathClassification  c)
 {
   char *path_str;
 
@@ -74,7 +74,7 @@ add_path_test (int                 pos,
 static void
 add_rounded_rect_test (int                    pos,
                        GskRoundedRect        *rr,
-                       SvgPathClassification  c)
+                       GskPathClassification  c)
 {
   GskPathBuilder *builder;
   GskPath *path;
@@ -89,7 +89,7 @@ add_rounded_rect_test (int                    pos,
 static void
 add_rect_test (int                    pos,
                graphene_rect_t       *rect,
-               SvgPathClassification  c)
+               GskPathClassification  c)
 {
   GskPathBuilder *builder;
   GskPath *path;
@@ -104,7 +104,7 @@ add_rect_test (int                    pos,
 static void
 add_circle_test (int                    pos,
                  graphene_rect_t       *rect,
-                 SvgPathClassification  c)
+                 GskPathClassification  c)
 {
   GskPathBuilder *builder;
   GskPath *path;
@@ -131,13 +131,13 @@ add_circle_test (int                    pos,
 }
 
 static TestData tests[] = {
-  { "", PATH_EMPTY },
-  { "M10,10h20M20,20", PATH_GENERAL },
+  { "", GSK_PATH_EMPTY },
+  { "M10,10h20M20,20", GSK_PATH_GENERAL },
   /* the following are from org.gnome.Loupe.svg */
-  { "m 2 2 h 124 v 124 h -124 z m 0 0", PATH_RECT },
-  { "M 106 20 L 22 20 C 20.8945312 20, 20 20.8945312, 20 22 L 20 86 C 20 87.1054688, 20.8945312 88, 22 88 L 106 88 C 107.105469 88, 108 87.1054688, 108 86 L 108 22 C 108 20.8945312, 107.105469 20, 106 20 Z M 106 20", PATH_ROUNDED_RECT },
-  { "M 0 66 L 98 66 L 98 152 L 0 152 Z M 0 66", PATH_RECT },
-  { "M 0 0 h 192 v 152 h -192 z", PATH_RECT },
+  { "m 2 2 h 124 v 124 h -124 z m 0 0", GSK_PATH_RECT },
+  { "M 106 20 L 22 20 C 20.8945312 20, 20 20.8945312, 20 22 L 20 86 C 20 87.1054688, 20.8945312 88, 22 88 L 106 88 C 107.105469 88, 108 87.1054688, 108 86 L 108 22 C 108 20.8945312, 107.105469 20, 106 20 Z M 106 20", GSK_PATH_APPROXIMATE_ROUNDED_RECT },
+  { "M 0 66 L 98 66 L 98 152 L 0 152 Z M 0 66", GSK_PATH_RECT },
+  { "M 0 0 h 192 v 152 h -192 z", GSK_PATH_RECT },
   { "M 93 67"
     "C 87.4765625 67"
     "  83 62.5234375"
@@ -152,8 +152,8 @@ static TestData tests[] = {
     "  98.5234375 67"
     "  93 67"
     "Z"
-    "M 94 67", PATH_CIRCLE },
-  { "M 52 44.125 C 35.4648438 44.125, 22.0625 57.5273438, 22.0625 74.0625 C 22.0625 90.5976562, 35.4648438 104, 52 104 C 68.5351562 104, 81.9375 90.5976562, 81.9375 74.0625 C 81.9375 57.5273438, 68.5351562 44.125, 52 44.125 Z M 52 44.125", PATH_CIRCLE },
+    "M 94 67", GSK_PATH_APPROXIMATE_CIRCLE },
+  { "M 52 44.125 C 35.4648438 44.125, 22.0625 57.5273438, 22.0625 74.0625 C 22.0625 90.5976562, 35.4648438 104, 52 104 C 68.5351562 104, 81.9375 90.5976562, 81.9375 74.0625 C 81.9375 57.5273438, 68.5351562 44.125, 52 44.125 Z M 52 44.125", GSK_PATH_APPROXIMATE_CIRCLE },
   /* from Adwaitas x-package-repository.svg */
   { "M 64.9921875 74"
     "L 67 74"
@@ -171,20 +171,20 @@ static TestData tests[] = {
     "  64.4414062 74"
     "  64.9921875 74"
     "Z"
-    "M 64.9921875 74", PATH_ROUNDED_RECT },
-  { "M 58.9453125 44 L 69.0546875 44 C 70.6875 44, 72 45.3125, 72 46.9453125 L 72 59.0546875 C 72 60.6875, 70.6875 62, 69.0546875 62 L 58.9453125 62 C 57.3125 62, 56 60.6875, 56 59.0546875 L 56 46.9453125 C 56 45.3125, 57.3125 44, 58.9453125 44 Z M 58.9453125 44", PATH_ROUNDED_RECT },
+    "M 64.9921875 74", GSK_PATH_APPROXIMATE_ROUNDED_RECT },
+  { "M 58.9453125 44 L 69.0546875 44 C 70.6875 44, 72 45.3125, 72 46.9453125 L 72 59.0546875 C 72 60.6875, 70.6875 62, 69.0546875 62 L 58.9453125 62 C 57.3125 62, 56 60.6875, 56 59.0546875 L 56 46.9453125 C 56 45.3125, 57.3125 44, 58.9453125 44 Z M 58.9453125 44", GSK_PATH_APPROXIMATE_ROUNDED_RECT },
   /* from panel-right-symbolic.svg */
-  { "m 104 502 c 0 0.550781 -0.449219 1 -1 1 s -1 -0.449219 -1 -1 s 0.449219 -1 1 -1 s 1 0.449219 1 1 z m 0 0", PATH_CIRCLE },
+  { "m 104 502 c 0 0.550781 -0.449219 1 -1 1 s -1 -0.449219 -1 -1 s 0.449219 -1 1 -1 s 1 0.449219 1 1 z m 0 0", GSK_PATH_APPROXIMATE_CIRCLE },
 
   /* from network-wireless-signal-weak-symbolic.svg
    * This is approximating a circle with 5 cubics - too weird to bother with
    */
-  { "M 8 10 C 7.48828077 10, 6.97656202 10.1953115, 6.58593798 10.5859385 C 5.80468798 11.3671885, 5.80468798 12.6328115, 6.58593798 13.4140615 C 7.36718798 14.1953115, 8.63281155 14.1953115, 9.41406155 13.4140615 C 10.1953115 12.6328115, 10.1953115 11.3671885, 9.41406155 10.5859385 C 9.02343845 10.1953115, 8.51171875 10, 8 10 Z  M 8 10", PATH_GENERAL },
+  { "M 8 10 C 7.48828077 10, 6.97656202 10.1953115, 6.58593798 10.5859385 C 5.80468798 11.3671885, 5.80468798 12.6328115, 6.58593798 13.4140615 C 7.36718798 14.1953115, 8.63281155 14.1953115, 9.41406155 13.4140615 C 10.1953115 12.6328115, 10.1953115 11.3671885, 9.41406155 10.5859385 C 9.02343845 10.1953115, 8.51171875 10, 8 10 Z  M 8 10", GSK_PATH_GENERAL },
  /* from org.gnome.SystemMonitor.Devel.svg */
- { "M 113 62 C 113 61.4500008, 113.449997 61, 114 61 C 114.550003 61, 115 61.4500008, 115 62 C 115 62.5499992, 114.550003 63, 114 63 C 113.449997 63, 113 62.5499992, 113 62 Z M 113 62", PATH_CIRCLE },
+ { "M 113 62 C 113 61.4500008, 113.449997 61, 114 61 C 114.550003 61, 115 61.4500008, 115 62 C 115 62.5499992, 114.550003 63, 114 63 C 113.449997 63, 113 62.5499992, 113 62 Z M 113 62", GSK_PATH_APPROXIMATE_CIRCLE },
   /* not from anywhere */
-  { "M 69.0546875 44 C 70.6875 44, 72 45.3125, 72 46.9453125 L 72 59.0546875 C 72 60.6875, 70.6875 62, 69.0546875 62 L 58.9453125 62 C 57.3125 62, 56 60.6875, 56 59.0546875 L 56 46.9453125 C 56 45.3125, 57.3125 44, 58.9453125 44 L 58.9453125 44 Z M 58.9453125 44", PATH_ROUNDED_RECT },
-  { "M 23.078125 17 L 61.3671875 17 C 62.8007812 17, 63.9609375 18.1601562, 63.9609375 19.5898438 L 63.9609375 56.4101562 C 63.9609375 57.8398438, 62.8007812 59, 61.3671875 59 L 23.078125 59 C 21.6445312 59, 20.484375 57.8398438, 20.484375 56.4101562 L 20.484375 19.5898438 C 20.484375 18.1601562, 21.6445312 17, 23.078125 17 Z M 23.078125 17", PATH_ROUNDED_RECT },
+  { "M 69.0546875 44 C 70.6875 44, 72 45.3125, 72 46.9453125 L 72 59.0546875 C 72 60.6875, 70.6875 62, 69.0546875 62 L 58.9453125 62 C 57.3125 62, 56 60.6875, 56 59.0546875 L 56 46.9453125 C 56 45.3125, 57.3125 44, 58.9453125 44 L 58.9453125 44 Z M 58.9453125 44", GSK_PATH_APPROXIMATE_ROUNDED_RECT },
+  { "M 23.078125 17 L 61.3671875 17 C 62.8007812 17, 63.9609375 18.1601562, 63.9609375 19.5898438 L 63.9609375 56.4101562 C 63.9609375 57.8398438, 62.8007812 59, 61.3671875 59 L 23.078125 59 C 21.6445312 59, 20.484375 57.8398438, 20.484375 56.4101562 L 20.484375 19.5898438 C 20.484375 18.1601562, 21.6445312 17, 23.078125 17 Z M 23.078125 17", GSK_PATH_APPROXIMATE_ROUNDED_RECT },
   { "M 66.8554688 42.4921875"
     "L 109.113281 42.4921875"
     "C 113.972656 42.4921875"
@@ -203,7 +203,7 @@ static TestData tests[] = {
     "  61.9921875 42.4921875"
     "  66.8554688 42.4921875"
     "Z"
-    "M 66.8554688 42.4921875", PATH_ROUNDED_RECT },
+    "M 66.8554688 42.4921875", GSK_PATH_APPROXIMATE_ROUNDED_RECT },
   { "M 87.984375 8.0625"
     "C 104.515625 8.0625"
     "  117.914062 21.4648438"
@@ -220,7 +220,7 @@ static TestData tests[] = {
     "  71.453125 8.0625"
     "  87.984375 8.0625"
     "Z"
-    "M 87.984375 8.0625", PATH_ROUNDED_RECT },
+    "M 87.984375 8.0625", GSK_PATH_APPROXIMATE_ROUNDED_RECT },
   { "M 72.359375 111.140625"
     "L 103.519531 111.140625"
     "C 105.960938 111.140625"
@@ -237,7 +237,7 @@ static TestData tests[] = {
     "  69.9179688 111.140625"
     "  72.359375 111.140625"
     "  Z"
-    "M 72.359375 111.140625", PATH_ROUNDED_RECT },
+    "M 72.359375 111.140625", GSK_PATH_APPROXIMATE_ROUNDED_RECT },
   { "M 20 12"
     "L 108 12"
     "C 112.417969 12"
@@ -256,7 +256,7 @@ static TestData tests[] = {
     "  15.5820312 12"
     "  20 12"
     "Z"
-    "M 20 12", PATH_ROUNDED_RECT },
+    "M 20 12", GSK_PATH_APPROXIMATE_ROUNDED_RECT },
 };
 
 int
@@ -273,15 +273,15 @@ main (int   argc,
 
   i++;
 
-  add_rect_test (i++, &GRAPHENE_RECT_INIT (0, 0, 10, 10), PATH_RECT);
-  add_circle_test (i++, &GRAPHENE_RECT_INIT (0, 0, 10, 10), PATH_CIRCLE);
-  add_rounded_rect_test (i++, &RR (0, 0, 10, 10, 1), PATH_ROUNDED_RECT);
-  add_rounded_rect_test (i++, &RR (0, 0, 10, 10, 0), PATH_GENERAL);
+  add_rect_test (i++, &GRAPHENE_RECT_INIT (0, 0, 10, 10), GSK_PATH_RECT);
+  add_circle_test (i++, &GRAPHENE_RECT_INIT (0, 0, 10, 10), GSK_PATH_CIRCLE);
+  add_rounded_rect_test (i++, &RR (0, 0, 10, 10, 1), GSK_PATH_ROUNDED_RECT);
+  add_rounded_rect_test (i++, &RR (0, 0, 10, 10, 0), GSK_PATH_GENERAL);
 
   r = GSK_ROUNDED_RECT_INIT (0, 0, 10, 10);
   r.corner[0].width = r.corner[1].height = 1;
 
-  add_rounded_rect_test (i++, &r, PATH_GENERAL);
+  add_rounded_rect_test (i++, &r, GSK_PATH_GENERAL);
 
   return g_test_run ();
 }

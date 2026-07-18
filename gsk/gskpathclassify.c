@@ -1,7 +1,5 @@
 /*
- * Copyright © 2025 Red Hat, Inc
- *
- * SPDX-License-Identifier: LGPL-2.1-or-later
+ * Copyright © 2026 Red Hat, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,85 +14,15 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
- * Authors: Matthias Clasen <mclasen@redhat.com>
+ * Authors: Benjamin Otte <otte@gnome.org>
  */
 
 #include "config.h"
 
-#include "gtksvgpathutilsprivate.h"
+#include "gskpathprivate.h"
 
-#include "gsk/gskroundedrectprivate.h"
-#include "gsk/gskpathprivate.h"
-#include "gsk/gskcontourprivate.h"
-
-#include <math.h>
-
-
-/* {{{ Builder */
-
-void
-path_builder_add_ellipse (GskPathBuilder *builder,
-                          double cx, double cy,
-                          double rx, double ry)
-{
-  gsk_path_builder_move_to  (builder, cx + rx, cy);
-  gsk_path_builder_conic_to (builder, cx + rx, cy + ry,
-                                      cx,      cy + ry, M_SQRT1_2);
-  gsk_path_builder_conic_to (builder, cx - rx, cy + ry,
-                                      cx - rx, cy,      M_SQRT1_2);
-  gsk_path_builder_conic_to (builder, cx - rx, cy - ry,
-                                      cx,      cy - ry, M_SQRT1_2);
-  gsk_path_builder_conic_to (builder, cx + rx, cy - ry,
-                                      cx + rx, cy,      M_SQRT1_2);
-  gsk_path_builder_close    (builder);
-}
-
-/* }}} */
-/* {{{ Path transformation */
-
-typedef struct
-{
-  GskPathBuilder *builder;
-  GskTransform *transform;
-} PathTransformData;
-
-static gboolean
-add_op_transformed (GskPathOperation        op,
-                    const graphene_point_t *_pts,
-                    size_t                   n_pts,
-                    float                   weight,
-                    gpointer                user_data)
-{
-  PathTransformData *t = user_data;
-  graphene_point_t pts[4];
-
-  for (unsigned int i = 0; i < n_pts; i++)
-    gsk_transform_transform_point (t->transform, &_pts[i], &pts[i]);
-
-  gsk_path_builder_add_op (t->builder, op, pts, n_pts, weight);
-
-  return TRUE;
-}
-
-/* Transform a path by applying the transform
- * to every point.
- */
-GskPath *
-svg_transform_path (GskTransform *transform,
-                    GskPath      *path)
-{
-  PathTransformData data;
-
-  data.builder = gsk_path_builder_new ();
-  data.transform = transform;
-
-  gsk_path_foreach (path, (GskPathForeachFlags) -1, add_op_transformed, &data);
-
-  return gsk_path_builder_free_to_path (data.builder);
-}
-
-/* }}} */
-/* {{{ Path decomposition */
+#include "gskcontourprivate.h"
+#include "gskroundedrectprivate.h"
 
 /* Some svg simplifiers (tinysvg, looking at you) replace
  * perfectly fine basic shapes like rects and circles with
@@ -213,7 +141,6 @@ path_is_circle (GskPathOperation *ops,
         equal3 (points[5].x, points[6].x, points[7].x) &&
         equal3 (points[8].y, points[9].y, points[10].y)))
     return FALSE;
-
   if (!(points[11].y == points[7].y &&
         points[0].y == points[6].y &&
         points[1].y == points[5].y &&
@@ -812,8 +739,8 @@ path_is_pill3 (GskPathOperation *ops,
  * as a path. The resulting shape is returned
  * in @rect.
  */
-SvgPathClassification
-svg_path_classify (GskPath        *path,
+GskPathClassification
+gsk_path_classify (GskPath        *path,
                    GskRoundedRect *rect)
 {
   const GskContour *contour;
@@ -826,19 +753,19 @@ svg_path_classify (GskPath        *path,
   size_t n_points;
 
   if (gsk_path_is_empty (path))
-    return PATH_EMPTY;
+    return GSK_PATH_EMPTY;
 
   if (gsk_path_get_n_contours (path) > 2 ||
       (gsk_path_get_n_contours (path) == 2 &&
        gsk_contour_get_standard_ops (gsk_path_get_contour (path, 1), 0, NULL) > 1))
-    return PATH_GENERAL;
+    return GSK_PATH_GENERAL;
 
   contour = gsk_path_get_contour (path, 0);
 
   if (gsk_contour_get_rect (contour, &rect->bounds))
-    return PATH_RECT;
+    return GSK_PATH_RECT;
   else if (gsk_contour_get_rounded_rect (contour, rect))
-    return PATH_ROUNDED_RECT;
+    return GSK_PATH_ROUNDED_RECT;
   else if (gsk_contour_get_circle (contour, &center, &radius, &ccw))
     {
       graphene_rect_init (&rect->bounds,
@@ -850,67 +777,28 @@ svg_path_classify (GskPath        *path,
       rect->corner[1].width = rect->corner[1].height = radius;
       rect->corner[2].width = rect->corner[2].height = radius;
       rect->corner[3].width = rect->corner[3].height = radius;
-      return PATH_CIRCLE;
+      return GSK_PATH_CIRCLE;
     }
-
   n_ops = gsk_contour_get_standard_ops (contour, G_N_ELEMENTS (ops), ops);
   n_points = gsk_contour_get_standard_points (contour, G_N_ELEMENTS (points), points);
 
   if (path_is_rect (ops, n_ops, points, n_points, &rect->bounds))
-    return PATH_RECT;
+    return GSK_PATH_RECT;
   else if (path_is_precise_circle (ops, n_ops, points, n_points, rect))
-    return PATH_CIRCLE;
+    return GSK_PATH_CIRCLE;
   else if (path_is_precise_rounded_rect (ops, n_ops, points, n_points, rect))
-    return PATH_ROUNDED_RECT;
-
-  if (path_is_circle (ops, n_ops, points, n_points, rect) ||
-      path_is_circle2 (ops, n_ops, points, n_points, rect))
-    return PATH_CIRCLE;
+    return GSK_PATH_ROUNDED_RECT;
+  else if (path_is_circle (ops, n_ops, points, n_points, rect) ||
+           path_is_circle2 (ops, n_ops, points, n_points, rect))
+    return GSK_PATH_APPROXIMATE_CIRCLE;
   else if (path_is_rounded_rect (ops, n_ops, points, n_points, rect) ||
            path_is_rounded_rect2 (ops, n_ops, points, n_points, rect) ||
            path_is_pill (ops, n_ops, points, n_points, rect) ||
            path_is_pill2 (ops, n_ops, points, n_points, rect) ||
            path_is_pill3 (ops, n_ops, points, n_points, rect))
-    return PATH_ROUNDED_RECT;
+    return GSK_PATH_APPROXIMATE_ROUNDED_RECT;
 
-  return PATH_GENERAL;
+  return GSK_PATH_GENERAL;
 }
-
-/* }}} */
-/* {{{ Snapshotting */
-
-/* Like gtk_snapshot_push_fill, but more efficient */
-
-void
-svg_snapshot_push_fill (GtkSnapshot *snapshot,
-                        GskPath     *path,
-                        GskFillRule  rule)
-{
-  GskRoundedRect rect = { 0, };
-
-  switch (gsk_path_classify (path, &rect))
-    {
-    case GSK_PATH_RECT:
-      gtk_snapshot_push_clip (snapshot, &rect.bounds);
-      break;
-    case GSK_PATH_ROUNDED_RECT:
-    case GSK_PATH_CIRCLE:
-    case GSK_PATH_APPROXIMATE_ROUNDED_RECT:
-    case GSK_PATH_APPROXIMATE_CIRCLE:
-      gtk_snapshot_push_rounded_clip (snapshot, &rect);
-      break;
-    case GSK_PATH_GENERAL:
-      gtk_snapshot_push_fill (snapshot, path, rule);
-      break;
-    case GSK_PATH_EMPTY:
-      gtk_snapshot_push_clip (snapshot, &GRAPHENE_RECT_INIT (0, 0, 0, 0));
-      break;
-    default:
-      g_assert_not_reached ();
-    }
-}
-
-/* }}} */
 
 /* vim:set foldmethod=marker: */
-

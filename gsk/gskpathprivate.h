@@ -116,4 +116,18 @@ gboolean gsk_path_parse_full (const char    *string,
                               GskPathParser *callbacks,
                               gpointer       data);
 
+typedef enum
+{
+  GSK_PATH_EMPTY,
+  GSK_PATH_RECT,
+  GSK_PATH_ROUNDED_RECT,
+  GSK_PATH_CIRCLE,
+  GSK_PATH_APPROXIMATE_ROUNDED_RECT,
+  GSK_PATH_APPROXIMATE_CIRCLE,
+  GSK_PATH_GENERAL,
+} GskPathClassification;
+
+GskPathClassification gsk_path_classify (GskPath        *path,
+                                         GskRoundedRect *rect);
+
 G_END_DECLS
