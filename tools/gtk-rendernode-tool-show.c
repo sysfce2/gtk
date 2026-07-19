@@ -43,17 +43,6 @@ set_window_title (GtkWindow  *window,
 }
 
 static void
-quit_cb (GtkWidget *widget,
-         gpointer   user_data)
-{
-  gboolean *is_done = user_data;
-
-  *is_done = TRUE;
-
-  g_main_context_wakeup (NULL);
-}
-
-static void
 show_file (const char *filename,
            gboolean    decorated,
            gboolean    offload)
@@ -64,7 +53,6 @@ show_file (const char *filename,
   GtkWidget *sw;
   GtkWidget *handle;
   GtkWidget *window;
-  gboolean done = FALSE;
   GtkSnapshot *snapshot;
   GtkWidget *picture;
 
@@ -101,10 +89,8 @@ show_file (const char *filename,
   gtk_window_set_child (GTK_WINDOW (window), handle);
 
   gtk_window_present (GTK_WINDOW (window));
-  g_signal_connect (window, "destroy", G_CALLBACK (quit_cb), &done);
-
-  while (!done)
-    g_main_context_iteration (NULL, TRUE);
+  gtk_tool_inhibit ();
+  g_signal_connect (window, "destroy", G_CALLBACK (gtk_tool_uninhibit), NULL);
 
   g_clear_object (&paintable);
   g_clear_pointer (&node, gsk_render_node_unref);
@@ -160,6 +146,8 @@ do_show (int          *argc,
     }
 
   show_file (filenames[0], decorate, offload);
+
+  gtk_tool_run ();
 
   g_strfreev (filenames);
 }
