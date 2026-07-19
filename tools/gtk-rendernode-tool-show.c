@@ -79,6 +79,7 @@ show_file (const char *filename,
   picture = gtk_picture_new_for_paintable (paintable);
   gtk_picture_set_can_shrink (GTK_PICTURE (picture), FALSE);
   gtk_picture_set_content_fit (GTK_PICTURE (picture), GTK_CONTENT_FIT_SCALE_DOWN);
+  gtk_picture_set_isolate_contents (GTK_PICTURE (picture), decorated);
 
   if (offload)
     picture = gtk_graphics_offload_new (picture);
