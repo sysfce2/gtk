@@ -81,8 +81,7 @@ gdk_win32_gl_context_wgl_dispose (GObject *gobject)
 
       GDK_NOTE (OPENGL, g_print ("Destroying WGL context\n"));
 
-      gdk_win32_private_wglDeleteContext (context_wgl->wgl_context);
-      context_wgl->wgl_context = NULL;
+      g_clear_pointer (&context_wgl->wgl_context, gdk_win32_private_wglDeleteContext);
     }
 
   G_OBJECT_CLASS (gdk_win32_gl_context_wgl_parent_class)->dispose (gobject);

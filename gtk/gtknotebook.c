@@ -3331,7 +3331,7 @@ gtk_notebook_drag_cancel_cb (GdkDrag             *drag,
     }
 }
 
-static gboolean
+static void
 gtk_notebook_switch_page_timeout (gpointer data)
 {
   GtkNotebook *notebook = GTK_NOTEBOOK (data);
@@ -3352,8 +3352,6 @@ gtk_notebook_switch_page_timeout (gpointer data)
                                      g_list_find (notebook->children,
                                                   switch_page));
     }
-
-  return G_SOURCE_REMOVE;
 }
 
 static gboolean
@@ -4024,7 +4022,7 @@ gtk_notebook_tab_drop_enter (GtkEventController *controller,
 
   notebook->switch_page = page;
 
-  notebook->switch_page_timer = g_timeout_add (TIMEOUT_EXPAND, gtk_notebook_switch_page_timeout, notebook);
+  notebook->switch_page_timer = g_timeout_add_once (TIMEOUT_EXPAND, gtk_notebook_switch_page_timeout, notebook);
   gdk_source_set_static_name_by_id (notebook->switch_page_timer, "[gtk] gtk_notebook_switch_page_timeout");
 }
 
@@ -4236,8 +4234,7 @@ gtk_notebook_remove_tab_label (GtkNotebook     *notebook,
 {
   if (page->tab_label)
     {
-      if (page->mnemonic_activate_signal)
-        g_clear_signal_handler (&page->mnemonic_activate_signal, page->tab_label);
+      g_clear_signal_handler (&page->mnemonic_activate_signal, page->tab_label);
       page->mnemonic_activate_signal = 0;
 
       if (gtk_widget_get_native (page->tab_label) != gtk_widget_get_native (GTK_WIDGET (notebook)) ||
@@ -4333,10 +4330,7 @@ gtk_notebook_real_remove (GtkNotebook *notebook,
 
   g_list_free (list);
 
-  if (page->last_focus_child)
-    {
-      g_clear_weak_pointer (&page->last_focus_child);
-    }
+  g_clear_weak_pointer (&page->last_focus_child);
 
   gtk_widget_unparent (page->tab_widget);
 
@@ -6198,8 +6192,7 @@ gtk_notebook_set_show_tabs (GtkNotebook *notebook,
           children = children->next;
           if (page->default_tab)
             {
-              gtk_widget_unparent (page->tab_label);
-              page->tab_label = NULL;
+              g_clear_pointer (&page->tab_label, gtk_widget_unparent);
             }
           else
             gtk_widget_set_visible (page->tab_label, FALSE);

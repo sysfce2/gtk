@@ -2835,11 +2835,7 @@ free_pending_scroll (GtkTextPendingScroll *scroll)
 static void
 cancel_pending_scroll (GtkTextView *text_view)
 {
-  if (text_view->priv->pending_scroll)
-    {
-      free_pending_scroll (text_view->priv->pending_scroll);
-      text_view->priv->pending_scroll = NULL;
-    }
+  g_clear_pointer (&text_view->priv->pending_scroll, free_pending_scroll);
 }
 
 static void
@@ -9484,7 +9480,7 @@ append_bubble_item (GtkTextView *text_view,
   gtk_box_append (GTK_BOX (toolbar), item);
 }
 
-static gboolean
+static void
 gtk_text_view_selection_bubble_popup_show (gpointer user_data)
 {
   GtkTextView *text_view = user_data;
@@ -9539,8 +9535,6 @@ gtk_text_view_selection_bubble_popup_show (gpointer user_data)
 
   gtk_popover_set_pointing_to (GTK_POPOVER (priv->selection_bubble), &rect);
   gtk_widget_set_visible (priv->selection_bubble, TRUE);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -9566,7 +9560,7 @@ gtk_text_view_selection_bubble_popup_set (GtkTextView *text_view)
   if (priv->selection_bubble_timeout_id)
     g_source_remove (priv->selection_bubble_timeout_id);
 
-  priv->selection_bubble_timeout_id = g_timeout_add (50, gtk_text_view_selection_bubble_popup_show, text_view);
+  priv->selection_bubble_timeout_id = g_timeout_add_once (50, gtk_text_view_selection_bubble_popup_show, text_view);
   gdk_source_set_static_name_by_id (priv->selection_bubble_timeout_id, "[gtk] gtk_text_view_selection_bubble_popup_cb");
 }
 
@@ -9643,7 +9637,7 @@ text_window_new (GtkWidget *widget)
   win->css_node = gtk_css_node_new ();
   gtk_css_node_set_parent (win->css_node, widget_node);
   gtk_css_node_set_state (win->css_node, gtk_css_node_get_state (widget_node));
-  g_signal_connect_object (win->css_node, "style-changed", G_CALLBACK (node_style_changed_cb), widget, 0);
+  g_signal_connect_object (win->css_node, "style-changed", G_CALLBACK (node_style_changed_cb), widget, G_CONNECT_DEFAULT);
   gtk_css_node_set_name (win->css_node, g_quark_from_static_string ("text"));
 
   g_object_unref (win->css_node);

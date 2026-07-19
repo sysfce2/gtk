@@ -4946,7 +4946,7 @@ struct _GtkLabelContentClass
   GdkContentProviderClass parent_class;
 };
 
-GType gtk_label_content_get_type (void) G_GNUC_CONST;
+GType gtk_label_content_get_type (void);
 
 G_DEFINE_TYPE (GtkLabelContent, gtk_label_content, GDK_TYPE_CONTENT_PROVIDER)
 

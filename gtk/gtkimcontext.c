@@ -522,8 +522,7 @@ gtk_im_context_set_client_widget (GtkIMContext *context,
   if (priv->client_widget == widget)
     return;
 
-  if (priv->client_widget)
-      g_clear_weak_pointer (&priv->client_widget);
+  g_clear_weak_pointer (&priv->client_widget);
 
   priv->client_widget = widget;
 

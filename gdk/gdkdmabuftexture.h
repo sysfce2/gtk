@@ -35,6 +35,6 @@ GDK_DECLARE_INTERNAL_TYPE (GdkDmabufTexture, gdk_dmabuf_texture, GDK, DMABUF_TEX
 #define GDK_DMABUF_ERROR       (gdk_dmabuf_error_quark ())
 
 GDK_AVAILABLE_IN_4_14
-GQuark                  gdk_dmabuf_error_quark                     (void) G_GNUC_CONST;
+GQuark                  gdk_dmabuf_error_quark                     (void);
 
 G_END_DECLS

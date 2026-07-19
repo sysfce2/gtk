@@ -65,7 +65,7 @@ struct _GskGpuFrameClass
   GskDebugProfile *     (* get_profile)                                 (GskGpuFrame            *self);
 };
 
-GType                   gsk_gpu_frame_get_type                          (void) G_GNUC_CONST;
+GType                   gsk_gpu_frame_get_type                          (void);
 
 
 void                    gsk_gpu_frame_setup                             (GskGpuFrame            *self,

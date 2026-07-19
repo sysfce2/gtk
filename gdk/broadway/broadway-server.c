@@ -1002,8 +1002,7 @@ broadway_server_flush (BroadwayServer *server)
       !broadway_output_flush (server->output))
     {
       server->saved_serial = broadway_output_get_next_serial (server->output);
-      broadway_output_free (server->output);
-      server->output = NULL;
+      g_clear_pointer (&server->output, broadway_output_free);
       send_outstanding_roundtrips (server);
     }
 }
@@ -1229,8 +1228,7 @@ start (BroadwayInput *input)
   if (server->input != NULL)
     {
       send_outstanding_roundtrips (server);
-      broadway_input_free (server->input);
-      server->input = NULL;
+      g_clear_pointer (&server->input, broadway_input_free);
     }
 
   server->input = input;

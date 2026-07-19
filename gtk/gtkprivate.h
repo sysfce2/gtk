@@ -50,11 +50,11 @@ G_BEGIN_DECLS
 #define gtk_internal_return_val_if_fail(__expr, __val) g_return_val_if_fail(__expr, __val)
 #endif
 
-const char * _gtk_get_datadir            (void) G_GNUC_CONST;
-const char * _gtk_get_libdir             (void) G_GNUC_CONST;
-const char * _gtk_get_sysconfdir         (void) G_GNUC_CONST;
-const char * _gtk_get_localedir          (void) G_GNUC_CONST;
-const char * _gtk_get_data_prefix        (void) G_GNUC_CONST;
+const char * _gtk_get_datadir            (void);
+const char * _gtk_get_libdir             (void);
+const char * _gtk_get_sysconfdir         (void);
+const char * _gtk_get_localedir          (void);
+const char * _gtk_get_data_prefix        (void);
 
 gboolean      _gtk_fnmatch                (const char *pattern,
                                            const char *string,

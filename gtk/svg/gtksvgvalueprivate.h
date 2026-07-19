@@ -70,7 +70,7 @@ struct _SvgValue
   int ref_count;
 };
 
-GType      svg_value_get_type     (void) G_GNUC_CONST;
+GType      svg_value_get_type     (void);
 
 SvgValue * svg_value_ref          (SvgValue       *value);
 void       svg_value_unref        (SvgValue       *value);

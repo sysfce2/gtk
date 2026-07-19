@@ -1105,8 +1105,7 @@ gdk_wayland_surface_hide_surface (GdkSurface *surface)
 
   if (impl->display_server.xdg_surface)
     {
-      xdg_surface_destroy (impl->display_server.xdg_surface);
-      impl->display_server.xdg_surface = NULL;
+      g_clear_pointer (&impl->display_server.xdg_surface, xdg_surface_destroy);
       if (!impl->initial_configure_received)
         gdk_surface_thaw_updates (surface);
       else
@@ -1141,7 +1140,6 @@ gdk_wayland_surface_hide (GdkSurface *surface)
     gdk_wayland_seat_clear_touchpoints (GDK_WAYLAND_SEAT (seat), surface);
 
   gdk_wayland_surface_hide_surface (surface);
-  _gdk_surface_clear_update_area (surface);
 }
 
 void

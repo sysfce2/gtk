@@ -2405,8 +2405,7 @@ show_rename_popover (GtkSidebarRow *row)
 
   create_rename_popover (sidebar);
 
-  if (sidebar->rename_uri)
-    g_free (sidebar->rename_uri);
+  g_free (sidebar->rename_uri);
   sidebar->rename_uri = g_strdup (uri);
 
   gtk_editable_set_text (GTK_EDITABLE (sidebar->rename_entry), name);
@@ -3977,22 +3976,14 @@ gtk_places_sidebar_dispose (GObject *object)
       g_clear_object (&sidebar->cancellable);
     }
 
-  if (sidebar->bookmarks_manager != NULL)
-    {
-      _gtk_bookmarks_manager_free (sidebar->bookmarks_manager);
-      sidebar->bookmarks_manager = NULL;
-    }
+  g_clear_pointer (&sidebar->bookmarks_manager, _gtk_bookmarks_manager_free);
 
   g_clear_pointer (&sidebar->popover, gtk_widget_unparent);
 
-  if (sidebar->rename_popover)
-    {
-      gtk_widget_unparent (sidebar->rename_popover);
-      sidebar->rename_popover = NULL;
-      sidebar->rename_entry = NULL;
-      sidebar->rename_button = NULL;
-      sidebar->rename_error = NULL;
-    }
+  g_clear_pointer (&sidebar->rename_popover, gtk_widget_unparent);
+  sidebar->rename_entry = NULL;
+  sidebar->rename_button = NULL;
+  sidebar->rename_error = NULL;
 
   if (sidebar->trash_monitor)
     {
@@ -4000,10 +3991,7 @@ gtk_places_sidebar_dispose (GObject *object)
       g_clear_object (&sidebar->trash_monitor);
     }
 
-  if (sidebar->trash_row)
-    {
-      g_clear_weak_pointer (&sidebar->trash_row);
-    }
+  g_clear_weak_pointer (&sidebar->trash_row);
 
   if (sidebar->volume_monitor != NULL)
     {

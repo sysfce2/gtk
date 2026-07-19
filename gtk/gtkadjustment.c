@@ -109,8 +109,7 @@ gtk_adjustment_finalize (GObject *object)
   GtkAdjustment *adjustment = GTK_ADJUSTMENT (object);
   GtkAdjustmentPrivate *priv = gtk_adjustment_get_instance_private (adjustment);
 
-  if (priv->tick_id)
-    g_clear_signal_handler (&priv->tick_id, priv->clock);
+  g_clear_signal_handler (&priv->tick_id, priv->clock);
   if (priv->clock)
     g_object_unref (priv->clock);
 

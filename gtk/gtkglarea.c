@@ -648,11 +648,7 @@ gtk_gl_area_delete_textures (GtkGLArea *area)
 {
   GtkGLAreaPrivate *priv = gtk_gl_area_get_instance_private (area);
 
-  if (priv->texture)
-    {
-      delete_one_texture (priv->texture);
-      priv->texture = NULL;
-    }
+  g_clear_pointer (&priv->texture, delete_one_texture);
 
   /* FIXME: we need to explicitly release all outstanding
    * textures here, otherwise release_texture will get called

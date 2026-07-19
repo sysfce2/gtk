@@ -1075,7 +1075,7 @@ load_print_backends (GtkPrintUnixDialog *dialog)
       GtkPrintBackend *backend = node->data;
 
       g_signal_connect_object (backend, "printer-status-changed",
-                               G_CALLBACK (printer_status_cb), G_OBJECT (dialog), 0);
+                               G_CALLBACK (printer_status_cb), G_OBJECT (dialog), G_CONNECT_DEFAULT);
       g_list_store_append (lists, gtk_print_backend_get_printers (backend));
     }
 
@@ -1749,7 +1749,7 @@ mark_conflicts (GtkPrintUnixDialog *dialog)
   gtk_widget_set_visible (dialog->conflicts_widget, have_conflict);
 }
 
-static gboolean
+static void
 mark_conflicts_callback (gpointer data)
 {
   GtkPrintUnixDialog *dialog = data;
@@ -1757,8 +1757,6 @@ mark_conflicts_callback (gpointer data)
   dialog->mark_conflicts_id = 0;
 
   mark_conflicts (dialog);
-
-  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -1773,7 +1771,7 @@ schedule_idle_mark_conflicts (GtkPrintUnixDialog *dialog)
   if (dialog->mark_conflicts_id != 0)
     return;
 
-  dialog->mark_conflicts_id = g_idle_add (mark_conflicts_callback, dialog);
+  dialog->mark_conflicts_id = g_idle_add_once (mark_conflicts_callback, dialog);
   g_source_set_static_name (g_main_context_find_source_by_id (NULL, dialog->mark_conflicts_id),
                             "[gtk] mark_conflicts_callback");
 }

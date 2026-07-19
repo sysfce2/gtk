@@ -205,8 +205,7 @@ gdk_win32_display_lang_notification_init (GdkWin32Display *display)
     {
       ITfActiveLanguageProfileNotifySink_Release (&display->input_locale_items->notification_sink->itf_alpn_sink);
       display->input_locale_items->notification_sink = NULL;
-      ITfSource_Release (display->input_locale_items->itf_source);
-      display->input_locale_items->itf_source = NULL;
+      gdk_win32_com_clear (&display->input_locale_items->itf_source);
     }
 }
 
