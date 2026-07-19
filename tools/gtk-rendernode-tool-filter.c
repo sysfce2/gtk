@@ -253,6 +253,8 @@ do_filter (int          *argc_,
       node = filter->run (node, argc_part, (const char **) argv_part);
   }
 
+  gtk_tool_run ();
+
   g_strfreev (filenames);
   g_clear_pointer (&node, gsk_render_node_unref);
 }
