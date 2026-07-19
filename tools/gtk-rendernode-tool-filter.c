@@ -62,6 +62,25 @@ filter_save (GskRenderNode *node,
   return NULL;
 }
 
+static GskRenderNode *
+filter_print (GskRenderNode *node,
+              int            argc,
+              const char   **argv)
+{
+  GBytes *bytes;
+
+  if (argc != 1)
+    {
+      g_printerr ("print: Unexpected arguments.\n");
+      exit (1);
+    }
+
+  bytes = gsk_render_node_serialize (node);
+  g_print ("%s", (const char *) g_bytes_get_data (bytes, NULL));
+  g_bytes_unref (bytes);
+
+  return node;
+}
 
 typedef struct _Filter Filter;
 
@@ -85,6 +104,12 @@ static const Filter filters[] = {
     .name = "cut",
     .description = "Cut out a part of the rendernode",
     .run = filter_cut,
+  },
+  {
+    .name = "print",
+    .description = "Print the node",
+    .suppress_printing = TRUE,
+    .run = filter_print,
   },
   {
     .name = "save",
