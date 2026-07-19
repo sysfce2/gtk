@@ -145,7 +145,6 @@ gdk_win32_cairo_context_surface_detach (GdkDrawContext *context)
 static void
 gdk_win32_cairo_context_begin_frame_dcomp (GdkDrawContext  *draw_context,
                                            gpointer         context_data,
-                                           GdkMemoryDepth   depth,
                                            cairo_region_t  *region,
                                            GdkColorState  **out_color_state,
                                            GdkMemoryDepth  *out_depth)
@@ -300,7 +299,6 @@ gdk_win32_cairo_context_end_frame_dcomp (GdkDrawContext *draw_context,
 static void
 gdk_win32_cairo_context_begin_frame_gdi (GdkDrawContext  *draw_context,
                                          gpointer         context_data,
-                                         GdkMemoryDepth   depth,
                                          cairo_region_t  *region,
                                          GdkColorState  **out_color_state,
                                          GdkMemoryDepth  *out_depth)
@@ -348,7 +346,6 @@ gdk_win32_cairo_context_end_frame_gdi (GdkDrawContext *draw_context,
 static void
 gdk_win32_cairo_context_begin_frame (GdkDrawContext  *draw_context,
                                      gpointer         context_data,
-                                     GdkMemoryDepth   depth,
                                      cairo_region_t  *region,
                                      GdkColorState  **out_color_state,
                                      GdkMemoryDepth  *out_depth)
@@ -356,9 +353,9 @@ gdk_win32_cairo_context_begin_frame (GdkDrawContext  *draw_context,
   GdkWin32CairoContext *self = GDK_WIN32_CAIRO_CONTEXT (draw_context);
 
   if (self->swap_chain)
-    gdk_win32_cairo_context_begin_frame_dcomp (draw_context, context_data, depth, region, out_color_state, out_depth);
+    gdk_win32_cairo_context_begin_frame_dcomp (draw_context, context_data, region, out_color_state, out_depth);
   else
-    gdk_win32_cairo_context_begin_frame_gdi (draw_context, context_data, depth, region, out_color_state, out_depth);
+    gdk_win32_cairo_context_begin_frame_gdi (draw_context, context_data, region, out_color_state, out_depth);
 }
 
 static void

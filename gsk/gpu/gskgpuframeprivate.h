@@ -32,7 +32,6 @@ struct _GskGpuFrameClass
   void                  (* begin)                                       (GskGpuFrame            *self,
                                                                          GdkDrawContext         *context,
                                                                          GskRenderNode          *node,
-                                                                         GdkMemoryDepth          depth,
                                                                          const cairo_region_t   *region,
                                                                          const graphene_rect_t  *opaque);
   void                  (* end)                                         (GskGpuFrame            *self,
@@ -81,7 +80,6 @@ gsize                   gsk_gpu_frame_get_texture_vertex_size           (GskGpuF
 void                    gsk_gpu_frame_begin                             (GskGpuFrame            *self,
                                                                          GdkDrawContext         *context,
                                                                          GskRenderNode          *node,
-                                                                         GdkMemoryDepth          depth,
                                                                          const cairo_region_t   *region,
                                                                          const graphene_rect_t  *opaque);
 void                    gsk_gpu_frame_end                               (GskGpuFrame            *self,

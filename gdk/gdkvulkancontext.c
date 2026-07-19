@@ -35,6 +35,9 @@
 #include "gdkdisplayprivate.h"
 #include "gdkprofilerprivate.h"
 #include "gdkmemorytexture.h"
+
+#include "gsk/gskrendernodeprivate.h"
+
 #include <glib/gi18n-lib.h>
 #include <math.h>
 
@@ -815,7 +818,6 @@ gdk_vulkan_context_release_presents (GdkVulkanContext *self,
 static void
 gdk_vulkan_context_begin_frame (GdkDrawContext  *draw_context,
                                 gpointer         context_data,
-                                GdkMemoryDepth   depth,
                                 cairo_region_t  *region,
                                 GdkColorState  **out_color_state,
                                 GdkMemoryDepth  *out_depth)
@@ -824,6 +826,8 @@ gdk_vulkan_context_begin_frame (GdkDrawContext  *draw_context,
   GdkVulkanContextPrivate *priv = gdk_vulkan_context_get_instance_private (context);
   GdkSurface *surface = gdk_draw_context_get_surface (draw_context);
   GdkColorState *color_state;
+  GskRenderNode *content;
+  GdkMemoryDepth depth;
   VkResult acquire_result;
   VkSemaphore draw_semaphore;
   GdkVulkanPresent *present;
@@ -832,6 +836,13 @@ gdk_vulkan_context_begin_frame (GdkDrawContext  *draw_context,
   g_assert (context_data != NULL);
   draw_semaphore = *(VkSemaphore *) context_data;
 
+  content = gdk_surface_get_content (surface);
+  if (content)
+    depth = gsk_render_node_get_preferred_depth (content);
+  else
+    depth = GDK_MEMORY_U8;
+  if (GDK_DISPLAY_DEBUG_CHECK (gdk_draw_context_get_display (draw_context), HIGH_DEPTH))
+    depth = GDK_MEMORY_FLOAT32;
   color_state = gdk_surface_get_color_state (surface);
   depth = gdk_memory_depth_merge (depth, gdk_color_state_get_depth (color_state));
 

@@ -362,11 +362,10 @@ gdk_draw_context_begin_frame (GdkDrawContext       *context,
   g_return_if_fail (priv->surface != NULL);
   g_return_if_fail (region != NULL);
 
-  gdk_draw_context_begin_frame_full (context, NULL, NULL, GDK_MEMORY_U8, region, NULL);
+  gdk_draw_context_begin_frame_full (context, NULL, NULL, region, NULL);
 }
 
 /*
- * @depth: best depth to render in
  * @opaque: (nullable): opaque region of the rendering
  *
  * If the given depth is not `GDK_MEMORY_U8`, GDK will see about providing a
@@ -393,7 +392,6 @@ void
 gdk_draw_context_begin_frame_full (GdkDrawContext        *context,
                                    gpointer               context_data,
                                    GskRenderNode         *node,
-                                   GdkMemoryDepth         depth,
                                    const cairo_region_t  *region,
                                    const graphene_rect_t *opaque)
 {
@@ -457,9 +455,6 @@ gdk_draw_context_begin_frame_full (GdkDrawContext        *context,
 
   gdk_surface_set_opaque_rect (priv->surface, opaque);
 
-  if (gdk_display_get_debug_flags (priv->display) & GDK_DEBUG_HIGH_DEPTH)
-    depth = GDK_MEMORY_FLOAT32;
-
   scale = gdk_surface_get_scale (priv->surface);
   priv->render_region = gdk_cairo_region_scale_grow (region, scale, scale);
   priv->surface->paint_context = g_object_ref (context);
@@ -468,7 +463,6 @@ gdk_draw_context_begin_frame_full (GdkDrawContext        *context,
 
   GDK_DRAW_CONTEXT_GET_CLASS (context)->begin_frame (context,
                                                      context_data,
-                                                     depth,
                                                      priv->render_region,
                                                      &priv->color_state,
                                                      &priv->depth);

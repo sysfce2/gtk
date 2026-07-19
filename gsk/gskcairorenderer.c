@@ -162,7 +162,6 @@ gsk_cairo_renderer_render (GskRenderer          *renderer,
   gdk_draw_context_begin_frame_full (GDK_DRAW_CONTEXT (self->cairo_context),
                                      NULL,
                                      root,
-                                     GDK_MEMORY_U8,
                                      region,
                                      opaque);
 G_GNUC_BEGIN_IGNORE_DEPRECATIONS

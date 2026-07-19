@@ -42,7 +42,6 @@ struct _GdkDrawContextClass
 
   void                  (* begin_frame)                         (GdkDrawContext         *context,
                                                                  gpointer                context_data,
-                                                                 GdkMemoryDepth          depth,
                                                                  cairo_region_t         *update_area,
                                                                  GdkColorState         **out_color_state,
                                                                  GdkMemoryDepth         *out_depth);
@@ -61,7 +60,6 @@ void                    gdk_draw_context_surface_resized        (GdkDrawContext 
 void                    gdk_draw_context_begin_frame_full       (GdkDrawContext         *context,
                                                                  gpointer                context_data,
                                                                  GskRenderNode          *node,
-                                                                 GdkMemoryDepth          depth,
                                                                  const cairo_region_t   *region,
                                                                  const graphene_rect_t  *opaque);
 void                    gdk_draw_context_end_frame_full         (GdkDrawContext         *context,
