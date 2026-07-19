@@ -49,6 +49,7 @@
 #include "gdkseatprivate.h"
 
 #include "gsk/gskrectprivate.h"
+#include "gsk/gskrendernode.h"
 
 #include <math.h>
 
@@ -78,6 +79,7 @@ struct _GdkSurfacePrivate
   cairo_rectangle_int_t opaque_rect; /* This is different from the region */
 
   GdkDrawContext *attached_context;
+  GskRenderNode *content;
   gpointer widget;
 
   GdkColorState *color_state;
@@ -1684,6 +1686,7 @@ gdk_surface_hide (GdkSurface *surface)
 
   GDK_SURFACE_GET_CLASS (surface)->hide (surface);
 
+  gdk_surface_set_content (surface, NULL);
   g_clear_pointer (&surface->update_area, cairo_region_destroy);
 
   surface->popup.rect_anchor = 0;
@@ -3081,4 +3084,46 @@ gdk_surface_get_attached_context (GdkSurface *self)
   GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
 
   return priv->attached_context;
+}
+
+/*<private>
+ * gdk_surface_set_content:
+ * @self: the surface
+ * @content: (nullable): the render node describing the content
+ *
+ * This function may only be called by gdk_draw_context_begin_frame().
+ *
+ * Use the attached draw context to render a new render node.
+ **/
+void
+gdk_surface_set_content (GdkSurface    *self,
+                         GskRenderNode *content)
+{
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
+
+  g_clear_pointer (&priv->content, gsk_render_node_unref);
+
+  if (content)
+    priv->content = gsk_render_node_ref (content);
+}
+
+/*<private>
+ * gdk_surface_get_content:
+ * @self: the surface
+ *
+ * Gets the content for this surface. If the surface is hidden its content
+ * will be cleared.
+ *
+ * An implementation detail for backends is that this value will be updated
+ * before `GdkDrawContext::begin_frame()` is called, so implementations can
+ * use this function to inspect the node that is drawn.
+ *
+ * Returns: (nullable): The content that this surface will draw.
+ **/
+GskRenderNode *
+gdk_surface_get_content (GdkSurface *self)
+{
+  GdkSurfacePrivate *priv = gdk_surface_get_instance_private (self);
+
+  return priv->content;
 }

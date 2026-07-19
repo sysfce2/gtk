@@ -453,6 +453,8 @@ gdk_draw_context_begin_frame_full (GdkDrawContext        *context,
       return;
     }
 
+  gdk_surface_set_content (priv->surface, node);
+
   gdk_surface_set_opaque_rect (priv->surface, opaque);
 
   if (gdk_display_get_debug_flags (priv->display) & GDK_DEBUG_HIGH_DEPTH)

@@ -25,6 +25,8 @@
 #include "gdktoplevel.h"
 #include <graphene.h>
 
+#include <gsk/gsktypes.h>
+
 G_BEGIN_DECLS
 
 typedef struct _GdkSubsurface GdkSubsurface;
@@ -353,5 +355,8 @@ void                    gdk_surface_set_color_state                     (GdkSurf
 void                    gdk_surface_set_attached_context                (GdkSurface             *self,
                                                                          GdkDrawContext         *context);
 GdkDrawContext *        gdk_surface_get_attached_context                (GdkSurface             *self);
+void                    gdk_surface_set_content                         (GdkSurface             *self,
+                                                                         GskRenderNode          *content);
+GskRenderNode *         gdk_surface_get_content                         (GdkSurface             *self);
 
 G_END_DECLS
