@@ -161,6 +161,7 @@ gsk_vulkan_frame_cleanup (GskGpuFrame *frame)
 static void
 gsk_vulkan_frame_begin (GskGpuFrame           *frame,
                         GdkDrawContext        *context,
+                        GskRenderNode         *node,
                         GdkMemoryDepth         depth,
                         const cairo_region_t  *region,
                         const graphene_rect_t *opaque)
@@ -171,6 +172,7 @@ gsk_vulkan_frame_begin (GskGpuFrame           *frame,
   gdk_draw_context_begin_frame_full (context,
                                      /* We pass a pointer here for 32bit architectures */
                                      &priv->vk_acquire_semaphore,
+                                     node,
                                      depth,
                                      region,
                                      opaque);

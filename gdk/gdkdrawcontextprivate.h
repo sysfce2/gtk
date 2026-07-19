@@ -25,6 +25,8 @@
 #include "gdkcolorstateprivate.h"
 #include "gdkmemoryformatprivate.h"
 
+#include "gsk/gsktypes.h"
+
 #include <graphene.h>
 
 G_BEGIN_DECLS
@@ -58,6 +60,7 @@ void                    gdk_draw_context_surface_resized        (GdkDrawContext 
 
 void                    gdk_draw_context_begin_frame_full       (GdkDrawContext         *context,
                                                                  gpointer                context_data,
+                                                                 GskRenderNode          *node,
                                                                  GdkMemoryDepth          depth,
                                                                  const cairo_region_t   *region,
                                                                  const graphene_rect_t  *opaque);

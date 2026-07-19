@@ -475,7 +475,7 @@ gsk_gpu_renderer_render (GskRenderer          *renderer,
     opaque = &opaque_tmp;
   else
     opaque = NULL;
-  gsk_gpu_frame_begin (frame, priv->context, depth, region, opaque);
+  gsk_gpu_frame_begin (frame, priv->context, root, depth, region, opaque);
 
   backbuffer = GSK_GPU_RENDERER_GET_CLASS (self)->get_backbuffer (self);
 

@@ -362,7 +362,7 @@ gdk_draw_context_begin_frame (GdkDrawContext       *context,
   g_return_if_fail (priv->surface != NULL);
   g_return_if_fail (region != NULL);
 
-  gdk_draw_context_begin_frame_full (context, NULL, GDK_MEMORY_U8, region, NULL);
+  gdk_draw_context_begin_frame_full (context, NULL, NULL, GDK_MEMORY_U8, region, NULL);
 }
 
 /*
@@ -392,6 +392,7 @@ gdk_draw_context_begin_frame (GdkDrawContext       *context,
 void
 gdk_draw_context_begin_frame_full (GdkDrawContext        *context,
                                    gpointer               context_data,
+                                   GskRenderNode         *node,
                                    GdkMemoryDepth         depth,
                                    const cairo_region_t  *region,
                                    const graphene_rect_t *opaque)
