@@ -23,7 +23,6 @@
 #endif
 
 #include <gsk/gsktypes.h>
-#include <gsk/gskrendernode.h>
 
 G_BEGIN_DECLS
 
