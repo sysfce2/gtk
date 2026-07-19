@@ -93,6 +93,12 @@ static const Filter filters[] = {
     .run = filter_save,
   },
   {
+    .name = "show",
+    .description = "Show the render node",
+    .suppress_printing = TRUE,
+    .run = filter_show,
+  },
+  {
     .name = "simplify",
     .description = "Simplify the node by keeping it functionally identical",
     .run = filter_simplify,

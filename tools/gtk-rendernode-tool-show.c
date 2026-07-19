@@ -43,11 +43,11 @@ set_window_title (GtkWindow  *window,
 }
 
 static void
-show_file (const char *filename,
-           gboolean    decorated,
-           gboolean    offload)
+show_node (GskRenderNode *node,
+           const char    *filename,
+           gboolean       decorated,
+           gboolean       offload)
 {
-  GskRenderNode *node;
   graphene_rect_t node_bounds;
   GdkPaintable *paintable;
   GtkWidget *sw;
@@ -56,7 +56,6 @@ show_file (const char *filename,
   GtkSnapshot *snapshot;
   GtkWidget *picture;
 
-  node = load_node_file (filename);
   gsk_render_node_get_bounds (node, &node_bounds);
 
   snapshot = gtk_snapshot_new ();
@@ -85,7 +84,8 @@ show_file (const char *filename,
   gtk_window_set_resizable (GTK_WINDOW (window), decorated);
   if (!decorated)
     gtk_widget_remove_css_class (window, "background");
-  set_window_title (GTK_WINDOW (window), filename);
+  if (filename)
+    set_window_title (GTK_WINDOW (window), filename);
   gtk_window_set_child (GTK_WINDOW (window), handle);
 
   gtk_window_present (GTK_WINDOW (window));
@@ -93,7 +93,6 @@ show_file (const char *filename,
   g_signal_connect (window, "destroy", G_CALLBACK (gtk_tool_uninhibit), NULL);
 
   g_clear_object (&paintable);
-  g_clear_pointer (&node, gsk_render_node_unref);
 }
 
 void
@@ -110,6 +109,7 @@ do_show (int          *argc,
     { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, N_("FILE") },
     { NULL, }
   };
+  GskRenderNode *node;
   GError *error = NULL;
 
   if (gdk_display_get_default () == NULL)
@@ -145,9 +145,46 @@ do_show (int          *argc,
       exit (1);
     }
 
-  show_file (filenames[0], decorate, offload);
+  node = load_node_file (filenames[0]);
+
+  show_node (node, filenames[0], decorate, offload);
 
   gtk_tool_run ();
 
   g_strfreev (filenames);
+  g_clear_pointer (&node, gsk_render_node_unref);
+}
+
+GskRenderNode *
+filter_show (GskRenderNode  *node,
+             int             argc,
+             const char    **argv)
+{
+  GOptionContext *context;
+  gboolean decorate = FALSE;
+  gboolean offload = FALSE;
+  const GOptionEntry entries[] = {
+    { "offload", 0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, &offload, N_("Put node into offload container"), NULL },
+    { "decorate", 0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, &decorate, N_("Add a titlebar"), NULL },
+    { NULL, }
+  };
+  GError *error = NULL;
+
+  context = g_option_context_new (NULL);
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
+  g_option_context_add_main_entries (context, entries, NULL);
+  g_option_context_set_summary (context, _("Show the render node."));
+
+  if (!g_option_context_parse (context, &argc, (char ***) &argv, &error))
+    {
+      g_printerr ("show: %s\n", error->message);
+      g_error_free (error);
+      exit (1);
+    }
+
+  g_option_context_free (context);
+
+  show_node (node, NULL, decorate, offload);
+
+  return node;
 }
