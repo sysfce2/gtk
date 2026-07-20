@@ -21,76 +21,7 @@
 #include <gtk/gtk.h>
 #include "gtk-rendernode-tool.h"
 #include "gtk-tool-utils.h"
-
-typedef struct _OverlayConfig OverlayConfig;
-
-struct _OverlayConfig
-{
-  gboolean include_original;
-  GdkRGBA color;
-};
-
-static void
-overlay_config_init (OverlayConfig *config)
-{
-  config->include_original = TRUE;
-  config->color = (GdkRGBA) { 1, 0, 0, 0.5 };
-}
-
-static gboolean
-overlay_config_parse_color (const char  *option_name,
-                            const char  *value,
-                            gpointer     data,
-                            GError     **error)
-{
-  OverlayConfig *config = data;
-
-  if (!gdk_rgba_parse (&config->color, value))
-    {
-      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE, _("Not a valid color"));
-      return FALSE;
-    }
-
-  return TRUE;
-}
-
-static GOptionGroup *
-overlay_config_create_option_group (OverlayConfig *self)
-{
-  const GOptionEntry entries[] = {
-    { "only", 'o', G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &self->include_original, N_("Only draw the opaque region, don't include the original image"), NULL },
-    { "color", 'c', G_OPTION_FLAG_NONE, G_OPTION_ARG_CALLBACK, overlay_config_parse_color, N_("Color for the opaque region"), "COLOR" },
-    { NULL, }
-  };
-  GOptionGroup *group;
-
-  group = g_option_group_new ("overlay",
-                              _("Overlay options"),
-                              _("How to render the overlay"),
-                              self,
-                              NULL);
-  g_option_group_set_translation_domain (group, GETTEXT_PACKAGE);
-  g_option_group_add_entries (group, entries);
-
-  return group;
-}
-
-static GskRenderNode *
-render_rect (GskRenderNode         *node,
-             const OverlayConfig   *config,
-             const graphene_rect_t *rect)
-{
-  GtkSnapshot *snapshot;
-
-  snapshot = gtk_snapshot_new ();
-  if (config->include_original)
-    gtk_snapshot_append_node (snapshot, node);
-  gtk_snapshot_append_color (snapshot,
-                             &config->color,
-                             rect);
-
-  return gtk_snapshot_free_to_node (snapshot);
-}
+#include "overlayconfig.h"
 
 GskRenderNode *
 filter_opaque (GskRenderNode  *node,
@@ -129,7 +60,7 @@ filter_opaque (GskRenderNode  *node,
   
   if (gsk_render_node_get_opaque_rect (node, &opaque))
     {
-      result = render_rect (node, &config, &opaque);
+      result = overlay_config_render_rect (&config, node, &opaque);
       gsk_render_node_unref (node);
     }
   else
