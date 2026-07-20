@@ -116,11 +116,11 @@ do_show (int          *argc,
 {
   GOptionContext *context;
   char **filenames = NULL;
-  gboolean decorated = TRUE;
+  gboolean decorate = TRUE;
   gboolean offload = FALSE;
   const GOptionEntry entries[] = {
     { "offload", 0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, &offload, N_("Put node into offload container"), NULL },
-    { "undecorated", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &decorated, N_("Don't add a titlebar"), NULL },
+    { "decorate", 0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, &decorate, N_("Add a titlebar"), NULL },
     { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, N_("FILE") },
     { NULL, }
   };
@@ -159,7 +159,7 @@ do_show (int          *argc,
       exit (1);
     }
 
-  show_file (filenames[0], decorated, offload);
+  show_file (filenames[0], decorate, offload);
 
   g_strfreev (filenames);
 }
