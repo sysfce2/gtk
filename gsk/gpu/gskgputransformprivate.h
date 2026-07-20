@@ -18,7 +18,7 @@ struct _GskGpuTransform
   graphene_point_t offset;
 };
 
-#define GSK_GPU_TRANSFORM_IDENTITIY (GskGpuTransform) { GDK_DIHEDRAL_NORMAL, { 1.0, 1.0 }, { 0.0, 0.0 } }
+#define GSK_GPU_TRANSFORM_IDENTITY (GskGpuTransform) { GDK_DIHEDRAL_NORMAL, { 1.0, 1.0 }, { 0.0, 0.0 } }
 
 void                    gsk_gpu_transform_init                  (GskGpuTransform        *self,
                                                                  GdkDihedral             dihedral,
