@@ -19,14 +19,15 @@
 
 #include "config.h"
 
-#include <math.h>
-
 #include "gskpathbuilder.h"
 
 #include "gskpathprivate.h"
 #include "gskcurveprivate.h"
 #include "gskpathpointprivate.h"
 #include "gskcontourprivate.h"
+
+#include <math.h>
+#include <pango/pangocairo.h>
 
 /**
  * GskPathBuilder:

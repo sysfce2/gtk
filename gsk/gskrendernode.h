@@ -24,6 +24,8 @@
 
 #include <gsk/gskroundedrect.h>
 #include <gsk/gsktypes.h>
+
+#include <gdk/gdkrgba.h>
 #include <gtk/css/gtkcss.h>
 
 G_BEGIN_DECLS
