@@ -1879,17 +1879,18 @@ svg_element_move_child_down (SvgElement *element,
 unsigned int
 svg_element_get_n_animations (SvgElement *element)
 {
-  return element->animations->len;
+  if (element->animations)
+    return element->animations->len;
+  return 0;
 }
 
 SvgAnimation *
 svg_element_get_animation (SvgElement   *element,
                            unsigned int  pos)
 {
-  if (pos < element->animations->len)
+  if (element->animations && pos < element->animations->len)
     return g_ptr_array_index (element->animations, pos);
-  else
-    return NULL;
+  return NULL;
 }
 
 SvgAnimation *
