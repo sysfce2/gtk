@@ -106,6 +106,11 @@ static const Filter filters[] = {
     .run = filter_cut,
   },
   {
+    .name = "opaque",
+    .description = "Show the opaque part",
+    .run = filter_opaque,
+  },
+  {
     .name = "print",
     .description = "Print the node",
     .suppress_printing = TRUE,
