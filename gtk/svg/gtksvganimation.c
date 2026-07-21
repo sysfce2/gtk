@@ -153,6 +153,18 @@ svg_animation_add_end (SvgAnimation *animation,
   return spec;
 }
 
+void
+svg_animation_clear_begin (SvgAnimation *animation)
+{
+  g_ptr_array_set_size (animation->begin, 0);
+}
+
+void
+svg_animation_clear_end (SvgAnimation *animation)
+{
+  g_ptr_array_set_size (animation->end, 0);
+}
+
 gboolean
 svg_animation_has_begin (SvgAnimation *animation,
                          TimeSpec     *spec)

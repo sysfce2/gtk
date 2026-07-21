@@ -193,6 +193,9 @@ TimeSpec *       svg_animation_add_begin     (SvgAnimation  *animation,
 TimeSpec *       svg_animation_add_end       (SvgAnimation  *animation,
                                               TimeSpec      *spec);
 
+void             svg_animation_clear_begin   (SvgAnimation  *animation);
+void             svg_animation_clear_end     (SvgAnimation  *animation);
+
 void             svg_animation_add_dep       (SvgAnimation  *base,
                                               SvgAnimation  *anim);
 
