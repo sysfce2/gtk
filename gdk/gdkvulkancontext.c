@@ -36,6 +36,8 @@
 #include "gdkprofilerprivate.h"
 #include "gdkmemorytexture.h"
 
+#include "gsk/gpu/gskvulkanrenderer.h"
+#include "gsk/gskrenderer.h"
 #include "gsk/gskrendernodeprivate.h"
 
 #include <glib/gi18n-lib.h>
@@ -2128,18 +2130,6 @@ gdk_display_destroy_vulkan_instance (GdkDisplay *display)
   vkDestroyInstance (display->vk_instance, NULL);
   display->vk_instance = VK_NULL_HANDLE;
 }
-
-/* Hack. We don't include gsk/gsk.h here to avoid a build order problem
- * with the generated header gskenumtypes.h, so we need to hack around
- * a bit to access the gsk api we need.
- */
-
-typedef struct _GskRenderer GskRenderer;
-
-extern GskRenderer *   gsk_vulkan_renderer_new                  (void);
-extern gboolean        gsk_renderer_realize_for_display         (GskRenderer  *renderer,
-                                                                 GdkDisplay   *display,
-                                                                 GError      **error);
 
 #ifdef HAVE_DMABUF
 static void
