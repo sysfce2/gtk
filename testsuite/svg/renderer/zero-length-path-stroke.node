@@ -6,8 +6,7 @@ clip {
         bounds: 0 0 20 20;
         color: rgb(255,0,0);
       }
-      path: "\
-M 10 10";
+      path: "M 10 10";
       line-width: 10;
       line-cap: round;
       line-join: bevel;
@@ -17,8 +16,7 @@ M 10 10";
         bounds: 15.8579 -4.14214 28.2843 28.2843;
         color: rgb(0,128,0);
       }
-      path: "\
-M 30 10";
+      path: "M 30 10";
       line-width: 10;
       line-cap: square;
       line-join: bevel;
@@ -28,8 +26,7 @@ M 30 10";
         bounds: 40 0 20 20;
         color: rgb(0,0,255);
       }
-      path: "\
-M 50 10";
+      path: "M 50 10";
       line-width: 10;
       line-cap: butt;
       line-join: bevel;
@@ -42,9 +39,7 @@ M 50 10";
             bounds: 0 0 20 20;
             color: rgb(255,0,0);
           }
-          path: "\
-M 10 10\
-Z";
+          path: "M 10 10 Z";
           line-width: 10;
           line-cap: round;
           line-join: bevel;
@@ -54,9 +49,7 @@ Z";
             bounds: 15.8579 -4.14214 28.2843 28.2843;
             color: rgb(0,128,0);
           }
-          path: "\
-M 30 10\
-Z";
+          path: "M 30 10 Z";
           line-width: 10;
           line-cap: square;
           line-join: bevel;
@@ -66,9 +59,7 @@ Z";
             bounds: 40 0 20 20;
             color: rgb(0,0,255);
           }
-          path: "\
-M 50 10\
-Z";
+          path: "M 50 10 Z";
           line-width: 10;
           line-cap: butt;
           line-join: bevel;
@@ -83,9 +74,7 @@ Z";
             bounds: 0 0 20 20;
             color: rgb(255,0,0);
           }
-          path: "\
-M 10 10\
-L 10 10";
+          path: "M 10 10 L 10 10";
           line-width: 10;
           line-cap: round;
           line-join: bevel;
@@ -95,9 +84,7 @@ L 10 10";
             bounds: 15.8579 -4.14214 28.2843 28.2843;
             color: rgb(0,128,0);
           }
-          path: "\
-M 30 10\
-L 30 10";
+          path: "M 30 10 L 30 10";
           line-width: 10;
           line-cap: square;
           line-join: bevel;
@@ -107,9 +94,7 @@ L 30 10";
             bounds: 40 0 20 20;
             color: rgb(0,0,255);
           }
-          path: "\
-M 50 10\
-L 50 10";
+          path: "M 50 10 L 50 10";
           line-width: 10;
           line-cap: butt;
           line-join: bevel;

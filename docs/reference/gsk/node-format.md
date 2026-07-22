@@ -150,6 +150,37 @@ Rounded rectangles use a CSS-like syntax:
 
     rounded-rect: <rect> [ "/" <number>{1,4} [ "/" <number>{1,4} ] ]
 
+# Paths
+
+The syntax for paths is as follows:
+
+    path: <contour> | "{" <contour>+ "}"
+    contour: <string> | <rounded-rect> | rect { … } | rounded-rect { … } | circle { … }
+
+The string uses SVG path syntax.
+The rounded-rect can be used as a shortcut for specifying a rounded rectangle
+(if the corners are non-empty) or a rectangle.
+
+
+The following properties can be set for rect contours:
+
+| property    | syntax           | default                | printed     |
+| ----------- | ---------------- | ---------------------- | ----------- |
+| outline     | `<rect>`         | 0 0 50 50              | always      |
+
+The following properties can be set for rounded-rect contours:
+
+| property    | syntax           | default                | printed     |
+| ----------- | ---------------- | ---------------------- | ----------- |
+| outline     | `<rounded-rect>` | 0 0 50 50              | always      |
+
+The following properties can be set for circle contours:
+
+| property    | syntax           | default                | printed     |
+| ----------- | ---------------- | ---------------------- | ----------- |
+| center      | `<point>`        | 10 10                  | always      |
+| radius      | `<boolean>`      | 10                     | always      |
+
 # Snapping
 
 Various nodes have snapping properties. They are specified as up to four values
@@ -405,7 +436,7 @@ Possible values for the channels property are:
 | property  | syntax          | default                | printed     |
 | --------- | --------------- | ---------------------- | ----------- |
 | child     | `<node>`        | *see below*            | always      |
-| path      | `<string>`      | ""                     | always      |
+| path      | `<path>`        | ""                     | always      |
 | fill-rule | `<fill-rule>`   | winding                | always      |
 
 Creates a node like `gsk_fill_node_new()` with the given properties.
@@ -647,7 +678,7 @@ Creates a node like `gsk_shadow_node_new()` with the given properties.
 | property    | syntax             | default           | printed     |
 | ----------- | ------------------ | ----------------- | ----------- |
 | child       | `<node>`           | *see below*       | always      |
-| path        | `<string>`         | ""                | always      |
+| path        | `<path>`           | ""                | always      |
 | line-width  | `<number>`         | 0                 | non-default |
 | line-cap    | `<line-cap>`       | butt              | always      |
 | line-join   | `<line-join>`      | miter             | always      |

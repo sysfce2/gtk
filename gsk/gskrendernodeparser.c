@@ -36,6 +36,7 @@
 #include "gskcomponenttransferprivate.h"
 #include "gskcompositenode.h"
 #include "gskcontainernodeprivate.h"
+#include "gskcontourprivate.h"
 #include "gskcopynode.h"
 #include "gskcrossfadenode.h"
 #include "gskdebugnode.h"
@@ -115,6 +116,8 @@
 #include <hb-subset.h>
 
 #include <glib/gstdio.h>
+
+#define INDENT_LEVEL 2 /* Spaces per level */
 
 typedef struct _Context Context;
 
@@ -3846,24 +3849,169 @@ parse_rounded_clip_node (GtkCssParser *parser,
   return result;
 }
 
+static GskPath *
+parse_rect_path (GtkCssParser *parser,
+                 Context      *context)
+{
+  graphene_rect_t rect = GRAPHENE_RECT_INIT (0, 0, 50, 50);
+  const Declaration declarations[] = {
+    { "outline", parse_rect, NULL, &rect },
+  };
+  GskPathBuilder *builder;
+
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+
+  builder = gsk_path_builder_new ();
+  gsk_path_builder_add_rect (builder, &rect);
+  return gsk_path_builder_free_to_path (builder);
+}
+
+static GskPath *
+parse_rounded_rect_path (GtkCssParser *parser,
+                         Context      *context)
+{
+  GskRoundedRect rect = GSK_ROUNDED_RECT_INIT (0, 0, 50, 50);
+  const Declaration declarations[] = {
+    { "outline", parse_rounded_rect, NULL, &rect },
+  };
+  GskPathBuilder *builder;
+
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+
+  builder = gsk_path_builder_new ();
+  if (gsk_rounded_rect_is_rectilinear (&rect))
+    gsk_path_builder_add_rect (builder, &rect.bounds);
+  else
+    gsk_path_builder_add_rounded_rect (builder, &rect);
+  return gsk_path_builder_free_to_path (builder);
+}
+
+static GskPath *
+parse_circle_path (GtkCssParser *parser,
+                   Context      *context)
+{
+  graphene_point_t center = GRAPHENE_POINT_INIT (10, 10);
+  double radius = 10;
+  const Declaration declarations[] = {
+    { "center", parse_point, NULL, &center },
+    { "radius", parse_double, NULL, &radius },
+  };
+  GskPathBuilder *builder;
+
+  parse_declarations (parser, context, declarations, G_N_ELEMENTS (declarations));
+
+  builder = gsk_path_builder_new ();
+  gsk_path_builder_add_circle (builder, &center, radius);
+  return gsk_path_builder_free_to_path (builder);
+}
+
+static GskPath *
+parse_contour (GtkCssParser *parser,
+               Context      *context)
+{
+  if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_STRING))
+    {
+      char *str = NULL;
+      GskPath *path;
+
+      if (!parse_string (parser, context, &str))
+        return FALSE;
+
+      path = gsk_path_parse (str);
+      g_free (str);
+
+      return path;
+    }
+  else if (gtk_css_parser_has_number (parser))
+    {
+      GskRoundedRect rect = GSK_ROUNDED_RECT_INIT (0, 0, 50, 50);
+      GskPathBuilder *builder;
+
+      if (!parse_rounded_rect (parser, context, &rect))
+        return FALSE;
+
+      builder = gsk_path_builder_new ();
+
+      if (gsk_rounded_rect_is_rectilinear (&rect))
+        gsk_path_builder_add_rect (builder, &rect.bounds);
+      else
+        gsk_path_builder_add_rounded_rect (builder, &rect);
+
+      return gsk_path_builder_free_to_path (builder);
+    }
+  else
+    {
+      static const struct {
+        const char *name;
+        GskPath * (* func) (GtkCssParser *, Context *);
+      } path_parsers[] = {
+        { "rect", parse_rect_path },
+        { "rounded-rect", parse_rounded_rect_path },
+        { "circle", parse_circle_path },
+      };
+
+      for (unsigned int i = 0; i < G_N_ELEMENTS (path_parsers); i++)
+        {
+          if (gtk_css_parser_try_ident (parser, path_parsers[i].name))
+            {
+              if (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
+                {
+                  gtk_css_parser_error_syntax (parser, "Expected '{' after contour name");
+                  return FALSE;
+                }
+
+              gtk_css_parser_end_block_prelude (parser);
+
+              return path_parsers[i].func (parser, context);
+            }
+        }
+
+      if (gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_IDENT))
+        gtk_css_parser_error_syntax (parser, "No contour named \"%s\"",
+                                     gtk_css_token_get_string (gtk_css_parser_get_token (parser)));
+      else
+        gtk_css_parser_error_syntax (parser, "Expected a contour name");
+
+      return NULL;
+    }
+}
+
 static gboolean
 parse_path (GtkCssParser *parser,
             Context      *context,
             gpointer      out_path)
 {
-  GskPath *path;
-  char *str = NULL;
+  GskPath *path = NULL;
 
-  if (!parse_string (parser, context, &str))
-    return FALSE;
-
-  path = gsk_path_parse (str);
-  g_free (str);
-
-  if (path == NULL)
+  if (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
     {
-      gtk_css_parser_error_value (parser, "Invalid path");
-      return FALSE;
+      path = parse_contour (parser, context);
+    }
+  else
+    {
+      GskPathBuilder *builder = gsk_path_builder_new ();
+
+      gtk_css_parser_end_block_prelude (parser);
+
+      while (!gtk_css_parser_has_token (parser, GTK_CSS_TOKEN_EOF))
+        {
+          GskPath *subpath;
+
+          gtk_css_parser_start_semicolon_block (parser, GTK_CSS_TOKEN_OPEN_CURLY);
+          subpath = parse_contour (parser, context);
+          gtk_css_parser_end_block (parser);
+
+          if (subpath)
+            gsk_path_builder_add_path (builder, subpath);
+          else
+            {
+              g_clear_pointer (&builder, gsk_path_builder_unref);
+              break;
+            }
+        }
+
+      if (builder)
+        path = gsk_path_builder_free_to_path (builder);
     }
 
   *((GskPath **) out_path) = path;
@@ -4985,14 +5133,12 @@ printer_clear (Printer *self)
   g_hash_table_unref (self->fonts);
 }
 
-#define IDENT_LEVEL 2 /* Spaces per level */
 static void
 _indent (Printer *self)
 {
   if (self->indentation_level > 0)
-    g_string_append_printf (self->str, "%*s", self->indentation_level * IDENT_LEVEL, " ");
+    g_string_append_printf (self->str, "%*s", self->indentation_level * INDENT_LEVEL, " ");
 }
-#undef IDENT_LEVEL
 
 static void
 start_node (Printer    *self,
@@ -6133,25 +6279,96 @@ gsk_text_node_serialize_glyphs (GskRenderNode *node,
 }
 
 static void
+append_contour (Printer          *p,
+                unsigned int      chars_in,
+                const GskContour *contour)
+{
+  graphene_rect_t rect;
+  GskRoundedRect rr;
+  graphene_point_t center;
+  float radius;
+  gboolean ccw;
+
+  if (gsk_contour_get_rect (contour, &rect))
+    {
+      append_rect (p->str, &rect);
+      g_string_append (p->str, ";\n");
+    }
+  else if (gsk_contour_get_rounded_rect (contour, &rr))
+    {
+      g_string_append (p->str, "rounded-rect {\n");
+      p->indentation_level ++;
+      append_rounded_rect_param (p, "outline", &rr);
+      p->indentation_level --;
+      _indent (p);
+      g_string_append (p->str, "}\n");
+    }
+  else if (gsk_contour_get_circle (contour, &center, &radius, &ccw))
+    {
+      g_string_append (p->str, "circle {\n");
+      p->indentation_level ++;
+      append_point_param (p, "center", &center);
+      append_float_param (p, "radius", radius, 0);
+      p->indentation_level --;
+      _indent (p);
+      g_string_append (p->str, "}\n");
+    }
+  else
+    {
+      GString *s = g_string_new ("");
+      size_t last_break, next, last_newline, threshold;
+      gsk_contour_print (contour, s);
+      threshold = 90 - MIN (30, p->indentation_level * INDENT_LEVEL + chars_in + 1);
+      last_break = 0;
+      last_newline = 0;
+      g_string_append (p->str, "\"");
+      for (next = strcspn (s->str, "mMhHvVzZlLcCsStTqQaAoO");
+           s->str[last_break] != '\0';
+           next = strcspn (&s->str[MIN (last_break + 1, s->len)], "mMhHvVzZlLcCsStTqQaAoO") + 1)
+        {
+          if (last_break != last_newline &&
+              last_break + next - last_newline > threshold)
+            {
+              g_string_append_len (p->str, &s->str[last_newline], last_break - last_newline - 1);
+              g_string_append (p->str, "\\\n");
+              _indent (p);
+              g_string_append_printf (p->str, "%*s", chars_in + 1, "");
+              last_newline = last_break;
+            }
+          last_break += next;
+        }
+      if (s->str[last_newline] != '\0')
+        g_string_append (p->str, &s->str[last_newline]);
+      g_string_append (p->str, "\";\n");
+      g_string_free (s, TRUE);
+    }
+}
+
+static void
 append_path_param (Printer    *p,
                    const char *param_name,
                    GskPath    *path)
 {
-  char *str, *s;
-
   _indent (p);
-  g_string_append (p->str, "path: \"\\\n");
-  str = gsk_path_to_string (path);
-  /* Put each command on a new line */
-  for (s = str; *s; s++)
+  g_string_append (p->str, "path: ");
+
+  if (gsk_path_get_n_contours (path) == 1)
     {
-      if (*s == ' ' &&
-          (s[1] == 'M' || s[1] == 'C' || s[1] == 'Z' || s[1] == 'L'))
-        *s = '\n';
+      append_contour (p, 6, gsk_path_get_contour (path, 0));
     }
-  append_escaping_newlines (p->str, str);
-  g_string_append (p->str, "\";\n");
-  g_free (str);
+  else
+    {
+      g_string_append (p->str, "{\n");
+      p->indentation_level ++;
+      for (size_t i = 0; i < gsk_path_get_n_contours (path); i++)
+        {
+          _indent (p);
+          append_contour (p, 0, gsk_path_get_contour (path, i));
+        }
+      p->indentation_level --;
+      _indent (p);
+      g_string_append (p->str, "}\n");
+    }
 }
 
 static void
