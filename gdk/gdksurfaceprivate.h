@@ -29,8 +29,6 @@ G_BEGIN_DECLS
 
 typedef struct _GdkSubsurface GdkSubsurface;
 
-typedef struct _GskRenderNode GskRenderNode;
-
 struct _GdkSurface
 {
   GObject parent_instance;
