@@ -47,7 +47,6 @@ G_DEFINE_TYPE (GdkAndroidGLContext, gdk_android_gl_context, GDK_TYPE_GL_CONTEXT)
 static void
 gdk_android_gl_context_begin_frame (GdkDrawContext  *draw_context,
                                     gpointer         context_data,
-                                    GdkMemoryDepth   depth,
                                     cairo_region_t  *region,
                                     GdkColorState  **out_color_state,
                                     GdkMemoryDepth  *out_depth)
@@ -55,7 +54,7 @@ gdk_android_gl_context_begin_frame (GdkDrawContext  *draw_context,
   GdkSurface *surface = gdk_draw_context_get_surface (draw_context);
   g_return_if_fail (GDK_IS_ANDROID_DRAG_SURFACE (surface) == FALSE);
 
-  GDK_DRAW_CONTEXT_CLASS (gdk_android_gl_context_parent_class)->begin_frame (draw_context, context_data, depth, region, out_color_state, out_depth);
+  GDK_DRAW_CONTEXT_CLASS (gdk_android_gl_context_parent_class)->begin_frame (draw_context, context_data, region, out_color_state, out_depth);
 }
 
 static void

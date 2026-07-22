@@ -17,8 +17,11 @@
 
 #pragma once
 
-#include <gdk/gdk.h>
-#include <gsk/gsk.h>
+#if !defined (__GSK_H_INSIDE__) && !defined (GTK_COMPILATION)
+#error "Only <gsk/gsk.h> can be included directly."
+#endif
+
+#include <gsk/gsktypes.h>
 
 G_BEGIN_DECLS
 

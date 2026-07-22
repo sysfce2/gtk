@@ -4,7 +4,6 @@
 #include <gsk/gsktypes.h>
 #include <graphene.h>
 
-#include "gskgputypesprivate.h"
 #include "gsktransformprivate.h"
 
 G_BEGIN_DECLS
