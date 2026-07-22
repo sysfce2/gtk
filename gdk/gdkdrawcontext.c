@@ -30,6 +30,8 @@
 
 #include <glib/gi18n-lib.h>
 
+#include "gsk/gskrendernode.h"
+
 /**
  * GdkDrawContext:
  *
@@ -362,7 +364,7 @@ gdk_draw_context_begin_frame (GdkDrawContext       *context,
   g_return_if_fail (priv->surface != NULL);
   g_return_if_fail (region != NULL);
 
-  gdk_draw_context_begin_frame_full (context, NULL, NULL, region, NULL);
+  gdk_draw_context_begin_frame_full (context, NULL, NULL, region);
 }
 
 /*
@@ -392,12 +394,12 @@ void
 gdk_draw_context_begin_frame_full (GdkDrawContext        *context,
                                    gpointer               context_data,
                                    GskRenderNode         *node,
-                                   const cairo_region_t  *region,
-                                   const graphene_rect_t *opaque)
+                                   const cairo_region_t  *region)
 {
   GdkDrawContextPrivate *priv = gdk_draw_context_get_instance_private (context);
   double scale;
   guint buffer_width, buffer_height;
+  graphene_rect_t opaque;
 
   if (GDK_SURFACE_DESTROYED (priv->surface))
     return;
@@ -453,7 +455,10 @@ gdk_draw_context_begin_frame_full (GdkDrawContext        *context,
 
   gdk_surface_set_content (priv->surface, node);
 
-  gdk_surface_set_opaque_rect (priv->surface, opaque);
+  if (gsk_render_node_get_opaque_rect (node, &opaque))
+    gdk_surface_set_opaque_rect (priv->surface, &opaque);
+  else
+    gdk_surface_set_opaque_rect (priv->surface, NULL);
 
   scale = gdk_surface_get_scale (priv->surface);
   priv->render_region = gdk_cairo_region_scale_grow (region, scale, scale);

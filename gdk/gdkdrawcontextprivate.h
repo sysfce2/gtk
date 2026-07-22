@@ -60,8 +60,7 @@ void                    gdk_draw_context_surface_resized        (GdkDrawContext 
 void                    gdk_draw_context_begin_frame_full       (GdkDrawContext         *context,
                                                                  gpointer                context_data,
                                                                  GskRenderNode          *node,
-                                                                 const cairo_region_t   *region,
-                                                                 const graphene_rect_t  *opaque);
+                                                                 const cairo_region_t   *region);
 void                    gdk_draw_context_end_frame_full         (GdkDrawContext         *context,
                                                                  gpointer                context_data);
 
