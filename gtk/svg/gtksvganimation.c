@@ -153,6 +153,66 @@ svg_animation_add_end (SvgAnimation *animation,
   return spec;
 }
 
+void
+svg_animation_clear_begin (SvgAnimation *animation)
+{
+  for (unsigned int i = 0; i < animation->begin->len; i++)
+    {
+      TimeSpec *spec = g_ptr_array_index (animation->begin, i);
+      time_spec_drop_animation (spec, animation);
+    }
+
+  g_ptr_array_set_size (animation->begin, 0);
+}
+
+void
+svg_animation_set_begin (SvgAnimation *animation,
+                         Timeline     *timeline,
+                         GArray       *specs)
+{
+  svg_animation_clear_begin (animation);
+
+  for (unsigned int i = 0; i < specs->len; i++)
+    {
+      TimeSpec *spec = &g_array_index (specs, TimeSpec, i);
+      TimeSpec *begin;
+
+      animation->has_begin = 1;
+      begin = svg_animation_add_begin (animation, timeline_get_time_spec (timeline, spec));
+      time_spec_add_animation (begin, animation);
+   }
+}
+
+void
+svg_animation_clear_end (SvgAnimation *animation)
+{
+  for (unsigned int i = 0; i < animation->end->len; i++)
+    {
+      TimeSpec *spec = g_ptr_array_index (animation->end, i);
+      time_spec_drop_animation (spec, animation);
+    }
+
+  g_ptr_array_set_size (animation->end, 0);
+}
+
+void
+svg_animation_set_end (SvgAnimation *animation,
+                       Timeline     *timeline,
+                       GArray       *specs)
+{
+  svg_animation_clear_end (animation);
+
+  for (unsigned int i = 0; i < specs->len; i++)
+    {
+      TimeSpec *spec = &g_array_index (specs, TimeSpec, i);
+      TimeSpec *end;
+
+      animation->has_end = 1;
+      end = svg_animation_add_end (animation, timeline_get_time_spec (timeline, spec));
+      time_spec_add_animation (end, animation);
+   }
+}
+
 gboolean
 svg_animation_has_begin (SvgAnimation *animation,
                          TimeSpec     *spec)
