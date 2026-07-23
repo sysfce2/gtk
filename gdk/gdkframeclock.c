@@ -30,9 +30,22 @@
 #include "gdkframetimingsprivate.h"
 #include "gdkprofilerprivate.h"
 
+#include <math.h>
+
 #ifdef G_OS_WIN32
 #include <windows.h>
 #endif
+
+/* expected presentation time is computed by this formula:
+ * priv->expected_delay = PRESENTATION_DELAY_KEEP * priv->expected_delay
+ *                      + PRESENTATION_DELAY_REPLACE * latest_delay
+ */
+#define PRESENTATION_DELAY_KEEP 5
+#define PRESENTATION_DELAY_REPLACE 3
+/* The expected delay can never grow larger than this many refresh cycles.
+ * We assume those are caused by frame drops, not by normal operations.
+ */
+#define PRESENTATION_DELAY_MAX_FRAMES 5
 
 /**
  * GdkFrameClock:
@@ -106,6 +119,7 @@ struct _GdkFrameClockPrivate
   Timings timings;
   uint64_t latest_presentation_time;
   uint64_t latest_refresh_interval;
+  uint64_t expected_presentation_delay;
   uint64_t frame_time;
 
   GdkFrameClockPhase requested;
@@ -119,6 +133,37 @@ struct _GdkFrameClockPrivate
 };
 
 G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (GdkFrameClock, gdk_frame_clock, G_TYPE_OBJECT)
+
+static uint64_t
+gdk_frame_clock_default_predict_presentation_time (GdkFrameClock *self,
+                                                   uint64_t       now)
+{
+  GdkFrameClockPrivate *priv = gdk_frame_clock_get_instance_private (self);
+  uint64_t predicted;
+
+  if (priv->expected_presentation_delay != 0)
+    predicted = now + priv->expected_presentation_delay;
+  else
+    predicted = now + priv->latest_refresh_interval + priv->latest_refresh_interval / 2;
+
+  if (priv->latest_presentation_time)
+    {
+      if (priv->latest_presentation_time < predicted)
+        {
+          double n_frames;
+          n_frames = (double) (predicted - priv->latest_presentation_time) / priv->latest_refresh_interval;
+          n_frames = round (n_frames);
+          n_frames = MAX (n_frames, 1);
+          predicted = priv->latest_presentation_time + ((guint) n_frames) * priv->latest_refresh_interval;
+        }
+      else
+        {
+          predicted = priv->latest_presentation_time + priv->latest_refresh_interval;
+        }
+    }
+
+  return predicted;
+}
 
 static void
 gdk_frame_clock_finalize (GObject *object)
@@ -139,7 +184,9 @@ gdk_frame_clock_class_init (GdkFrameClockClass *klass)
 {
   GObjectClass *gobject_class = (GObjectClass*) klass;
 
-  gobject_class->finalize     = gdk_frame_clock_finalize;
+  klass->predict_presentation_time = gdk_frame_clock_default_predict_presentation_time;
+
+  gobject_class->finalize = gdk_frame_clock_finalize;
 
   /**
    * GdkFrameClock::flush-events:
@@ -551,6 +598,13 @@ gdk_frame_clock_get_history_start (GdkFrameClock *frame_clock)
   return _gdk_frame_clock_get_history_start (frame_clock);
 }
 
+static uint64_t
+gdk_frame_clock_predict_presentation_time (GdkFrameClock *self,
+                                           uint64_t       now)
+{
+  return GDK_FRAME_CLOCK_GET_CLASS (self)->predict_presentation_time (self, now);
+}
+
 static void
 gdk_frame_clock_begin_frame (GdkFrameClock *self,
                              uint64_t       frame_time,
@@ -559,7 +613,6 @@ gdk_frame_clock_begin_frame (GdkFrameClock *self,
 {
   GdkFrameClockPrivate *priv = gdk_frame_clock_get_instance_private (self);
   GdkFrameTimings *timings;
-  uint64_t predicted_presentation_time;
 
   priv->frame_counter++;
   priv->frame_time = frame_time;
@@ -594,27 +647,9 @@ gdk_frame_clock_begin_frame (GdkFrameClock *self,
         }
     }
 
-  if (priv->latest_presentation_time != 0)
-    {
-      if (priv->latest_presentation_time < stage_start_time)
-        {
-          uint64_t n_frames;
-          n_frames = (stage_start_time - priv->latest_presentation_time) / priv->latest_refresh_interval + 1;
-          predicted_presentation_time = priv->latest_presentation_time + n_frames * priv->latest_refresh_interval;
-        }
-      else
-        {
-          predicted_presentation_time = priv->latest_presentation_time + priv->latest_refresh_interval;
-        }
-    }
-  else
-    {
-      predicted_presentation_time = frame_time + priv->latest_refresh_interval + priv->latest_refresh_interval / 2;
-    }
-
   gdk_frame_timings_setup (timings,
                            frame_time,
-                           predicted_presentation_time,
+                           gdk_frame_clock_predict_presentation_time (self, priv->stage_start_time),
                            frame_start_time,
                            stage_start_time);
 }
@@ -786,40 +821,6 @@ gdk_frame_clock_get_refresh_info (GdkFrameClock *frame_clock,
     }
 }
 
-static gint64
-guess_refresh_interval (GdkFrameClock *frame_clock)
-{
-  gint64 interval;
-  gint64 i;
-
-  interval = G_MAXINT64;
-
-  for (i = _gdk_frame_clock_get_history_start (frame_clock);
-       i < _gdk_frame_clock_get_frame_counter (frame_clock);
-       i++)
-    {
-      GdkFrameTimings *t, *before;
-      gint64 ts, before_ts;
-
-      t = _gdk_frame_clock_get_timings (frame_clock, i);
-      before = _gdk_frame_clock_get_timings (frame_clock, i - 1);
-      if (t == NULL || before == NULL)
-        continue;
-
-      ts = gdk_frame_timings_get_frame_time (t);
-      before_ts = gdk_frame_timings_get_frame_time (before);
-      if (ts == 0 || before_ts == 0)
-        continue;
-
-      interval = MIN (interval, ts - before_ts);
-    }
-
-  if (interval == G_MAXINT64)
-    return 0;
-
-  return interval;
-}
-
 /**
  * gdk_frame_clock_get_fps:
  * @frame_clock: a `GdkFrameClock`
@@ -840,30 +841,41 @@ gdk_frame_clock_get_fps (GdkFrameClock *frame_clock)
   start_counter = _gdk_frame_clock_get_history_start (frame_clock);
   end_counter = _gdk_frame_clock_get_frame_counter (frame_clock);
   for (start = _gdk_frame_clock_get_timings (frame_clock, start_counter);
-       end_counter > start_counter && start != NULL && !gdk_frame_timings_get_complete (start);
+       end_counter > start_counter && start != NULL && gdk_frame_timings_get_presentation_time (start) == 0;
        start = _gdk_frame_clock_get_timings (frame_clock, start_counter))
     start_counter++;
   for (end = _gdk_frame_clock_get_timings (frame_clock, end_counter);
-       end_counter > start_counter && end != NULL && !gdk_frame_timings_get_complete (end);
+       end_counter > start_counter && end != NULL && gdk_frame_timings_get_presentation_time (end) == 0;
        end = _gdk_frame_clock_get_timings (frame_clock, end_counter))
     end_counter--;
-  if (end_counter - start_counter < 4)
-    return 0.0;
-
-  start_timestamp = gdk_frame_timings_get_presentation_time (start);
-  end_timestamp = gdk_frame_timings_get_presentation_time (end);
-  if (start_timestamp == 0 || end_timestamp == 0)
+  if (end_counter - start_counter >= 4)
     {
+      start_timestamp = gdk_frame_timings_get_presentation_time (start);
+      end_timestamp = gdk_frame_timings_get_presentation_time (end);
+      g_assert (start_timestamp != 0);
+      g_assert (end_timestamp != 0);
+    }
+  else
+    {
+      start_counter = _gdk_frame_clock_get_history_start (frame_clock);
+      end_counter = _gdk_frame_clock_get_frame_counter (frame_clock);
+      for (start = _gdk_frame_clock_get_timings (frame_clock, start_counter);
+           end_counter > start_counter && start != NULL && gdk_frame_timings_get_frame_time (start) == 0;
+           start = _gdk_frame_clock_get_timings (frame_clock, start_counter))
+        start_counter++;
+      for (end = _gdk_frame_clock_get_timings (frame_clock, end_counter);
+           end_counter > start_counter && end != NULL && gdk_frame_timings_get_frame_time (end) == 0;
+           end = _gdk_frame_clock_get_timings (frame_clock, end_counter))
+        end_counter--;
+      if (end_counter - start_counter < 4)
+        return 0.0;
       start_timestamp = gdk_frame_timings_get_frame_time (start);
       end_timestamp = gdk_frame_timings_get_frame_time (end);
     }
+
   interval = gdk_frame_timings_get_refresh_interval (end);
   if (interval == 0)
-    {
-      interval = guess_refresh_interval (frame_clock);
-      if (interval == 0)
-        return 0.0;
-    }
+    interval = (gdk_frame_clock_get_refresh_interval (frame_clock) + 500) / 1000;
 
   return ((double) end_counter - start_counter) * G_USEC_PER_SEC / (end_timestamp - start_timestamp);
 }
@@ -989,14 +1001,35 @@ gdk_frame_clock_presented (GdkFrameClock *self,
 
   g_return_if_fail (presentation_time != 0);
 
+  timings = gdk_frame_clock_get_timings (self, frame_counter);
+
   if (presentation_time > priv->latest_presentation_time)
     {
       priv->latest_presentation_time = presentation_time;
       if (refresh)
         priv->latest_refresh_interval = refresh;
+
+      if (timings != NULL)
+        {
+          uint64_t delay;
+
+          delay = presentation_time - gdk_frame_timings_get_start_time (timings, GDK_FRAME_STAGE_BEFORE_PAINT);
+          if (refresh)
+              delay = MIN (PRESENTATION_DELAY_MAX_FRAMES * refresh, delay);
+
+          if (priv->expected_presentation_delay == 0)
+            {
+              priv->expected_presentation_delay = delay;
+            }
+          else
+            {
+              priv->expected_presentation_delay = (PRESENTATION_DELAY_KEEP * priv->expected_presentation_delay
+                                                   + PRESENTATION_DELAY_REPLACE * delay)
+                                                  / (PRESENTATION_DELAY_KEEP + PRESENTATION_DELAY_REPLACE);
+            }
+        }
     }
 
-  timings = gdk_frame_clock_get_timings (self, frame_counter);
   if (timings == NULL)
     return;
 
