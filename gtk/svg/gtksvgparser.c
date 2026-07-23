@@ -383,15 +383,7 @@ parse_base_animation_attrs (SvgAnimation         *a,
 
       if (time_specs_parse (begin_attr, data->svg, array, current_shape, &error))
         {
-          for (unsigned int i = 0; i < array->len; i++)
-            {
-              TimeSpec *spec = &g_array_index (array, TimeSpec, i);
-              TimeSpec *begin;
-
-              a->has_begin = 1;
-              begin = svg_animation_add_begin (a, timeline_get_time_spec (data->svg->timeline, spec));
-              time_spec_add_animation (begin, a);
-            }
+          svg_animation_set_begin (a, data->svg->timeline, array);
         }
       else if (error)
         {
@@ -423,15 +415,7 @@ parse_base_animation_attrs (SvgAnimation         *a,
 
       if (time_specs_parse (end_attr, data->svg, array, current_shape, &error))
         {
-          for (unsigned int i = 0; i < array->len; i++)
-            {
-              TimeSpec *spec = &g_array_index (array, TimeSpec, i);
-              TimeSpec *end;
-
-              a->has_end = 1;
-              end = svg_animation_add_end (a, timeline_get_time_spec (data->svg->timeline, spec));
-              time_spec_add_animation (end, a);
-            }
+          svg_animation_set_end (a, data->svg->timeline, array);
         }
       else if (error)
         {
