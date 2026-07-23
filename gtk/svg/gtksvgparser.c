@@ -301,27 +301,6 @@ g_strv_has (GStrv       strv,
 /* }}} */
 /* {{{ SvgAnimation attributes */
 
-typedef struct
-{
-  GtkSvg *svg;
-  GArray *array;
-  GError *error;
-  SvgElement *default_event_target;
-} Specs;
-
-static gboolean
-time_spec_parse_one (GtkCssParser *parser,
-                     gpointer      user_data)
-{
-  Specs *specs = user_data;
-  TimeSpec *spec;
-
-  g_array_set_size (specs->array, specs->array->len + 1);
-  spec = &g_array_index (specs->array, TimeSpec, specs->array->len - 1);
-
-  return time_spec_parse (parser, specs->svg, specs->default_event_target, spec, &specs->error);
-}
-
 static gboolean
 parse_base_animation_attrs (SvgAnimation         *a,
                             const char           *element_name,
@@ -396,19 +375,17 @@ parse_base_animation_attrs (SvgAnimation         *a,
 
   if (begin_attr)
     {
-      GtkCssParser *parser = parser_new_for_string (begin_attr);
-      Specs specs = { 0, };
+      GArray *array;
+      GError *error = NULL;
 
-      specs.svg = data->svg;
-      specs.default_event_target = current_shape;
-      specs.array = g_array_new (FALSE, TRUE, sizeof (TimeSpec));
-      g_array_set_clear_func (specs.array, (GDestroyNotify) time_spec_clear);
+      array = g_array_new (FALSE, TRUE, sizeof (TimeSpec));
+      g_array_set_clear_func (array, (GDestroyNotify) time_spec_clear);
 
-      if (parser_parse_list (parser, time_spec_parse_one, &specs))
+      if (time_specs_parse (begin_attr, data->svg, array, current_shape, &error))
         {
-          for (unsigned int i = 0; i < specs.array->len; i++)
+          for (unsigned int i = 0; i < array->len; i++)
             {
-              TimeSpec *spec = &g_array_index (specs.array, TimeSpec, i);
+              TimeSpec *spec = &g_array_index (array, TimeSpec, i);
               TimeSpec *begin;
 
               a->has_begin = 1;
@@ -416,19 +393,18 @@ parse_base_animation_attrs (SvgAnimation         *a,
               time_spec_add_animation (begin, a);
             }
         }
+      else if (error)
+        {
+          gtk_svg_invalid_attribute (data->svg, context, attr_names, "begin", "%s", error->message);
+          g_error_free (error);
+        }
       else
         {
           gtk_svg_invalid_attribute (data->svg, context, attr_names, "begin", NULL);
         }
 
-      gtk_css_parser_unref (parser);
-      g_array_unref (specs.array);
+      g_array_unref (array);
 
-      if (specs.error)
-        {
-          gtk_svg_invalid_attribute (data->svg, context, attr_names, "begin", "%s", specs.error->message);
-          g_error_free (specs.error);
-        }
     }
   else
     {
@@ -439,19 +415,17 @@ parse_base_animation_attrs (SvgAnimation         *a,
 
   if (end_attr)
     {
-      GtkCssParser *parser = parser_new_for_string (end_attr);
-      Specs specs = { 0, };
+      GArray *array;
+      GError *error = NULL;
 
-      specs.svg = data->svg;
-      specs.default_event_target = current_shape;
-      specs.array = g_array_new (FALSE, TRUE, sizeof (TimeSpec));
-      g_array_set_clear_func (specs.array, (GDestroyNotify) time_spec_clear);
+      array = g_array_new (FALSE, TRUE, sizeof (TimeSpec));
+      g_array_set_clear_func (array, (GDestroyNotify) time_spec_clear);
 
-      if (parser_parse_list (parser, time_spec_parse_one, &specs))
+      if (time_specs_parse (end_attr, data->svg, array, current_shape, &error))
         {
-          for (unsigned int i = 0; i < specs.array->len; i++)
+          for (unsigned int i = 0; i < array->len; i++)
             {
-              TimeSpec *spec = &g_array_index (specs.array, TimeSpec, i);
+              TimeSpec *spec = &g_array_index (array, TimeSpec, i);
               TimeSpec *end;
 
               a->has_end = 1;
@@ -459,19 +433,17 @@ parse_base_animation_attrs (SvgAnimation         *a,
               time_spec_add_animation (end, a);
             }
         }
+      else if (error)
+        {
+          gtk_svg_invalid_attribute (data->svg, context, attr_names, "end", "%s", error->message);
+          g_error_free (error);
+        }
       else
         {
           gtk_svg_invalid_attribute (data->svg, context, attr_names, "end", NULL);
         }
 
-      gtk_css_parser_unref (parser);
-      g_array_unref (specs.array);
-
-      if (specs.error)
-        {
-          gtk_svg_invalid_attribute (data->svg, context, attr_names, "end", "%s", specs.error->message);
-          g_error_free (specs.error);
-        }
+      g_array_unref (array);
     }
   else
     {
